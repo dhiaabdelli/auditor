@@ -1,0 +1,610 @@
+.health-monitor-page {
+    padding: 1rem;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    background: #0f172a;
+}
+
+.health-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.health-title h1 {
+    margin: 0 0 0.125rem 0;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.health-title h1 i {
+    color: #ef4444;
+    font-size: 1rem;
+}
+
+.health-subtitle {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.6875rem;
+}
+
+.health-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.health-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.health-toggle input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--primary);
+}
+
+.health-toggle span {
+    color: #94a3b8;
+    font-size: 0.8125rem;
+}
+
+/* Overall Status Card */
+.health-overall-card {
+    margin-bottom: 1rem;
+}
+
+.health-overall-status {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.health-status-icon {
+    font-size: 1.25rem;
+}
+
+.health-status-info h2 {
+    margin: 0 0 0.0625rem 0;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.health-status-label {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.6875rem;
+}
+
+.health-uptime {
+    margin-left: auto;
+    text-align: right;
+}
+
+.health-uptime-value {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    display: block;
+}
+
+.health-uptime-label {
+    font-size: 0.625rem;
+    color: #94a3b8;
+    display: block;
+    margin-top: 0.0625rem;
+}
+
+/* Services Section */
+.health-services-section {
+    margin-bottom: 1rem;
+}
+
+.health-services-section h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.health-services-section h2 i {
+    font-size: 0.8125rem;
+}
+
+.health-services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+.health-service-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    transition: all 0.2s ease;
+}
+
+.health-service-card:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+    transform: translateY(-1px);
+    border-color: #475569;
+}
+
+.health-service-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.625rem;
+}
+
+.health-service-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    flex: 1;
+}
+
+.health-service-status-indicator {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.health-service-title h3 {
+    margin: 0 0 0.0625rem 0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.health-service-message {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.6875rem;
+}
+
+.health-service-badge {
+    padding: 0.1875rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.health-service-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3125rem;
+    margin-bottom: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid #334155;
+}
+
+.health-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.health-metric-label {
+    color: #94a3b8;
+    font-size: 0.6875rem;
+}
+
+.health-metric-value {
+    color: #e2e8f0;
+    font-size: 0.6875rem;
+    font-weight: 500;
+}
+
+.health-service-details {
+    margin-top: 0.625rem;
+    padding-top: 0.625rem;
+    border-top: 1px solid #334155;
+}
+
+.health-service-details h4 {
+    margin: 0 0 0.375rem 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.health-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 0.375rem;
+}
+
+.health-detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+}
+
+.health-detail-key {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.health-detail-value {
+    font-size: 0.6875rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+/* System Info Section */
+/* Tasks Section */
+.health-tasks-section {
+    margin-bottom: 1rem;
+}
+
+.health-tasks-section h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.health-tasks-section h2 i {
+    font-size: 0.8125rem;
+}
+
+.health-tasks-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.health-task-stat-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.75rem;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.health-task-stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+}
+
+.health-task-stat-label {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.health-active-tasks {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.health-tasks-loading,
+.health-tasks-empty,
+.health-tasks-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.health-tasks-loading i,
+.health-tasks-empty i,
+.health-tasks-error i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.5;
+}
+
+.health-tasks-empty i {
+    color: #10b981;
+}
+
+.health-tasks-error i {
+    color: #ef4444;
+}
+
+.health-tasks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.health-task-item {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.75rem;
+    transition: all 0.2s ease;
+}
+
+.health-task-item:hover {
+    border-color: #475569;
+    background: #1e293b;
+}
+
+.health-task-item.running {
+    border-left: 3px solid #3b82f6;
+}
+
+.health-task-item.completed {
+    border-left: 3px solid #10b981;
+    opacity: 0.8;
+}
+
+.health-task-item.failed {
+    border-left: 3px solid #ef4444;
+}
+
+.health-task-item.cancelled {
+    border-left: 3px solid #94a3b8;
+    opacity: 0.6;
+}
+
+.health-task-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.health-task-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.health-task-icon i {
+    font-size: 1rem;
+}
+
+.health-task-item.running .health-task-icon i {
+    color: #3b82f6;
+}
+
+.health-task-item.completed .health-task-icon i {
+    color: #10b981;
+}
+
+.health-task-item.failed .health-task-icon i {
+    color: #ef4444;
+}
+
+.health-task-item.cancelled .health-task-icon i {
+    color: #94a3b8;
+}
+
+.health-task-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.health-task-name {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    margin-bottom: 0.25rem;
+}
+
+.health-task-message {
+    font-size: 0.6875rem;
+    color: #64748b;
+}
+
+.health-task-status {
+    flex-shrink: 0;
+}
+
+.health-task-status-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.625rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.health-task-status-badge.running {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.health-task-status-badge.completed {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.health-task-status-badge.failed {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.health-task-status-badge.pending {
+    background: rgba(148, 163, 184, 0.2);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.health-task-status-badge.cancelled {
+    background: rgba(148, 163, 184, 0.2);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.health-task-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.health-task-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #0f172a;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.health-task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.health-task-item.completed .health-task-progress-fill {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.health-task-item.failed .health-task-progress-fill {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
+}
+
+.health-task-progress-text {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: #94a3b8;
+    min-width: 35px;
+    text-align: right;
+}
+
+.health-system-section {
+    margin-bottom: 1rem;
+}
+
+.health-system-section h2 {
+    margin: 0 0 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.health-system-section h2 i {
+    font-size: 0.8125rem;
+}
+
+.health-system-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.625rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.health-system-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding: 0.5rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 4px;
+}
+
+.health-system-key {
+    font-size: 0.6875rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.health-system-value {
+    font-size: 0.6875rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+/* Compact buttons in health monitor */
+.health-monitor-page .btn {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    border-radius: 4px;
+}
+
+.health-monitor-page .btn i {
+    font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .health-monitor-page {
+        padding: 0.75rem;
+    }
+
+    .health-header {
+        flex-direction: column;
+    }
+
+    .health-services-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .health-system-grid {
+        grid-template-columns: 1fr;
+        padding: 0.625rem;
+    }
+}
+

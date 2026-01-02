@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dhia Control Tower</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/login.css">
+    <link rel="stylesheet" href="styles/hyperv-compact.css">
+    <link rel="stylesheet" href="styles/san-management.css">
+    <link rel="stylesheet" href="styles/ip-scanner.css">
+    <link rel="stylesheet" href="styles/ping-tracer.css">
+    <link rel="stylesheet" href="styles/domain-lookup.css">
+    <link rel="stylesheet" href="styles/packet-analyzer.css">
+    <link rel="stylesheet" href="styles/speedtest.css">
+    <link rel="stylesheet" href="styles/report-templates.css">
+    <link rel="stylesheet" href="styles/subnet-calculator.css">
+    <link rel="stylesheet" href="styles/crypto-tools.css">
+    <link rel="stylesheet" href="styles/web-tools.css">
+    <link rel="stylesheet" href="styles/development-tools.css">
+    <link rel="stylesheet" href="styles/automation.css">
+    <link rel="stylesheet" href="styles/infrastructure-diagram.css">
+    <link rel="stylesheet" href="styles/health-monitor.css">
+    <link rel="stylesheet" href="styles/api-auditor.css">
+    <link rel="stylesheet" href="styles/windows-server-auditor.css">
+    <link rel="stylesheet" href="styles/veeam-auditor.css">
+    <link rel="stylesheet" href="styles/file-share-auditor.css">
+    <link rel="stylesheet" href="styles/sftp-client.css">
+    <link rel="stylesheet" href="styles/settings.css">
+    <link rel="stylesheet" href="styles/font-awesome.min.css">
+    <!-- Crypto Libraries -->
+    <script src="js/libs/crypto-js.min.js"></script>
+    <script src="js/libs/bcrypt.min.js"></script>
+    <script src="js/libs/forge.min.js"></script>
+    <!-- QR Code Library -->
+    <script src="js/libs/qrcode.min.js"></script>
+    <!-- Chart.js Library -->
+    <script src="js/libs/chart.min.js"></script>
+    <!-- JSZip Library for DOCX file handling -->
+    <script src="js/libs/jszip.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header id="header"></header>
+        
+        <!-- Main Content -->
+        <main id="main-content" class="main-content">
+            <!-- Page Content -->
+            <div id="page-content"></div>
+        </main>
+        
+        <!-- Sidebar Overlay -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+        
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar"></aside>
+        
+        <!-- Modal Container -->
+        <div id="modal-container"></div>
+        
+        <!-- Footer -->
+        <footer id="footer" class="app-footer"></footer>
+    </div>
+
+    <!-- Scripts -->
+    <!-- Suppress harmless browser extension errors - MUST be first script -->
+    <script>
+        // Immediately suppress extension errors before anything else runs
+        (function() {
+            'use strict';
+            
+            // Store original console methods
+            const originalConsole = {
+                error: console.error.bind(console),
+                warn: console.warn.bind(console),
+                log: console.log.bind(console)
+            };
+            
+            // Helper to check if message is from extension
+            function isExtensionError(message) {
+                if (typeof message !== 'string') return false;
+                const lower = message.toLowerCase();
+                return lower.includes('runtime.lasterror') ||
+                       lower.includes('back/forward cache') ||
+                       lower.includes('message channel is closed') ||
+                       lower.includes('extension context invalidated') ||
+                       lower.includes('unchecked runtime.lasterror');
+            }
+            
+            // Override console.error
+            console.error = function(...args) {
+                const message = args.map(arg => 
+                    typeof arg === 'string' ? arg : 
+                    arg?.message || String(arg || '')
+                ).join(' ');
+                
+                if (isExtensionError(message)) {
+                    return; // Silently ignore
+                }
+                originalConsole.error.apply(console, args);
+            };
+            
+            // Override console.warn
+            console.warn = function(...args) {
+                const message = args.map(arg => 
+                    typeof arg === 'string' ? arg : 
+                    arg?.message || String(arg || '')
+                ).join(' ');
+                
+                if (isExtensionError(message)) {
+                    return; // Silently ignore
+                }
+                originalConsole.warn.apply(console, args);
+            };
+            
+            // Override console.log to catch extension errors that might be logged
+            const originalLog = console.log;
+            console.log = function(...args) {
+                const message = args.map(arg => String(arg || '')).join(' ');
+                if (isExtensionError(message)) {
+                    return; // Silently ignore
+                }
+                originalLog.apply(console, args);
+            };
+            
+            // Global error handler with highest priority
+            const errorHandler = function(event) {
+                const message = event.message || 
+                               event.error?.message || 
+                               String(event.error || event);
+                
+                if (isExtensionError(message)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    event.stopImmediatePropagation();
+                    return false;
+                }
+            };
+            
+            // Add error listeners with capture phase (runs first)
+            window.addEventListener('error', errorHandler, true);
+            window.addEventListener('unhandledrejection', function(event) {
+                const message = event.reason?.message || 
+                              String(event.reason || '');
+                if (isExtensionError(message)) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    return false;
+                }
+            }, true);
+            
+            // Override Error constructor
+            const OriginalError = window.Error;
+            window.Error = function(...args) {
+                const error = new OriginalError(...args);
+                if (isExtensionError(error.message)) {
+                    // Create a silent error
+                    Object.defineProperty(error, 'message', {
+                        value: '',
+                        writable: false,
+                        configurable: false
+                    });
+                    Object.defineProperty(error, 'name', {
+                        value: 'SilentExtensionError',
+                        writable: false,
+                        configurable: false
+                    });
+                }
+                return error;
+            };
+            window.Error.prototype = OriginalError.prototype;
+            
+            // Also try to intercept at the DevTools level (if possible)
+            if (window.chrome && window.chrome.runtime) {
+                try {
+                    // Wrap chrome.runtime to catch errors
+                    const originalSendMessage = window.chrome.runtime.sendMessage;
+                    if (originalSendMessage) {
+                        window.chrome.runtime.sendMessage = function(...args) {
+                            try {
+                                return originalSendMessage.apply(this, args);
+                            } catch (e) {
+                                if (isExtensionError(e.message || String(e))) {
+                                    return; // Silently ignore
+                                }
+                                throw e;
+                            }
+                        };
+                    }
+                } catch (e) {
+                    // Ignore if we can't wrap chrome.runtime
+                }
+            }
+        })();
+    </script>
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>

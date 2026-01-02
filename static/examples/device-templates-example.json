@@ -1,0 +1,404 @@
+[
+  {
+    "name": "Dell PowerEdge R740 Server",
+    "type": "server",
+    "vendor": "dell",
+    "imagePath": "/images/devices/server-dell-r740.png",
+    "width": 150,
+    "height": 100,
+    "ports": [
+      {
+        "id": "eth0",
+        "type": "ethernet",
+        "name": "Ethernet 0",
+        "x": 0.1,
+        "y": 0.4,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#00ff00"
+      },
+      {
+        "id": "eth1",
+        "type": "ethernet",
+        "name": "Ethernet 1",
+        "x": 0.15,
+        "y": 0.4,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#00ff00"
+      },
+      {
+        "id": "fc0",
+        "type": "fc",
+        "name": "FC Port 0",
+        "x": 0.25,
+        "y": 0.4,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#ff6600"
+      },
+      {
+        "id": "fc1",
+        "type": "fc",
+        "name": "FC Port 1",
+        "x": 0.3,
+        "y": 0.4,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#ff6600"
+      },
+      {
+        "id": "idrac",
+        "type": "ethernet",
+        "name": "iDRAC",
+        "x": 0.4,
+        "y": 0.4,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#0066ff"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "power1",
+        "type": "power",
+        "name": "Power Supply 1",
+        "x": 0.85,
+        "y": 0.3,
+        "side": "back"
+      },
+      {
+        "id": "power2",
+        "type": "power",
+        "name": "Power Supply 2",
+        "x": 0.85,
+        "y": 0.7,
+        "side": "back"
+      }
+    ],
+    "metadata": {
+      "description": "Dell PowerEdge R740 2U Rack Server",
+      "rackUnits": 2,
+      "manufacturer": "Dell Technologies"
+    }
+  },
+  {
+    "name": "Cisco Catalyst 2960 Switch",
+    "type": "switch",
+    "vendor": "cisco",
+    "imagePath": "/images/devices/switch-cisco-2960.png",
+    "width": 200,
+    "height": 80,
+    "ports": [
+      {
+        "id": "gig0/1",
+        "type": "ethernet",
+        "name": "Gig0/1",
+        "x": 0.05,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/2",
+        "type": "ethernet",
+        "name": "Gig0/2",
+        "x": 0.08,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/3",
+        "type": "ethernet",
+        "name": "Gig0/3",
+        "x": 0.11,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/4",
+        "type": "ethernet",
+        "name": "Gig0/4",
+        "x": 0.14,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/5",
+        "type": "ethernet",
+        "name": "Gig0/5",
+        "x": 0.17,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/6",
+        "type": "ethernet",
+        "name": "Gig0/6",
+        "x": 0.2,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/7",
+        "type": "ethernet",
+        "name": "Gig0/7",
+        "x": 0.23,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "gig0/8",
+        "type": "ethernet",
+        "name": "Gig0/8",
+        "x": 0.26,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "console",
+        "type": "serial",
+        "name": "Console",
+        "x": 0.9,
+        "y": 0.5,
+        "width": 0.02,
+        "height": 0.03,
+        "side": "back",
+        "color": "#ffff00"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "power",
+        "type": "power",
+        "name": "Power",
+        "x": 0.95,
+        "y": 0.5,
+        "side": "back"
+      }
+    ],
+    "metadata": {
+      "description": "Cisco Catalyst 2960 24-Port Switch",
+      "portCount": 24,
+      "manufacturer": "Cisco Systems"
+    }
+  },
+  {
+    "name": "HP ProLiant DL380 Gen10",
+    "type": "server",
+    "vendor": "hp",
+    "imagePath": "/images/devices/server-hp-dl380.png",
+    "width": 150,
+    "height": 100,
+    "ports": [
+      {
+        "id": "eth0",
+        "type": "ethernet",
+        "name": "Ethernet 0",
+        "x": 0.1,
+        "y": 0.45,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#00ff00"
+      },
+      {
+        "id": "eth1",
+        "type": "ethernet",
+        "name": "Ethernet 1",
+        "x": 0.15,
+        "y": 0.45,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#00ff00"
+      },
+      {
+        "id": "ilo",
+        "type": "ethernet",
+        "name": "iLO",
+        "x": 0.2,
+        "y": 0.45,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#0066ff"
+      },
+      {
+        "id": "fc0",
+        "type": "fc",
+        "name": "FC Port 0",
+        "x": 0.3,
+        "y": 0.45,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#ff6600"
+      },
+      {
+        "id": "fc1",
+        "type": "fc",
+        "name": "FC Port 1",
+        "x": 0.35,
+        "y": 0.45,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#ff6600"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "power1",
+        "type": "power",
+        "name": "PSU 1",
+        "x": 0.8,
+        "y": 0.35,
+        "side": "back"
+      },
+      {
+        "id": "power2",
+        "type": "power",
+        "name": "PSU 2",
+        "x": 0.8,
+        "y": 0.65,
+        "side": "back"
+      }
+    ],
+    "metadata": {
+      "description": "HP ProLiant DL380 Gen10 2U Server",
+      "rackUnits": 2,
+      "manufacturer": "Hewlett Packard Enterprise"
+    }
+  },
+  {
+    "name": "Generic Server",
+    "type": "server",
+    "vendor": "generic",
+    "imagePath": "/images/devices/server-generic.png",
+    "width": 120,
+    "height": 80,
+    "ports": [
+      {
+        "id": "eth0",
+        "type": "ethernet",
+        "name": "Ethernet",
+        "x": 0.2,
+        "y": 0.5,
+        "width": 0.03,
+        "height": 0.04,
+        "side": "back",
+        "color": "#00ff00"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "power",
+        "type": "power",
+        "name": "Power",
+        "x": 0.8,
+        "y": 0.5,
+        "side": "back"
+      }
+    ],
+    "metadata": {
+      "description": "Generic server template"
+    }
+  },
+  {
+    "name": "Generic Switch",
+    "type": "switch",
+    "vendor": "generic",
+    "imagePath": "/images/devices/switch-generic.png",
+    "width": 180,
+    "height": 70,
+    "ports": [
+      {
+        "id": "port1",
+        "type": "ethernet",
+        "name": "Port 1",
+        "x": 0.1,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "port2",
+        "type": "ethernet",
+        "name": "Port 2",
+        "x": 0.15,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "port3",
+        "type": "ethernet",
+        "name": "Port 3",
+        "x": 0.2,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      },
+      {
+        "id": "port4",
+        "type": "ethernet",
+        "name": "Port 4",
+        "x": 0.25,
+        "y": 0.5,
+        "width": 0.015,
+        "height": 0.03,
+        "side": "front",
+        "color": "#00ff00"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "power",
+        "type": "power",
+        "name": "Power",
+        "x": 0.9,
+        "y": 0.5,
+        "side": "back"
+      }
+    ],
+    "metadata": {
+      "description": "Generic network switch template"
+    }
+  }
+]
+

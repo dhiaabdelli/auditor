@@ -1,0 +1,1377 @@
+/* Packet Analyzer Styles - Full Page Layout (like SSH client) */
+
+/* Remove padding from page container for Packet Analyzer */
+.page-container-full:has(.packet-analyzer-full-container) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+    position: fixed;
+    background: #1e293b;
+    top: 90px; /* Header + sub-navbar height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(100vh - 90px);
+    padding-bottom: 56px !important; /* Add padding for footer */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 50;
+}
+
+/* If no sub-navbar, adjust position */
+body:not(.has-sub-navbar) .page-container-full:has(.packet-analyzer-full-container) {
+    top: 50px; /* Just header height */
+    height: calc(100vh - 50px);
+    padding-bottom: 56px !important;
+    box-sizing: border-box;
+}
+
+#main-content:has(.packet-analyzer-full-container),
+.main-content:has(.packet-analyzer-full-container) {
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+/* Prevent body scrolling when Packet Analyzer is active */
+body:has(.packet-analyzer-full-container) {
+    overflow: hidden !important;
+}
+
+#page-content:has(.packet-analyzer-full-container) {
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+/* Full Container */
+.packet-analyzer-full-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* Packet Display Container */
+.packet-display-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background: var(--card-bg, #fff);
+    overflow: hidden;
+}
+
+/* Header */
+.packet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 12px;
+    background: #1e293b;
+    color: white;
+    border-bottom: 1px solid #334155;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    min-height: 38px;
+}
+
+.packet-header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.packet-header-left h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: white;
+}
+
+.packet-header-left h3 i {
+    color: #3b82f6;
+    font-size: 12px;
+}
+
+.packet-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.interface-select,
+.filter-input {
+    padding: 4px 8px;
+    border: 1px solid #334155;
+    border-radius: 3px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 11px;
+    height: 26px;
+}
+
+.interface-select:focus,
+.filter-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    background: #1e293b;
+}
+
+.interface-select option {
+    background: #0f172a;
+    color: #e2e8f0;
+}
+
+.interface-select {
+    min-width: 300px;
+    max-width: 500px;
+    font-family: 'Segoe UI', 'Consolas', monospace;
+}
+
+.filter-input {
+    min-width: 250px;
+}
+
+.filter-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    position: relative;
+}
+
+.btn-filter-help {
+    padding: 0.25rem 0.5rem;
+    background: transparent;
+    border: 1px solid #334155;
+    color: #94a3b8;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-filter-help:hover {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+/* Filter help modal styles */
+.filter-example-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.filter-example {
+    padding: 0.75rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+}
+
+.filter-example:hover {
+    background: #1e293b;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+}
+
+.filter-example code {
+    color: #60a5fa;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.filter-example span {
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+.filter-example-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-example-item {
+    padding: 0.625rem 0.875rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.filter-example-item:hover {
+    background: #1e293b;
+    border-color: #3b82f6;
+}
+
+.filter-example-item code {
+    color: #60a5fa;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.8125rem;
+    font-weight: 600;
+}
+
+.filter-example-item span {
+    color: #94a3b8;
+    font-size: 0.8125rem;
+}
+
+.filter-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.filter-display i {
+    font-size: 10px;
+}
+
+.promiscuous-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+    color: #94a3b8;
+}
+
+.promiscuous-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 14px;
+    height: 14px;
+}
+
+.packet-status-badge {
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.packet-status-badge i {
+    font-size: 8px;
+}
+
+.packet-status-badge.capturing {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.packet-status-badge.capturing i {
+    color: #10b981;
+    animation: pulse 1.5s infinite;
+}
+
+.packet-status-badge.stopped {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.packet-status-badge.stopped i {
+    color: #ef4444;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.packet-header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.packet-header-right .btn {
+    min-width: 70px;
+}
+
+/* Toolbar */
+.packet-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 15px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+    gap: 12px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+.packet-search-input {
+    flex: 1;
+    min-width: 300px;
+    padding: 6px 10px;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    font-size: 12px;
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+.packet-search-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+}
+
+.packet-search-input::placeholder {
+    color: #64748b;
+}
+
+.packet-toolbar-stats {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.packet-toolbar-stats .btn-icon {
+    padding: 0.375rem 0.625rem;
+    color: #94a3b8;
+    background: transparent;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.packet-toolbar-stats .btn-icon:hover {
+    color: #e2e8f0;
+    background: #334155;
+    border-color: #475569;
+}
+
+.packet-stat {
+    font-size: 12px;
+    color: #94a3b8;
+    white-space: nowrap;
+}
+
+.packet-stat strong {
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.packet-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+    color: #94a3b8;
+}
+
+.packet-checkbox input[type="checkbox"] {
+    cursor: pointer;
+}
+
+/* Content Area */
+.packet-content-area {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.packet-list-panel {
+    flex: 1;
+    overflow: auto;
+    border-right: 1px solid #334155;
+    min-width: 0;
+    background: #0f172a;
+}
+
+.packet-details-sidebar {
+    width: 480px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #0f172a;
+    border-left: 1px solid #334155;
+}
+
+.packet-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #1e293b;
+    color: #e2e8f0;
+    border-bottom: 1px solid #334155;
+    flex-shrink: 0;
+}
+
+.packet-details-header h4 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #e2e8f0;
+}
+
+.packet-details-header h4 i {
+    color: #3b82f6;
+    font-size: 12px;
+}
+
+.packet-details-header .btn-icon {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 3px;
+    transition: all 0.2s;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.packet-details-header .btn-icon:hover {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.packet-details-header .btn-icon i {
+    font-size: 11px;
+}
+
+.packet-details-scroll {
+    flex: 1;
+    overflow: auto;
+    background: #0f172a;
+    padding: 12px;
+}
+
+/* Packet Table */
+.packet-table {
+    width: 100%;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+}
+
+.packet-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1e293b;
+    color: #94a3b8;
+}
+
+.packet-table th {
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    border-bottom: 1px solid #334155;
+}
+
+.packet-table th:last-child {
+    border-right: none;
+}
+
+.packet-table tbody tr.packet-row {
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-bottom: 1px solid #1e293b;
+    background: #0f172a;
+}
+
+/* Traffic Type Colors */
+/* 🟢 Light Green - Normal TCP traffic */
+.packet-table tbody tr.packet-row.traffic-tcp-normal {
+    background: rgba(134, 239, 172, 0.15);
+    border-left: 3px solid #86efac;
+}
+
+.packet-table tbody tr.packet-row.traffic-tcp-normal:hover {
+    background: rgba(134, 239, 172, 0.25);
+}
+
+/* 🔵 Light Blue - UDP traffic */
+.packet-table tbody tr.packet-row.traffic-udp {
+    background: rgba(147, 197, 253, 0.15);
+    border-left: 3px solid #93c5fd;
+}
+
+.packet-table tbody tr.packet-row.traffic-udp:hover {
+    background: rgba(147, 197, 253, 0.25);
+}
+
+/* 🟣 Light Purple - ICMP traffic */
+.packet-table tbody tr.packet-row.traffic-icmp {
+    background: rgba(196, 181, 253, 0.15);
+    border-left: 3px solid #c4b5fd;
+}
+
+.packet-table tbody tr.packet-row.traffic-icmp:hover {
+    background: rgba(196, 181, 253, 0.25);
+}
+
+/* 🟡 Yellow - ARP traffic */
+.packet-table tbody tr.packet-row.traffic-arp {
+    background: rgba(253, 224, 71, 0.15);
+    border-left: 3px solid #fde047;
+}
+
+.packet-table tbody tr.packet-row.traffic-arp:hover {
+    background: rgba(253, 224, 71, 0.25);
+}
+
+/* 🔴 Light Red / Pink - TCP problems */
+.packet-table tbody tr.packet-row.traffic-tcp-problem {
+    background: rgba(252, 165, 165, 0.15);
+    border-left: 3px solid #fca5a5;
+}
+
+.packet-table tbody tr.packet-row.traffic-tcp-problem:hover {
+    background: rgba(252, 165, 165, 0.25);
+}
+
+/* ⚫ Gray - Malformed / invalid packets */
+.packet-table tbody tr.packet-row.traffic-malformed {
+    background: rgba(156, 163, 175, 0.15);
+    border-left: 3px solid #9ca3af;
+}
+
+.packet-table tbody tr.packet-row.traffic-malformed:hover {
+    background: rgba(156, 163, 175, 0.25);
+}
+
+/* 🟠 Orange - Spanning Tree / control traffic */
+.packet-table tbody tr.packet-row.traffic-control {
+    background: rgba(251, 146, 60, 0.15);
+    border-left: 3px solid #fb923c;
+}
+
+.packet-table tbody tr.packet-row.traffic-control:hover {
+    background: rgba(251, 146, 60, 0.25);
+}
+
+/* Unknown/Other */
+.packet-table tbody tr.packet-row.traffic-unknown {
+    background: rgba(107, 114, 128, 0.1);
+    border-left: 3px solid #6b7280;
+}
+
+.packet-table tbody tr.packet-row.traffic-unknown:hover {
+    background: rgba(107, 114, 128, 0.2);
+}
+
+/* Preserve hover effect but respect traffic type - override default hover */
+.packet-table tbody tr.packet-row.traffic-tcp-normal:hover {
+    background: rgba(134, 239, 172, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-udp:hover {
+    background: rgba(147, 197, 253, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-icmp:hover {
+    background: rgba(196, 181, 253, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-arp:hover {
+    background: rgba(253, 224, 71, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-tcp-problem:hover {
+    background: rgba(252, 165, 165, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-malformed:hover {
+    background: rgba(156, 163, 175, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-control:hover {
+    background: rgba(251, 146, 60, 0.3) !important;
+}
+
+.packet-table tbody tr.packet-row.traffic-unknown:hover {
+    background: rgba(107, 114, 128, 0.25) !important;
+}
+
+/* Default hover for rows without traffic type (fallback) */
+.packet-table tbody tr.packet-row:not([class*="traffic-"]):hover {
+    background-color: #1e293b;
+}
+
+.packet-table tbody tr.packet-row.selected {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    border-color: #3b82f6;
+    font-weight: 500;
+    border-left-width: 4px;
+}
+
+.packet-table td {
+    padding: 6px 10px;
+    color: #e2e8f0;
+    font-size: 12px;
+}
+
+.packet-info {
+    max-width: 400px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Protocol Badges */
+.protocol-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
+}
+
+.protocol-tcp { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
+.protocol-udp { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+.protocol-icmp { background: rgba(251, 191, 36, 0.2); color: #fbbf24; }
+.protocol-dns { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+.protocol-arp { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
+.protocol-http { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+.protocol-802\.11 { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+.protocol-wifi { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+
+/* Empty States */
+.packet-empty {
+    text-align: center;
+}
+
+.packet-empty-state {
+    padding: 40px 20px;
+    color: #64748b;
+    text-align: center;
+}
+
+.packet-empty-state i {
+    color: #334155;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.packet-empty-state p {
+    margin: 8px 0 0 0;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+.no-selection,
+.packet-details-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #64748b;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.no-selection i,
+.packet-details-empty i {
+    color: #334155;
+    margin-bottom: 15px;
+    opacity: 0.5;
+}
+
+.no-selection p,
+.packet-details-empty p {
+    margin: 0;
+    font-size: 13px;
+    color: #94a3b8;
+}
+
+/* Packet Details Content */
+.packet-details-content {
+    padding: 0;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+}
+
+.packet-details-content h3 {
+    margin: 0 0 12px 0;
+    padding: 12px 12px 8px 12px;
+    border-bottom: 1px solid #334155;
+    color: #e2e8f0;
+    font-size: 13px;
+    background: #1e293b;
+}
+
+.packet-detail-section {
+    margin: 0;
+    background: #0f172a;
+    border-radius: 0;
+    padding: 12px;
+    border-top: 1px solid #334155;
+}
+
+.packet-detail-section h4 {
+    margin: 0 0 10px 0;
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.packet-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+
+.packet-detail-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #1e293b;
+    color: #e2e8f0;
+}
+
+.packet-detail-table tr:last-child td {
+    border-bottom: none;
+}
+
+.packet-detail-table td:first-child {
+    width: 120px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.packet-layer {
+    margin-bottom: 12px;
+    background: #1e293b;
+    border-radius: 6px;
+    border: 1px solid #334155;
+    overflow: hidden;
+}
+
+.packet-layer h4 {
+    margin: 0;
+    padding: 8px 12px;
+    background: #334155;
+    color: #e2e8f0;
+    font-size: 12px;
+    font-weight: 600;
+    border-bottom: 1px solid #475569;
+}
+
+.packet-layer pre {
+    margin: 0;
+    padding: 10px 12px;
+    background: #0f172a;
+    color: #e2e8f0;
+    font-size: 11px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    overflow-x: auto;
+    line-height: 1.5;
+}
+
+.packet-hex-dump {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 11px;
+    line-height: 1.6;
+    max-height: 400px;
+    overflow-y: auto;
+    margin: 0;
+    border: 1px solid #334155;
+}
+
+/* Buttons */
+.btn {
+    padding: 5px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn i {
+    font-size: 10px;
+}
+
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 10px;
+    gap: 4px;
+    min-width: 60px;
+}
+
+.btn-sm i {
+    font-size: 9px;
+}
+
+.btn-lg {
+    padding: 6px 14px;
+    font-size: 12px;
+    min-width: 90px;
+}
+
+.btn i.fa-play,
+.btn i.fa-stop {
+    font-size: 9px;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary {
+    background: #334155;
+    color: #e2e8f0;
+    border: 1px solid #475569;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: #475569;
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.btn-success {
+    background: #10b981;
+    color: white;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Welcome Screen */
+.packet-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: #64748b;
+    padding: 40px;
+    background: #0f172a;
+}
+
+.packet-welcome i {
+    color: #3b82f6;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.packet-welcome h2 {
+    margin: 0 0 10px 0;
+    color: #e2e8f0;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.packet-welcome p {
+    margin: 0;
+    font-size: 14px;
+    max-width: 500px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.packet-welcome small {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #64748b;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .packet-details-sidebar {
+        width: 420px;
+    }
+    
+    .interface-select {
+        min-width: 200px;
+    }
+    
+    .filter-input {
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .packet-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .packet-header-left {
+        width: 100%;
+    }
+    
+    .packet-header-controls {
+        width: 100%;
+    }
+    
+    .interface-select,
+    .filter-input {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .packet-header-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .packet-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .packet-search-input {
+        width: 100%;
+    }
+    
+    .packet-toolbar-stats {
+        justify-content: space-between;
+    }
+    
+    .packet-content-area {
+        flex-direction: column;
+    }
+    
+    .packet-list-panel {
+        min-height: 300px;
+        border-right: none;
+        border-bottom: 2px solid var(--border-color, #ddd);
+    }
+    
+    .packet-details-sidebar {
+        width: 100%;
+        min-height: 250px;
+        border-left: none;
+    }
+    
+    .packet-table th,
+    .packet-table td {
+        padding: 6px 8px;
+        font-size: 11px;
+    }
+    
+    .packet-info {
+        max-width: 200px;
+    }
+}
+
+/* Dark theme is default - no media query needed */
+
+/* Scrollbar Styling */
+.packet-list-panel::-webkit-scrollbar,
+.packet-details-scroll::-webkit-scrollbar,
+.packet-hex-dump::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.packet-list-panel::-webkit-scrollbar-track,
+.packet-details-scroll::-webkit-scrollbar-track,
+.packet-hex-dump::-webkit-scrollbar-track {
+    background: #0f172a;
+}
+
+.packet-list-panel::-webkit-scrollbar-thumb,
+.packet-details-scroll::-webkit-scrollbar-thumb,
+.packet-hex-dump::-webkit-scrollbar-thumb {
+    background: #334155;
+    border-radius: 4px;
+}
+
+.packet-list-panel::-webkit-scrollbar-thumb:hover,
+.packet-details-scroll::-webkit-scrollbar-thumb:hover,
+.packet-hex-dump::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+/* Protocol-specific styling */
+.packet-detail-table td.indent {
+    padding-left: 1.5rem;
+    font-size: 11px;
+    color: #94a3b8;
+}
+
+.tcp-flags {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.http-method {
+    font-weight: 600;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.http-status {
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.tls-version {
+    font-weight: 600;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.tls-handshake {
+    font-weight: 600;
+    color: #f472b6;
+    background: rgba(244, 114, 182, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.dhcp-type {
+    font-weight: 600;
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.packet-layer h4 i {
+    margin-right: 0.5rem;
+    color: #60a5fa;
+}
+
+.packet-detail-section h4 i {
+    margin-right: 0.5rem;
+    color: #60a5fa;
+}
+
+/* URL styling */
+.dns-url,
+.tls-url {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+    display: inline-block;
+    margin: 2px 0;
+    padding: 2px 6px;
+    background: rgba(96, 165, 250, 0.1);
+    border-radius: 3px;
+    transition: all 0.2s;
+}
+
+.dns-url:hover,
+.tls-url:hover {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.2);
+    transform: translateX(2px);
+}
+
+.tls-url {
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.1);
+}
+
+.tls-url:hover {
+    color: #c4b5fd;
+    background: rgba(167, 139, 250, 0.2);
+}
+
+.tls-servername {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-weight: 600;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+/* Enhanced protocol data styling */
+.ip-flag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-right: 0.25rem;
+}
+
+.tcp-flag-detail {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-right: 0.25rem;
+}
+
+.tcp-option {
+    font-weight: 600;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.port-app {
+    font-size: 10px;
+    font-weight: 600;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-left: 0.25rem;
+}
+
+.icmp-type {
+    font-size: 11px;
+    font-weight: 500;
+    color: #fb923c;
+    background: rgba(251, 146, 60, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-left: 0.25rem;
+}
+
+/* Ethernet styling */
+.mac-vendor {
+    font-size: 10px;
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-left: 0.25rem;
+}
+
+.eth-type {
+    font-weight: 600;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.eth-hex {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-left: 0.25rem;
+}
+
+.vlan-tag {
+    font-weight: 600;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+/* TCP connection state */
+.tcp-state {
+    font-weight: 600;
+    color: #a78bfa;
+    background: rgba(167, 139, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+/* QUIC styling */
+.quic-header {
+    font-weight: 600;
+    color: #60a5fa;
+    background: rgba(96, 165, 250, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.quic-type {
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+.conn-id {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.05);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+/* ARP operation */
+.arp-op {
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+}
+
+/* TCP window scaling */
+.window-scaled {
+    font-weight: 600;
+    color: #34d399;
+    background: rgba(52, 211, 153, 0.1);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    margin-left: 0.25rem;
+}
+
+.tcp-opt-value {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    color: #94a3b8;
+    margin-left: 0.25rem;
+}
+
+/* WiFi/802.11 packet styling */
+.wifi-type {
+    display: inline-block;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(139, 92, 246, 0.2);
+    color: #a78bfa;
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Column configuration modal */
+.column-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.column-config-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.column-config-item:hover {
+    background: #1e293b;
+    border-color: #475569;
+}
+
+.column-config-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: #3b82f6;
+}
+
+.column-config-item span {
+    color: #e2e8f0;
+    font-size: 0.9375rem;
+    user-select: none;
+}

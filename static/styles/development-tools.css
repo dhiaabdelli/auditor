@@ -1,0 +1,464 @@
+/* Development Tools Styles */
+.code-output {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--dark);
+    background: var(--bg);
+    padding: 0.75rem;
+    border-radius: 4px;
+    border: 1px solid var(--gray-light);
+    margin: 0;
+    overflow-x: auto;
+    white-space: pre;
+    max-height: calc(100vh - 300px);
+    overflow-y: auto;
+}
+
+.code-textarea {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    resize: vertical;
+}
+
+/* Crontab Generator Styles */
+.crontab-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.crontab-left {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.crontab-input-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+}
+
+.crontab-description {
+    background: var(--bg);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.crontab-description-label {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.crontab-description-text {
+    font-size: 0.9375rem;
+    color: var(--dark);
+    line-height: 1.6;
+}
+
+.crontab-description-placeholder {
+    background: var(--bg);
+    border: 1px dashed var(--gray-light);
+    border-radius: 4px;
+    padding: 1rem;
+    margin-top: 1rem;
+    text-align: center;
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+
+.crontab-options-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+}
+
+.crontab-options-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.crontab-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.crontab-option-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    color: var(--dark);
+}
+
+.crontab-option-item input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+.crontab-right {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.crontab-syntax {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.crontab-syntax-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.crontab-syntax-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.crontab-field-diagram {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8125rem;
+    line-height: 1.8;
+    color: var(--dark);
+    background: var(--bg);
+    padding: 1rem;
+    border-radius: 4px;
+    border: 1px solid var(--gray-light);
+}
+
+.crontab-field-line {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.crontab-field-label {
+    color: var(--dark);
+    min-width: 120px;
+}
+
+.crontab-field-desc {
+    color: var(--gray);
+    font-size: 0.75rem;
+}
+
+.crontab-symbol-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+}
+
+.crontab-symbol-table thead {
+    background: var(--bg);
+    border-bottom: 2px solid var(--gray-light);
+}
+
+.crontab-symbol-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: var(--dark);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.crontab-symbol-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--gray-light);
+    color: var(--dark);
+}
+
+.crontab-symbol-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.crontab-symbol-table code {
+    background: var(--bg);
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+    color: var(--primary);
+}
+
+/* Formatter Styles (JSON, SQL, XML, Docker) */
+.formatter-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.formatter-left,
+.formatter-right {
+    display: flex;
+    flex-direction: column;
+}
+
+.formatter-input-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+}
+
+.formatter-options {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-light);
+}
+
+.formatter-options-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--gray-light);
+}
+
+.formatter-output-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 2rem);
+    display: flex;
+    flex-direction: column;
+}
+
+.formatter-output-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.formatter-output-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.formatter-output-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1rem;
+    text-align: center;
+    color: var(--gray);
+}
+
+.formatter-output-placeholder i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.formatter-output-placeholder p {
+    margin: 0;
+    font-size: 0.875rem;
+}
+
+/* Chmod Calculator Styles */
+.chmod-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.chmod-left,
+.chmod-right {
+    display: flex;
+    flex-direction: column;
+}
+
+.chmod-calculator {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.chmod-section {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1rem;
+}
+
+.chmod-title {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--dark);
+    text-align: center;
+    font-size: 0.875rem;
+}
+
+.chmod-permissions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.chmod-results-card {
+    background: var(--white);
+    border: 1px solid var(--gray-light);
+    border-radius: 4px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+}
+
+.chmod-result-section {
+    margin-bottom: 1.5rem;
+}
+
+.chmod-result-section:last-child {
+    margin-bottom: 0;
+}
+
+.chmod-result-label {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+.chmod-result-value {
+    font-family: 'Courier New', monospace;
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg);
+    border-radius: 4px;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+
+.chmod-result-binary {
+    font-family: 'Courier New', monospace;
+    font-size: 1rem;
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 4px;
+    color: var(--dark);
+    letter-spacing: 0.1em;
+}
+
+.chmod-result-command {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 4px;
+}
+
+.chmod-result-command code {
+    flex: 1;
+    color: var(--dark);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .crontab-container,
+    .formatter-container,
+    .chmod-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .crontab-right,
+    .formatter-output-card,
+    .chmod-results-card {
+        position: static;
+        max-height: none;
+    }
+    
+    .formatter-options-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .chmod-calculator {
+        grid-template-columns: 1fr;
+    }
+    
+    .crontab-symbol-table {
+        font-size: 0.75rem;
+    }
+    
+    .crontab-symbol-table th,
+    .crontab-symbol-table td {
+        padding: 0.5rem;
+    }
+    
+    .formatter-options {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+

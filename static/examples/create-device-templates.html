@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Device Templates - Example</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .example-template {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .btn-success {
+            background: #10b981;
+        }
+        .btn-success:hover {
+            background: #059669;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .instructions {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Device Templates Example</h1>
+        
+        <div class="instructions">
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Place device images in <code>static/images/devices/</code> folder</li>
+                <li>Use the examples below to create device templates</li>
+                <li>Click "Load Example Templates" to load the example JSON</li>
+                <li>Click "Create All Templates" to add them to the database</li>
+                <li>Or copy individual templates and create them one by one</li>
+            </ol>
+        </div>
+
+        <div>
+            <button class="btn btn-success" onclick="loadExampleTemplates()">Load Example Templates</button>
+            <button class="btn" onclick="createAllTemplates()">Create All Templates</button>
+            <button class="btn" onclick="listTemplates()">List Existing Templates</button>
+        </div>
+
+        <div id="status"></div>
+
+        <h2>Example Device Templates</h2>
+
+        <div class="example-template">
+            <strong>Dell PowerEdge R740 Server</strong>
+            <pre id="example-dell"></pre>
+            <button class="btn" onclick="createTemplate('dell')">Create This Template</button>
+        </div>
+
+        <div class="example-template">
+            <strong>Cisco Catalyst 2960 Switch</strong>
+            <pre id="example-cisco"></pre>
+            <button class="btn" onclick="createTemplate('cisco')">Create This Template</button>
+        </div>
+
+        <div class="example-template">
+            <strong>HP ProLiant DL380 Gen10</strong>
+            <pre id="example-hp"></pre>
+            <button class="btn" onclick="createTemplate('hp')">Create This Template</button>
+        </div>
+
+        <div class="example-template">
+            <strong>Generic Server</strong>
+            <pre id="example-generic-server"></pre>
+            <button class="btn" onclick="createTemplate('generic-server')">Create This Template</button>
+        </div>
+
+        <div class="example-template">
+            <strong>Generic Switch</strong>
+            <pre id="example-generic-switch"></pre>
+            <button class="btn" onclick="createTemplate('generic-switch')">Create This Template</button>
+        </div>
+    </div>
+
+    <script>
+        let templates = [];
+
+        async function loadExampleTemplates() {
+            try {
+                const response = await fetch('/examples/device-templates-example.json');
+                templates = await response.json();
+                
+                // Display examples
+                document.getElementById('example-dell').textContent = JSON.stringify(templates[0], null, 2);
+                document.getElementById('example-cisco').textContent = JSON.stringify(templates[1], null, 2);
+                document.getElementById('example-hp').textContent = JSON.stringify(templates[2], null, 2);
+                document.getElementById('example-generic-server').textContent = JSON.stringify(templates[3], null, 2);
+                document.getElementById('example-generic-switch').textContent = JSON.stringify(templates[4], null, 2);
+                
+                showStatus('Example templates loaded successfully!', 'success');
+            } catch (error) {
+                showStatus('Error loading examples: ' + error.message, 'error');
+            }
+        }
+
+        async function createTemplate(type) {
+            if (templates.length === 0) {
+                await loadExampleTemplates();
+            }
+
+            let template;
+            switch(type) {
+                case 'dell':
+                    template = templates[0];
+                    break;
+                case 'cisco':
+                    template = templates[1];
+                    break;
+                case 'hp':
+                    template = templates[2];
+                    break;
+                case 'generic-server':
+                    template = templates[3];
+                    break;
+                case 'generic-switch':
+                    template = templates[4];
+                    break;
+                default:
+                    showStatus('Unknown template type', 'error');
+                    return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/device-templates', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(template)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    showStatus(`Template "${template.name}" created successfully! ID: ${result.id}`, 'success');
+                } else {
+                    const error = await response.text();
+                    showStatus('Error creating template: ' + error, 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        async function createAllTemplates() {
+            if (templates.length === 0) {
+                await loadExampleTemplates();
+            }
+
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const template of templates) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch('/api/device-templates', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(template)
+                    });
+
+                    if (response.ok) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                    }
+                } catch (error) {
+                    errorCount++;
+                }
+            }
+
+            showStatus(`Created ${successCount} templates. ${errorCount} errors.`, 
+                      errorCount > 0 ? 'error' : 'success');
+        }
+
+        async function listTemplates() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('/api/device-templates', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const existingTemplates = await response.json();
+                    const templateList = existingTemplates.map(t => 
+                        `- ${t.name} (${t.type}-${t.vendor})`
+                    ).join('<br>');
+                    
+                    showStatus(`Existing Templates:<br>${templateList || 'No templates found'}`, 'success');
+                } else {
+                    showStatus('Error loading templates', 'error');
+                }
+            } catch (error) {
+                showStatus('Error: ' + error.message, 'error');
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+        }
+
+        // Auto-load examples on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadExampleTemplates();
+        });
+    </script>
+</body>
+</html>
+

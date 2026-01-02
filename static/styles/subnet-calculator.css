@@ -1,0 +1,375 @@
+/* Network Tools Page Styles */
+
+.network-tools-container {
+    width: 100%;
+    margin: 0;
+    padding: 0 1rem;
+}
+
+.network-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+    background: var(--white);
+    padding: 0.25rem;
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-light);
+    overflow-x: auto;
+}
+
+.network-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+.network-tab:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+}
+
+.network-tab.active {
+    background: var(--primary);
+    color: var(--white);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.network-tab-content {
+    background: var(--white);
+    border-radius: 6px;
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-light);
+    width: 100%;
+}
+
+.tool-section {
+    width: 100%;
+}
+
+.tool-input-section {
+    margin-bottom: 1rem;
+}
+
+.tool-input-section .form-group {
+    margin-bottom: 0.5rem;
+}
+
+.tool-input-section .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.tool-input-section .form-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+}
+
+.tool-input-section .form-input {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    min-height: 2.25rem;
+}
+
+.tool-input-section .form-hint {
+    font-size: 0.6875rem;
+    margin-top: 0.25rem;
+}
+
+.input-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.input-group .form-input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.input-group .btn {
+    white-space: nowrap;
+    min-width: 120px;
+}
+
+.tool-results-placeholder {
+    padding: 2rem 1rem;
+    text-align: center;
+    border: 2px dashed var(--gray-light);
+    border-radius: 6px;
+    background: var(--bg);
+}
+
+.placeholder-content {
+    color: var(--gray);
+}
+
+.placeholder-content i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+    color: var(--primary);
+}
+
+.placeholder-content p {
+    font-size: 1rem;
+    margin: 0;
+}
+
+.tool-error {
+    padding: 1rem;
+    border: 1px solid var(--danger);
+    border-radius: 4px;
+    text-align: center;
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.tool-error i {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.tool-error p {
+    font-size: 0.875rem;
+    margin: 0;
+}
+
+.tool-results {
+    padding: 0.75rem 0;
+}
+
+.results-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+}
+
+.result-card {
+    background: var(--bg);
+    border-radius: 4px;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-light);
+    transition: all 0.2s ease;
+}
+
+.result-card:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+    transform: translateY(-2px);
+}
+
+.result-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.375rem;
+}
+
+.result-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+    line-height: 1.4;
+}
+
+.result-value.highlight {
+    color: var(--primary);
+    font-size: 0.9375rem;
+}
+
+.result-value.binary {
+    font-size: 0.75rem;
+    color: var(--dark-light);
+    letter-spacing: 0.05em;
+}
+
+.result-card.full-width {
+    grid-column: 1 / -1;
+}
+
+.result-value.vendor-info {
+    font-family: inherit;
+    line-height: 1.6;
+    white-space: pre-line;
+}
+
+.mac-generated-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.mac-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--bg);
+    border-radius: 4px;
+    border: 1px solid var(--gray-light);
+    transition: all 0.2s ease;
+}
+
+.mac-item:hover {
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.mac-value {
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--dark);
+    flex: 1;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+.btn-success {
+    background: var(--success);
+    color: var(--white);
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* Range Expander Table */
+.range-results-table {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.range-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.range-comparison-table thead {
+    background: var(--primary);
+    color: var(--white);
+}
+
+.range-comparison-table th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.range-comparison-table th:first-child {
+    width: 40%;
+}
+
+.range-comparison-table th:not(:first-child) {
+    width: 30%;
+    text-align: center;
+}
+
+.range-comparison-table tbody tr {
+    border-bottom: 1px solid var(--gray-light);
+    transition: background 0.2s ease;
+}
+
+.range-comparison-table tbody tr:hover {
+    background: var(--bg);
+}
+
+.range-comparison-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.range-comparison-table td {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    color: var(--dark);
+}
+
+.range-comparison-table td:first-child {
+    font-weight: 500;
+    color: var(--dark-light);
+}
+
+.range-comparison-table td:not(:first-child) {
+    text-align: center;
+    font-family: 'Courier New', monospace;
+}
+
+.range-comparison-table .new-value {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.range-comparison-table .cidr-value {
+    text-align: center;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 0.9375rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .results-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .network-tabs {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+    }
+    
+    .network-tab {
+        min-width: 120px;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .mac-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .mac-item .btn {
+        width: 100%;
+    }
+    
+    .range-comparison-table {
+        font-size: 0.75rem;
+    }
+    
+    .range-comparison-table th,
+    .range-comparison-table td {
+        padding: 0.5rem 0.75rem;
+    }
+}
+

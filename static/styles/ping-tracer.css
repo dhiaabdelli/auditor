@@ -1,0 +1,381 @@
+/* Ping Tracer Page Styles - Dark Theme - Full Width/Height */
+
+.page-container-full:has(.ping-tracer-full-container) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+    position: fixed;
+    background: #0f172a;
+    top: 90px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(100vh - 90px);
+    padding-bottom: 56px !important;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 50;
+}
+
+body:not(.has-sub-navbar) .page-container-full:has(.ping-tracer-full-container) {
+    top: 50px;
+    height: calc(100vh - 50px);
+    padding-bottom: 56px !important;
+    box-sizing: border-box;
+}
+
+#main-content:has(.ping-tracer-full-container),
+.main-content:has(.ping-tracer-full-container) {
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+body:has(.ping-tracer-full-container) {
+    overflow: hidden !important;
+}
+
+#page-content:has(.ping-tracer-full-container) {
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+.ping-tracer-full-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: #0f172a;
+    overflow: hidden;
+}
+
+.ping-tracer-split {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    padding: 0;
+    background: #0f172a;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    flex: 1;
+}
+
+.ping-tracer-form {
+    background: #0f172a;
+    border-right: 1px solid #334155;
+    padding: 0;
+    width: 320px;
+    flex-shrink: 0;
+    flex-grow: 0;
+    overflow-y: auto;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.ping-tracer-form-header {
+    padding: 0.625rem 1rem;
+    border-bottom: 1px solid #334155;
+    background: #1e293b;
+    flex-shrink: 0;
+}
+
+.ping-tracer-form-header h3 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.ping-tracer-form-header h3 i {
+    color: #3b82f6;
+    font-size: 0.875rem;
+}
+
+.ping-tracer-form-content {
+    padding: 1rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.ping-tracer-form .form-group {
+    margin-bottom: 0.875rem;
+}
+
+.ping-tracer-form .form-group h4 {
+    margin: 0 0 0.5rem 0;
+    color: #94a3b8;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.ping-tracer-form label {
+    display: block;
+    margin-bottom: 0.375rem;
+    color: #e2e8f0;
+    font-weight: 500;
+    font-size: 0.8125rem;
+}
+
+.ping-tracer-form label input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.ping-tracer-form .form-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #e2e8f0;
+    font-size: 0.8125rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.ping-tracer-form .form-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: #1e293b;
+}
+
+.form-spacer {
+    flex: 1;
+}
+
+.ping-tracer-form .form-actions-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 1rem;
+}
+
+.ping-tracer-form .btn {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.ping-tracer-form .btn-primary {
+    background: #3b82f6;
+    color: white;
+}
+
+.ping-tracer-form .btn-primary:hover {
+    background: #2563eb;
+}
+
+.ping-tracer-form .btn-secondary {
+    background: #475569;
+    color: #e2e8f0;
+}
+
+.ping-tracer-form .btn-secondary:hover {
+    background: #64748b;
+}
+
+.ping-tracer-results {
+    background: #0f172a;
+    padding: 1rem;
+    flex: 1;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    height: 100%;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #334155;
+}
+
+.results-header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1; /* Allow it to grow */
+}
+
+.results-header h3 {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.discovery-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: #3b82f6;
+    font-weight: 500;
+    flex: 1; /* Allow to grow to fill space */
+}
+
+.discovery-spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    border-top-color: #3b82f6;
+    animation: spin 1s linear infinite;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.discovery-progress-bar {
+    width: 100%; /* Use full width */
+    height: 6px;
+    background: #1e293b;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+    flex: 1; /* Grow to fill remaining space */
+}
+
+.discovery-progress-value {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 30%; /* Slightly smaller for better effect on wide bar */
+    background: #3b82f6;
+    border-radius: 3px;
+    animation: indeterminate 2s infinite ease-in-out; /* Slower animation for long bar */
+}
+
+@keyframes indeterminate {
+    0% { left: -30%; width: 30%; }
+    50% { left: 40%; width: 40%; }
+    100% { left: 100%; width: 30%; }
+}
+
+.results-stats {
+    display: flex;
+    gap: 1.5rem;
+    font-size: 0.875rem;
+    color: #94a3b8;
+}
+
+.results-stats strong {
+    color: #e2e8f0;
+    font-weight: 600;
+}
+
+.graphs-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    background: #0f172a;
+}
+
+.graphs-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    padding: 2rem;
+    color: #64748b;
+}
+
+.empty-icon-wrapper {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+}
+
+.empty-icon-wrapper i {
+    font-size: 3.5rem;
+    color: #60a5fa;
+}
+
+.graphs-empty h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+.graphs-empty p {
+    margin: 0;
+    font-size: 1rem;
+    text-align: center;
+    color: #94a3b8;
+    max-width: 400px;
+}
+
+.hop-graph {
+    margin-bottom: 0.5rem;
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.hop-label {
+    color: #94a3b8;
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+    font-family: 'Courier New', monospace;
+}
+
+.graph-canvas {
+    width: 100%;
+    height: 50px;
+    display: block;
+}
+
+
+/* Responsive */
+@media (max-width: 768px) {
+    .ping-tracer-split {
+        flex-direction: column;
+    }
+
+    .ping-tracer-form {
+        width: 100%;
+        max-height: 50%;
+    }
+}
