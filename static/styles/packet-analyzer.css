@@ -674,6 +674,9 @@ body:has(.packet-analyzer-full-container) {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     display: inline-block;
+    /* Default style for unknown protocols */
+    background: rgba(107, 114, 128, 0.2);
+    color: #9ca3af;
 }
 
 .protocol-tcp { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
@@ -682,8 +685,13 @@ body:has(.packet-analyzer-full-container) {
 .protocol-dns { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
 .protocol-arp { background: rgba(236, 72, 153, 0.2); color: #f472b6; }
 .protocol-http { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+.protocol-https { background: rgba(249, 115, 22, 0.2); color: #fb923c; }
+.protocol-tls { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.protocol-ssl { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.protocol-quic { background: rgba(16, 185, 129, 0.2); color: #34d399; }
 .protocol-802\.11 { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
 .protocol-wifi { background: rgba(139, 92, 246, 0.2); color: #a78bfa; }
+.protocol-unknown { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
 
 /* Empty States */
 .packet-empty {
@@ -966,14 +974,16 @@ body:has(.packet-analyzer-full-container) {
     color: #64748b;
 }
 
-/* Responsive Design */
+/* Responsive Adjustments */
 @media (max-width: 1200px) {
     .packet-details-sidebar {
-        width: 420px;
+        width: 400px;
     }
-    
-    .interface-select {
-        min-width: 200px;
+}
+
+@media (max-width: 992px) {
+    .packet-details-sidebar {
+        width: 350px;
     }
     
     .filter-input {
@@ -1027,22 +1037,247 @@ body:has(.packet-analyzer-full-container) {
         min-height: 300px;
         border-right: none;
         border-bottom: 2px solid var(--border-color, #ddd);
+        overflow-x: auto !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y pan-x;
+        will-change: scroll-position;
     }
     
     .packet-details-sidebar {
         width: 100%;
         min-height: 250px;
         border-left: none;
+        display: none; /* Hide by default on mobile */
+    }
+    
+    /* Override parent overflow for modal */
+    .packet-content-area.has-selection {
+        overflow: visible !important;
+    }
+    
+    /* Show details sidebar as modal when a packet is selected on mobile */
+    .packet-content-area.has-selection .packet-details-sidebar {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 1000;
+        width: 92%;
+        max-width: 550px;
+        height: 85%;
+        max-height: 700px;
+        display: flex;
+        flex-direction: column;
+        background: #0f172a;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        animation: modalFadeIn 0.3s ease-out;
+        overflow: hidden;
+    }
+    
+    @keyframes modalFadeIn {
+        from {
+            transform: translate(-50%, -50%) scale(0.9);
+            opacity: 0;
+        }
+        to {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Modal overlay backdrop */
+    .packet-content-area.has-selection::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.75);
+        backdrop-filter: blur(4px);
+        z-index: 999;
+        animation: fadeIn 0.3s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 1;
+        }
+    }
+    
+    /* Modal header - make it more prominent */
+    .packet-content-area.has-selection .packet-details-sidebar {
+        padding-top: 0;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header {
+        background: #1e293b;
+        border-bottom: 1px solid #334155;
+        padding: 0.625rem 0.75rem;
+        flex-shrink: 0;
+        z-index: 1001;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 0.5rem;
+        min-height: 44px;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible !important;
+        clip-path: none !important;
+        contain: none !important;
+        border-radius: 8px 8px 0 0;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header h4 {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin: 0;
+        flex: 1;
+        min-width: 0;
+        padding-right: 0.375rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header h4 i {
+        font-size: 0.75rem;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header .btn-icon {
+        width: 28px !important;
+        height: 28px !important;
+        min-width: 28px !important;
+        min-height: 28px !important;
+        max-width: 28px !important;
+        max-height: 28px !important;
+        background: rgba(239, 68, 68, 0.15) !important;
+        border: 1.5px solid rgba(239, 68, 68, 0.4) !important;
+        color: #ef4444 !important;
+        font-size: 12px !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        margin-left: 0.5rem !important;
+        flex-shrink: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: 5px;
+        cursor: pointer;
+        z-index: 1002 !important;
+        position: relative !important;
+        overflow: visible !important;
+        box-sizing: border-box !important;
+        clip-path: none !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        flex: 0 0 28px !important;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header .btn-icon i {
+        font-size: 11px !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+    
+    .packet-content-area.has-selection .packet-details-header .btn-icon:hover,
+    .packet-content-area.has-selection .packet-details-header .btn-icon:active {
+        background: rgba(239, 68, 68, 0.25) !important;
+        border-color: rgba(239, 68, 68, 0.6) !important;
+        transform: scale(1.05);
+    }
+    
+    /* Modal scrollable content */
+    .packet-content-area.has-selection .packet-details-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0.75rem;
+        -webkit-overflow-scrolling: touch;
+        min-height: 0;
+        border-radius: 0 0 8px 8px;
+    }
+    
+    .packet-table {
+        display: block !important;
+        table-layout: fixed;
+        min-width: 800px;
+        border-collapse: separate;
+    }
+    
+    .packet-table thead {
+        display: block !important;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        width: 100%;
+    }
+
+    .packet-table thead tr {
+        display: flex !important;
+        width: 100%;
+        background: #1e293b;
+    }
+
+    .packet-table tbody {
+        display: block !important;
+        position: relative !important;
+        width: 100%;
+        overflow: visible !important;
+    }
+    
+    .packet-table tr.packet-row {
+        display: flex !important;
+        align-items: flex-start;
+        width: 100%;
+        min-height: 32px !important;
+        position: absolute !important;
+        border-bottom: 1px solid #1e293b;
+        background: #0f172a;
+        left: 0;
+        right: 0;
+        padding: 4px 0;
     }
     
     .packet-table th,
     .packet-table td {
-        padding: 6px 8px;
+        padding: 4px 8px;
         font-size: 11px;
+        min-height: 24px !important;
+        line-height: 1.4 !important;
+        display: block !important;
+        flex-shrink: 0;
+        box-sizing: border-box;
+    }
+    
+    .packet-table th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .packet-table td {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        word-wrap: break-word;
+        word-break: break-all;
     }
     
     .packet-info {
-        max-width: 200px;
+        max-width: none !important;
+        flex: 1 !important;
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        word-wrap: break-word;
     }
 }
 

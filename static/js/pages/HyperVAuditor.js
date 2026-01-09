@@ -470,39 +470,7 @@ export class HyperVAuditorPage {
         
         return `
             <div class="page-container-full">
-                <div class="page-header">
-                    <div class="page-header-content">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-icon" onclick="window.appInstance.navigateTo('hyperv-auditor-list')">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                            <div>
-                                <h1 class="page-title">📊 ${this.selectedReport ? this.selectedReport.name : this.t('title')}</h1>
-                                <p class="page-subtitle">${this.t('subtitle')}</p>
-                            </div>
-                        </div>
-                        <div class="page-header-actions">
-                            ${this.selectedReport ? `
-                                <button type="button" class="btn btn-sm btn-primary" onclick="hyperVAuditorInstance.generateScript()" title="${this.t('scriptButton')}">
-                                    <i class="fas fa-code"></i> <span class="btn-text">${this.t('scriptButton')}</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="hyperVAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="${this.t('plainScriptButton')}">
-                                    <i class="fas fa-file-alt"></i> <span class="btn-text">${this.t('plainScriptButton')}</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success" onclick="hyperVAuditorInstance.importReport()" title="${this.t('importButton')}">
-                                    <i class="fas fa-upload"></i> <span class="btn-text">${this.t('importButton')}</span>
-                                </button>
-                                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="hyperVAuditorInstance.handleFileSelect(event)">
-                            ` : ''}
-                            <div class="language-selector-compact">
-                                <select id="language-select" class="language-select-compact" onchange="hyperVAuditorInstance.setLanguage(this.value)">
-                                    <option value="en" ${this.language === 'en' ? 'selected' : ''}">🇺🇸 EN</option>
-                                    <option value="fr" ${this.language === 'fr' ? 'selected' : ''}">🇫🇷 FR</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="hyperVAuditorInstance.handleFileSelect(event)">
 
                 ${!this.selectedReport ? `
                     <div class="card">
@@ -4767,6 +4735,10 @@ export class HyperVAuditorPage {
             content.innerHTML = await this.render();
             // Set instance but don't call mount() to avoid reloading reports
             window.hyperVAuditorInstance = this;
+            // Update page navbar title after rendering
+            if (window.pageNavbarInstance) {
+                window.pageNavbarInstance.updateTitle();
+            }
         }
     }
 
@@ -5330,13 +5302,21 @@ export class HyperVAuditorPage {
         }
     }
 
-    async deleteReport(reportId) {
+    async deleteReport(reportId = null) {
+        // If no reportId provided, try to get it from selectedReport or reportId
+        const idToDelete = reportId || this.selectedReport?.id || this.reportId;
+        
+        if (!idToDelete) {
+            this.showMessage('No report ID available', 'error');
+            return;
+        }
+
         if (!confirm('Are you sure you want to delete this report?')) {
             return;
         }
 
         try {
-            const response = await fetch(`/api/hyperv-reports?id=${reportId}`, {
+            const response = await fetch(`/api/hyperv-reports?id=${idToDelete}`, {
                 method: 'DELETE'
             });
 
@@ -5344,7 +5324,7 @@ export class HyperVAuditorPage {
                 throw new Error('Failed to delete report');
             }
 
-            if (this.selectedReport?.id === reportId) {
+            if (this.selectedReport?.id === idToDelete) {
                 this.selectedReport = null;
                 this.clusterName = '';
                 this.hosts = [];
@@ -5352,15 +5332,17 @@ export class HyperVAuditorPage {
                 this.volumes = [];
             }
 
-            // Ensure reports is initialized before loading
-            if (!this.reports) {
-                this.reports = [];
-            }
-            
-            await this.loadReports();
-            // Update display after loading reports
-            this.updateDisplay();
             this.showMessage('Report deleted successfully!', 'success');
+            
+            // Navigate back to list page
+            setTimeout(() => {
+                if (window.appInstance) {
+                    window.appInstance.navigateTo('hyperv-auditor-list');
+                } else {
+                    window.location.hash = '#hyperv-auditor-list';
+                    window.location.reload();
+                }
+            }, 1000);
         } catch (error) {
             this.showMessage('Error deleting report: ' + error.message, 'error');
         }

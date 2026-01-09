@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -26,6 +27,11 @@ var (
 
 // HandlePowerShellWebSocket handles WebSocket connections for PowerShell console
 func HandlePowerShellWebSocket(w http.ResponseWriter, r *http.Request) {
+	if runtime.GOOS != "windows" {
+		http.Error(w, "PowerShell console is only available on Windows", http.StatusNotImplemented)
+		return
+	}
+
 	conn, err := shared.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("PowerShell WebSocket upgrade error: %v", err)
@@ -249,6 +255,16 @@ func safeWriteJSON(conn *websocket.Conn, v interface{}) error {
 
 // executePowerShellCommand executes a PowerShell command and streams output
 func executePowerShellCommand(conn *websocket.Conn, command string) {
+	if runtime.GOOS != "windows" {
+		errorMsg := map[string]interface{}{
+			"type":    "error",
+			"content": "PowerShell commands are only available on Windows",
+			"time":    time.Now().Format("15:04:05"),
+		}
+		safeWriteJSON(conn, errorMsg)
+		return
+	}
+
 	// Send command echo with command type for colorization
 	echoMsg := map[string]interface{}{
 		"type":    "command",
@@ -364,6 +380,9 @@ func executePowerShellCommand(conn *websocket.Conn, command string) {
 
 // getPowerShellPrompt returns the current PowerShell prompt
 func getPowerShellPrompt() string {
+	if runtime.GOOS != "windows" {
+		return "PS> "
+	}
 	// Get current directory
 	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Get-Location | Select-Object -ExpandProperty Path")
 	output, err := cmd.Output()

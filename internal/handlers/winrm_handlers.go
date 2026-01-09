@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 
@@ -40,6 +41,11 @@ var (
 
 // HandleWinRMConnect handles WinRM connection requests
 func HandleWinRMConnect(w http.ResponseWriter, r *http.Request) {
+	if runtime.GOOS != "windows" {
+		http.Error(w, "WinRM is only available on Windows", http.StatusNotImplemented)
+		return
+	}
+
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -93,6 +99,11 @@ func HandleWinRMConnect(w http.ResponseWriter, r *http.Request) {
 
 // HandleWinRMWebSocket handles WinRM WebSocket connections
 func HandleWinRMWebSocket(w http.ResponseWriter, r *http.Request) {
+	if runtime.GOOS != "windows" {
+		http.Error(w, "WinRM is only available on Windows", http.StatusNotImplemented)
+		return
+	}
+
 	conn, err := shared.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Printf("WebSocket upgrade error: %v", err)
@@ -160,6 +171,14 @@ func HandleWinRMWebSocket(w http.ResponseWriter, r *http.Request) {
 
 // executeCommand executes a PowerShell command via WinRM
 func (wc *WinRMConnection) executeCommand(wsConn *websocket.Conn, command string) {
+	if runtime.GOOS != "windows" {
+		wsConn.WriteJSON(map[string]interface{}{
+			"type":    "error",
+			"message": "WinRM commands are only available on Windows",
+		})
+		return
+	}
+
 	// Escape command for PowerShell
 	escapedCmd := strings.ReplaceAll(command, `"`, `\"`)
 	psCommand := fmt.Sprintf(`$cred = New-Object System.Management.Automation.PSCredential("%s", (ConvertTo-SecureString -String "%s" -AsPlainText -Force)); Invoke-Command -ComputerName %s -Port %d -Credential $cred -ScriptBlock { %s }`, wc.User, wc.Password, wc.Host, wc.Port, escapedCmd)

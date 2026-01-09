@@ -311,15 +311,9 @@ export class AppsPage {
 
         return `
             <div class="apps-page">
-                <div class="apps-header">
-                    <div class="apps-header-content">
-                        <p class="apps-subtitle">${this.t('pageSubtitle')}</p>
-                    </div>
-                </div>
-                
                 <div class="apps-grid">
                     ${apps.map((app, index) => `
-                        <div class="app-card" data-app="${app.id}" onclick="appsPageInstance.navigateTo('${app.id}')" style="animation-delay: ${index * 0.08}s; visibility: hidden;">
+                        <div class="app-card" data-app="${app.id}" onclick="appsPageInstance.navigateTo('${app.id}')">
                             <div class="app-icon" style="background: linear-gradient(135deg, ${app.color}15 0%, ${app.color}25 100%);">
                                 <i class="fas ${app.icon}" style="color: ${app.color};"></i>
                             </div>
@@ -351,26 +345,6 @@ export class AppsPage {
             });
         });
         
-        // Trigger animations with improved timing and staggered effect
-        requestAnimationFrame(() => {
-            const appsPage = document.querySelector('.apps-page');
-            if (appsPage) {
-                appsPage.classList.add('apps-page-enter');
-            }
-            
-            // Stagger card animations for a cascading effect
-            const cards = document.querySelectorAll('.app-card');
-            cards.forEach((card, index) => {
-                // Reset animation delay based on index
-                card.style.animationDelay = `${index * 0.08}s`;
-                
-                // Trigger animation after a small delay to ensure DOM is ready
-                setTimeout(() => {
-                    card.classList.add('app-card-enter');
-                    card.style.visibility = 'visible';
-                }, 50);
-            });
-        });
     }
 
     navigateTo(appId) {

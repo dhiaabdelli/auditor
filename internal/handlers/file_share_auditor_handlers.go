@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -2568,4 +2569,438 @@ try {
 }`
 
 	return script
+}
+
+// HandleGenerateFileShareHTMLReport generates an HTML report for File Share
+func HandleGenerateFileShareHTMLReport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	reportID := r.URL.Query().Get("id")
+	if reportID == "" {
+		http.Error(w, "Report ID is required", http.StatusBadRequest)
+		return
+	}
+
+	var name, serverName, folderPath, reportData, privateKey sql.NullString
+	var createdAt, updatedAt string
+
+	err := database.DB.QueryRow(`
+		SELECT name, server_name, folder_path, report_data, private_key, created_at, updated_at
+		FROM file_share_reports
+		WHERE id = ?
+	`, reportID).Scan(&name, &serverName, &folderPath, &reportData, &privateKey, &createdAt, &updatedAt)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Report not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return
+	}
+
+	var data map[string]interface{}
+	if reportData.Valid && reportData.String != "" {
+		rawJSON := strings.TrimSpace(reportData.String)
+		if err := json.Unmarshal([]byte(rawJSON), &data); err == nil {
+			// Check if data is encrypted and decrypt if needed
+			if utils.IsEncryptedPayload(data) {
+				if privateKey.Valid && privateKey.String != "" {
+					decryptedData, err := utils.DecryptData(rawJSON, privateKey.String)
+					if err == nil {
+						if err := json.Unmarshal([]byte(decryptedData), &data); err != nil {
+							http.Error(w, "Invalid decrypted report data", http.StatusInternalServerError)
+							return
+						}
+					} else {
+						http.Error(w, "Failed to decrypt report data", http.StatusInternalServerError)
+						return
+					}
+				} else {
+					http.Error(w, "Private key not found for encrypted report", http.StatusBadRequest)
+					return
+				}
+			}
+		} else {
+			http.Error(w, "Invalid report data", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "Report data not found", http.StatusNotFound)
+		return
+	}
+
+	// Generate HTML report
+	html := generateFileShareHTMLReport(name.String, serverName.String, folderPath.String, createdAt, data)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
+}
+
+// generateFileShareHTMLReport creates an HTML report from File Share data
+func generateFileShareHTMLReport(name, serverName, folderPath, createdAt string, data map[string]interface{}) string {
+	folderAnalysis := getMapValue(data, "folderAnalysis", make(map[string]interface{}))
+	summary := getMapValue(folderAnalysis, "summary", make(map[string]interface{}))
+	folderTree := getArrayValue(folderAnalysis, "folderTree", []interface{}{})
+	auditDate := getStringValue(data, "auditDate", createdAt)
+
+	criticalIssues := getArrayValue(summary, "criticalIssues", []interface{}{})
+	warningIssues := getArrayValue(summary, "warningIssues", []interface{}{})
+	criticalIssuesCount := getIntValue(summary, "criticalIssuesCount", 0)
+	warningIssuesCount := getIntValue(summary, "warningIssuesCount", 0)
+
+	var html strings.Builder
+	html.WriteString(`<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Share Audit Report - ` + escapeHTML(name) + `</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            line-height: 1.6;
+            padding: 2rem;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            padding: 2rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #334155;
+        }
+        .header h1 {
+            color: #e2e8f0;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        .header .meta {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .section {
+            background: #1e293b;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #334155;
+        }
+        .section h2 {
+            color: #8b5cf6;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #334155;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        .stat-card {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+        }
+        .stat-card .label {
+            color: #94a3b8;
+            font-size: 0.875rem;
+            margin-bottom: 0.5rem;
+        }
+        .stat-card .value {
+            color: #e2e8f0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .stat-card.critical .value { color: #ef4444; }
+        .stat-card.warning .value { color: #f59e0b; }
+        .stat-card.success .value { color: #10b981; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #334155;
+        }
+        th {
+            background: #0f172a;
+            color: #8b5cf6;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        td { color: #e2e8f0; }
+        tr:hover { background: rgba(139, 92, 246, 0.1); }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .badge-critical { background: #ef4444; color: white; }
+        .badge-warning { background: #f59e0b; color: white; }
+        .badge-success { background: #10b981; color: white; }
+        .badge-info { background: #3b82f6; color: white; }
+        .issue-list {
+            list-style: none;
+            padding: 0;
+        }
+        .issue-list li {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: #0f172a;
+            border-left: 3px solid #ef4444;
+            border-radius: 0.25rem;
+        }
+        .issue-list li.warning {
+            border-left-color: #f59e0b;
+        }
+        .folder-tree {
+            margin-left: 1rem;
+        }
+        .folder-item {
+            margin: 0.5rem 0;
+            padding: 0.5rem;
+            background: #0f172a;
+            border-radius: 0.25rem;
+            border: 1px solid #334155;
+        }
+        .folder-path {
+            color: #8b5cf6;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        .permission-item {
+            padding: 0.25rem 0;
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-folder-open"></i> File Share Audit Report</h1>
+            <div class="meta">
+                <span><strong>Report Name:</strong> ` + escapeHTML(name) + `</span>
+                <span><strong>Server:</strong> ` + escapeHTML(serverName) + `</span>
+                <span><strong>Folder Path:</strong> ` + escapeHTML(folderPath) + `</span>
+                <span><strong>Audit Date:</strong> ` + escapeHTML(auditDate) + `</span>
+            </div>
+        </div>`)
+
+	// Summary Statistics
+	html.WriteString(`
+        <div class="section">
+            <h2>Summary Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-card critical">
+                    <div class="label">Critical Issues</div>
+                    <div class="value">` + formatInt(criticalIssuesCount) + `</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="label">Warning Issues</div>
+                    <div class="value">` + formatInt(warningIssuesCount) + `</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="label">Folders Analyzed</div>
+                    <div class="value">` + formatInt(len(folderTree)) + `</div>
+                </div>
+            </div>
+        </div>`)
+
+	// Critical Issues
+	if len(criticalIssues) > 0 {
+		html.WriteString(`
+        <div class="section">
+            <h2>Critical Issues</h2>
+            <ul class="issue-list">`)
+		for _, issue := range criticalIssues {
+			issueStr := formatValue(issue)
+			html.WriteString(`
+                <li>` + escapeHTML(issueStr) + `</li>`)
+		}
+		html.WriteString(`
+            </ul>
+        </div>`)
+	}
+
+	// Warning Issues
+	if len(warningIssues) > 0 {
+		html.WriteString(`
+        <div class="section">
+            <h2>Warning Issues</h2>
+            <ul class="issue-list">`)
+		for _, issue := range warningIssues {
+			issueStr := formatValue(issue)
+			html.WriteString(`
+                <li class="warning">` + escapeHTML(issueStr) + `</li>`)
+		}
+		html.WriteString(`
+            </ul>
+        </div>`)
+	}
+
+	// Folder Tree
+	if len(folderTree) > 0 {
+		html.WriteString(`
+        <div class="section">
+            <h2>Folder Analysis</h2>
+            <div class="folder-tree">`)
+		for _, folder := range folderTree {
+			folderMap := getMap(folder)
+			folderPath := getStringValue(folderMap, "path", "N/A")
+			relativePath := getStringValue(folderMap, "relativePath", "N/A")
+			permissions := getArrayValue(folderMap, "permissions", []interface{}{})
+			fileCount := getIntValue(folderMap, "fileCount", 0)
+			totalSize := getFloatValue(folderMap, "totalSize", 0)
+
+			html.WriteString(`
+                <div class="folder-item">
+                    <div class="folder-path">` + escapeHTML(folderPath) + `</div>
+                    <div style="color: #94a3b8; font-size: 0.875rem; margin-bottom: 0.5rem;">
+                        Relative Path: ` + escapeHTML(relativePath) + ` | 
+                        Files: ` + formatInt(fileCount) + ` | 
+                        Size: ` + formatSize(totalSize) + `
+                    </div>`)
+
+			if len(permissions) > 0 {
+				html.WriteString(`
+                    <div style="margin-top: 0.5rem;">
+                        <strong style="color: #8b5cf6;">Permissions:</strong>`)
+				for _, perm := range permissions {
+					permMap := getMap(perm)
+					identity := getStringValue(permMap, "identityReference", "N/A")
+					rights := getStringValue(permMap, "fileSystemRights", "N/A")
+					accessType := getStringValue(permMap, "accessControlType", "N/A")
+					isInherited := getBoolValue(permMap, "isInherited", false)
+
+					html.WriteString(`
+                        <div class="permission-item">
+                            ` + escapeHTML(identity) + ` - ` + escapeHTML(rights) + ` (` + escapeHTML(accessType) + `)` + func() string {
+						if isInherited {
+							return ` <span class="badge badge-info">Inherited</span>`
+						}
+						return ` <span class="badge badge-warning">Explicit</span>`
+					}() + `
+                        </div>`)
+				}
+				html.WriteString(`
+                    </div>`)
+			}
+			html.WriteString(`
+                </div>`)
+		}
+		html.WriteString(`
+            </div>
+        </div>`)
+	}
+
+	html.WriteString(`
+    </div>
+</body>
+</html>`)
+
+	return html.String()
+}
+
+// Helper functions
+func escapeHTML(s string) string {
+	s = strings.ReplaceAll(s, "&", "&amp;")
+	s = strings.ReplaceAll(s, "<", "&lt;")
+	s = strings.ReplaceAll(s, ">", "&gt;")
+	s = strings.ReplaceAll(s, "\"", "&quot;")
+	s = strings.ReplaceAll(s, "'", "&#39;")
+	return s
+}
+
+func getMapValue(m map[string]interface{}, key string, defaultValue map[string]interface{}) map[string]interface{} {
+	if val, ok := m[key].(map[string]interface{}); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getArrayValue(m map[string]interface{}, key string, defaultValue []interface{}) []interface{} {
+	if val, ok := m[key].([]interface{}); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getStringValue(m map[string]interface{}, key string, defaultValue string) string {
+	if val, ok := m[key].(string); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getIntValue(m map[string]interface{}, key string, defaultValue int) int {
+	if val, ok := m[key].(float64); ok {
+		return int(val)
+	}
+	if val, ok := m[key].(int); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getFloatValue(m map[string]interface{}, key string, defaultValue float64) float64 {
+	if val, ok := m[key].(float64); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getBoolValue(m map[string]interface{}, key string, defaultValue bool) bool {
+	if val, ok := m[key].(bool); ok {
+		return val
+	}
+	return defaultValue
+}
+
+func getMap(v interface{}) map[string]interface{} {
+	if m, ok := v.(map[string]interface{}); ok {
+		return m
+	}
+	return make(map[string]interface{})
+}
+
+func formatValue(v interface{}) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+func formatInt(i int) string {
+	return fmt.Sprintf("%d", i)
+}
+
+func formatSize(size float64) string {
+	if size < 1024 {
+		return fmt.Sprintf("%.2f B", size)
+	} else if size < 1024*1024 {
+		return fmt.Sprintf("%.2f KB", size/1024)
+	} else if size < 1024*1024*1024 {
+		return fmt.Sprintf("%.2f MB", size/(1024*1024))
+	} else {
+		return fmt.Sprintf("%.2f GB", size/(1024*1024*1024))
+	}
 }

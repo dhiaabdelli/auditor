@@ -8,6 +8,8 @@ export class FileShareAuditorPage {
         this.usersArray = [];
         this.showCriticalIssuesModal = false;
         this.showWarningIssuesModal = false;
+        this.selectedFolderForModal = null;
+        this.folderTreeData = null; // Store original folder tree data
         this.selectedCriticalIssuesModal = null;
         this.selectedWarningIssuesModal = null;
         this.selectedGroupModal = null;
@@ -16,6 +18,7 @@ export class FileShareAuditorPage {
         this.selectedShareRedFlags = null;
         this.isShareDetailsModalOpen = false;
         this.selectedShareDetails = null;
+        this.activeView = 'overview'; // 'overview' or 'folder-tree'
         this.translations = {
             en: {
                 title: 'File Share Audit',
@@ -98,39 +101,30 @@ export class FileShareAuditorPage {
 
         if (!this.reportData) {
             return `
-                <div class="page-container-full">
-                    <div class="page-header">
-                        <div class="page-header-content">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <button class="btn btn-icon" onclick="fileShareAuditorInstance.goBack()">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
-                                <div>
-                                    <h1 class="page-title">📁 ${this.t('title')}</h1>
-                                    <p class="page-subtitle">${this.t('subtitle')}</p>
-                                </div>
-                            </div>
-                            <div class="page-header-actions">
-                                <button type="button" class="btn btn-sm btn-primary" onclick="fileShareAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                    <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="fileShareAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                    <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success" onclick="fileShareAuditorInstance.showImportDialog()" title="Import">
-                                    <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                                </button>
-                                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                <div class="page-container-full file-share-auditor-layout">
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                    <!-- Sidebar Overlay (Mobile) -->
+                    <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="fileShareAuditorInstance.closeSidebar()"></div>
+                    <!-- Sidebar Navigation -->
+                    <div class="file-share-auditor-sidebar" id="auditor-sidebar">
+                        <div class="file-share-auditor-sidebar-nav">
+                            <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                                 onclick="fileShareAuditorInstance.switchView('overview')">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Overview</span>
                             </div>
                         </div>
                     </div>
-                    <div class="audit-content">
-                        <div class="reports-empty-state">
-                            <i class="fas fa-folder-open"></i>
-                            <p>${this.t('noData')}</p>
-                            <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
-                                Click "Script" to download the PowerShell script, run it on your server, then click "Import" to upload the JSON output.
-                            </p>
+                    <!-- Main Content -->
+                    <div class="file-share-auditor-main">
+                        <div class="audit-content">
+                            <div class="reports-empty-state">
+                                <i class="fas fa-folder-open fa-3x"></i>
+                                <p>${this.t('noData')}</p>
+                                <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
+                                    Click "Script" to download the PowerShell script, run it on your server, then click "Import" to upload the JSON output.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -240,34 +234,39 @@ export class FileShareAuditorPage {
             .sort((a, b) => b.totalFolders - a.totalFolders);
 
         return `
-            <div class="page-container-full">
-                <div class="page-header">
-                    <div class="page-header-content">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-icon" onclick="fileShareAuditorInstance.goBack()">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                            <div>
-                                <h1 class="page-title">📁 ${this.t('title')}</h1>
-                                <p class="page-subtitle">${serverName} • ${auditDate}</p>
-                            </div>
+            <div class="page-container-full file-share-auditor-layout">
+                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                <!-- Sidebar Overlay (Mobile) -->
+                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="fileShareAuditorInstance.closeSidebar()"></div>
+                    <!-- Sidebar Navigation -->
+                    <div class="file-share-auditor-sidebar" id="auditor-sidebar">
+                        <div class="file-share-auditor-sidebar-nav">
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                             onclick="fileShareAuditorInstance.switchView('overview')">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Overview</span>
                         </div>
-                        <div class="page-header-actions">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="fileShareAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="fileShareAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-success" onclick="fileShareAuditorInstance.showImportDialog()" title="Import">
-                                <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                            </button>
-                            <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                        ${folderTree.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'folder-tree' ? 'active' : ''}" 
+                             onclick="fileShareAuditorInstance.switchView('folder-tree')">
+                            <i class="fas fa-sitemap"></i>
+                            <span>Folder Tree</span>
                         </div>
+                        ` : ''}
                     </div>
                 </div>
+                <!-- Main Content -->
+                <div class="file-share-auditor-main">
+                    ${this.activeView === 'folder-tree' ? this.renderFolderTreeView(folderTree, folderAnalysis) : this.renderOverviewView(folderAnalysis, summary, criticalIssues, warningIssues, totalPermissions, totalExplicit, totalInherited, totalDenyAces, totalAllow)}
+                </div>
+            </div>
+        `;
+    }
 
-                <div class="audit-content">
+    renderOverviewView(folderAnalysis, summary, criticalIssues, warningIssues, totalPermissions, totalExplicit, totalInherited, totalDenyAces, totalAllow) {
+        const folderTree = folderAnalysis.folderTree || [];
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
                     <!-- Summary Cards -->
                     ${folderAnalysis.folderPath ? `
                     <div class="hardware-section-modern">
@@ -502,20 +501,6 @@ export class FileShareAuditorPage {
                     </div>
                     ` : ''}
 
-                    <!-- Folder Tree with Permissions -->
-                    ${folderTree.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-sitemap"></i> Folder Tree with Permissions
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: normal; margin-left: 0.5rem;">
-                                (${folderTree.length} ${folderTree.length === 1 ? 'folder' : 'folders'})
-                            </span>
-                        </h4>
-                        <div class="folder-tree-container">
-                            ${this.renderFolderTree(folderTree, folderAnalysis.folderPath || '')}
-                        </div>
-                    </div>
-                    ` : ''}
 
                     <!-- Groups with Folder Access -->
                     ${this.groupsArray.length > 0 ? `
@@ -1712,15 +1697,59 @@ export class FileShareAuditorPage {
                         </div>
                     </div>
                     ` : ''}
-
-
-
-                    </div>
-                </div>
-
-                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
             </div>
         `;
+    }
+
+    renderFolderTreeView(folderTree, folderAnalysis) {
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                <div class="hardware-section-modern" style="margin-top: 0;">
+                    <div style="margin-bottom: 1rem;">
+                        <input 
+                            type="text" 
+                            id="folder-tree-search" 
+                            class="folder-tree-search-input"
+                            placeholder="Search folders by name or path..."
+                            oninput="fileShareAuditorInstance.filterFolderTree(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="folder-tree-container" id="folder-tree-container" style="height: calc(100vh - 250px); overflow-y: auto;">
+                        ${this.renderFolderTree(folderTree, folderAnalysis.folderPath || '')}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+    }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
+        // Close sidebar on mobile when switching views
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
     }
 
     async mount() {
@@ -2500,6 +2529,10 @@ export class FileShareAuditorPage {
                 if (this.selectedGroupModal !== null) {
                     content.insertAdjacentHTML('beforeend', this.renderGroupModal());
                 }
+                // Update page navbar title after rendering
+                if (window.pageNavbarInstance) {
+                    window.pageNavbarInstance.updateTitle();
+                }
                 if (this.selectedUserModal !== null) {
                     content.insertAdjacentHTML('beforeend', this.renderUserModal());
                 }
@@ -2508,6 +2541,13 @@ export class FileShareAuditorPage {
                 }
                 if (this.isShareDetailsModalOpen) {
                     content.insertAdjacentHTML('beforeend', this.renderShareDetailsModal());
+                }
+                if (this.selectedFolderForModal) {
+                    content.insertAdjacentHTML('beforeend', this.renderFolderPermissionsModal());
+                }
+                // Update page navbar title after rendering
+                if (window.pageNavbarInstance) {
+                    window.pageNavbarInstance.updateTitle();
                 }
             });
         }
@@ -2518,11 +2558,16 @@ export class FileShareAuditorPage {
             return '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No folder tree data available</p></div>';
         }
 
+        // Store folder tree data indexed by path for quick lookup
+        if (!this.folderTreeMap) {
+            this.folderTreeMap = new Map();
+            folderTree.forEach(folder => {
+                this.folderTreeMap.set(folder.path, folder);
+            });
+        }
+
         // Build a map for quick lookup
-        const folderMap = new Map();
-        folderTree.forEach(folder => {
-            folderMap.set(folder.path, folder);
-        });
+        const folderMap = this.folderTreeMap;
 
         // Build hierarchy recursively
         const buildTree = (path, depth = 0) => {
@@ -2549,199 +2594,66 @@ export class FileShareAuditorPage {
             }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
             const folderId = `folder-${path.replace(/[^a-zA-Z0-9]/g, '-')}`;
-            const isExpanded = false; // Don't auto-expand, user must click to expand
-
+            const isRoot = depth === 0; // Root folder is always open
+            const isExpanded = true; // All folders are expanded by default
+            const hasChildren = childFolders.length > 0;
+            
             const explicitPerms = (folder.permissions || []).filter(p => !p.isInherited).length;
             const inheritedPerms = (folder.permissions || []).filter(p => p.isInherited).length;
             const denyAces = (folder.permissions || []).filter(p => p.accessControlType === 'Deny').length;
             const allowPerms = (folder.permissions || []).filter(p => p.accessControlType === 'Allow').length;
             
+            const folderPathEncoded = encodeURIComponent(folder.path || '');
             let html = `
-                <div class="folder-tree-node">
+                <div class="folder-tree-node" data-folder-path="${folder.path || ''}">
                     <div class="folder-tree-header" 
                          data-folder-id="${folderId}"
-                         onclick="fileShareAuditorInstance.toggleFolder('${folderId}')"
-                         style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.625rem; background: ${hasIssues ? 'rgba(239, 68, 68, 0.08)' : 'rgba(51, 65, 85, 0.3)'}; border: 1px solid ${hasIssues ? 'rgba(239, 68, 68, 0.3)' : '#334155'}; border-radius: 0.25rem; cursor: pointer; transition: all 0.15s; user-select: none; margin-left: ${depth * 0.5}rem; margin-bottom: 0.25rem;"
+                         data-folder-path="${folder.path || ''}"
+                         style="display: flex; align-items: center; gap: 0.375rem; padding: 0.375rem 0.5rem; background: ${hasIssues ? 'rgba(239, 68, 68, 0.08)' : 'rgba(51, 65, 85, 0.3)'}; border: 1px solid ${hasIssues ? 'rgba(239, 68, 68, 0.3)' : '#334155'}; border-radius: 0.25rem; transition: all 0.15s; user-select: none; margin-left: ${depth * 0.5}rem; margin-bottom: 0.125rem;"
                          onmouseover="this.style.background='${hasIssues ? 'rgba(239, 68, 68, 0.12)' : 'rgba(51, 65, 85, 0.4)'}'; this.style.borderColor='${hasIssues ? 'rgba(239, 68, 68, 0.4)' : '#475569'}'"
                          onmouseout="this.style.background='${hasIssues ? 'rgba(239, 68, 68, 0.08)' : 'rgba(51, 65, 85, 0.3)'}'; this.style.borderColor='${hasIssues ? 'rgba(239, 68, 68, 0.3)' : '#334155'}'"
                          title="${folder.path || ''}">
-                        <i class="fas folder-chevron-${folderId} fa-chevron-${isExpanded ? 'down' : 'right'}" style="color: #64748b; font-size: 0.6875rem; width: 10px; transition: transform 0.15s; flex-shrink: 0;"></i>
-                        <i class="fas fa-folder" style="color: ${riskColor}; font-size: 0.75rem; flex-shrink: 0;"></i>
-                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.125rem;">
-                            <span style="font-weight: 600; color: #e2e8f0; font-size: 0.8125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${folder.name || relativePath}</span>
-                            <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.6875rem; color: #94a3b8;">
-                                <span title="Explicit permissions">Exp: ${explicitPerms}</span>
-                                <span title="Inherited permissions">Inh: ${inheritedPerms}</span>
-                                ${denyAces > 0 ? `<span style="color: #f59e0b;" title="Deny ACEs">Deny: ${denyAces}</span>` : ''}
-                            </div>
+                        ${hasChildren ? `
+                        <i class="fas folder-chevron-${folderId} fa-chevron-down" 
+                           style="color: #64748b; font-size: 0.625rem; width: 10px; transition: transform 0.15s; flex-shrink: 0; cursor: pointer;"
+                           onclick="event.stopPropagation(); fileShareAuditorInstance.toggleFolder('${folderId}')"
+                           title="Click to expand/collapse"></i>
+                        ` : '<span style="width: 10px; flex-shrink: 0;"></span>'}
+                        <i class="fas fa-folder" style="color: ${riskColor}; font-size: 0.6875rem; flex-shrink: 0;"></i>
+                        <div style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.0625rem; cursor: pointer;"
+                             onclick="event.stopPropagation(); fileShareAuditorInstance.toggleFolder('${folderId}')"
+                             onmouseover="this.style.opacity='0.8'"
+                             onmouseout="this.style.opacity='1'"
+                             title="Click to expand/collapse">
+                            <span style="font-weight: 600; color: #e2e8f0; font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${folder.name || relativePath}</span>
                         </div>
                         ${issueCount > 0 ? `
-                        <span style="background: ${riskColor}30; color: ${riskColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${riskColor}50; flex-shrink: 0;">
-                            <i class="fas ${riskIcon}" style="font-size: 0.5625rem; margin-right: 0.1875rem;"></i>${issueCount}
+                        <span style="background: ${riskColor}30; color: ${riskColor}; padding: 0.125rem 0.3125rem; border-radius: 3px; font-size: 0.625rem; font-weight: 600; border: 1px solid ${riskColor}50; flex-shrink: 0; cursor: pointer;"
+                              onclick="event.stopPropagation(); fileShareAuditorInstance.showFolderPermissionsModalByPath('${folderPathEncoded}')"
+                              onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 2px 8px ${riskColor}50'"
+                              onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'"
+                              title="Click to view permissions">
+                            <i class="fas ${riskIcon}" style="font-size: 0.5rem; margin-right: 0.125rem;"></i>${issueCount}
                         </span>
-                        ` : '<span style="color: #10b981; font-size: 0.6875rem; flex-shrink: 0;"><i class="fas fa-check" style="font-size: 0.5625rem;"></i></span>'}
+                        ` : '<span style="color: #10b981; font-size: 0.625rem; flex-shrink: 0;"><i class="fas fa-check" style="font-size: 0.5rem;"></i></span>'}
                     </div>
-                    <div class="folder-tree-content-${folderId}" style="display: ${isExpanded ? 'block' : 'none'}; margin-left: ${(depth + 1) * 0.5}rem; margin-top: 0.25rem; padding-left: 0.5rem; border-left: 1px solid ${hasIssues ? 'rgba(239, 68, 68, 0.2)' : '#334155'};">
-                        ${(folder.permissions || []).length > 0 ? `
-                        <div class="folder-permissions-section">
-                            <div style="margin-bottom: 0.5rem; padding: 0.5rem; background: rgba(15, 23, 42, 0.4); border: 1px solid #1e293b; border-radius: 0.25rem;">
-                                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.375rem;">
-                                    <span style="color: #94a3b8; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas fa-shield-alt" style="color: #3b82f6; font-size: 0.6875rem;"></i> ${folder.permissions.length} permission${folder.permissions.length !== 1 ? 's' : ''}
-                                    </span>
-                                    ${issueCount > 0 ? `
-                                    <div style="display: flex; gap: 0.375rem; flex-wrap: wrap;">
-                                        ${folder.criticalCount > 0 ? `<span style="color: #ef4444; font-size: 0.6875rem; font-weight: 600;">🔴 ${folder.criticalCount}</span>` : ''}
-                                        ${folder.highCount > 0 ? `<span style="color: #f59e0b; font-size: 0.6875rem; font-weight: 600;">🟠 ${folder.highCount}</span>` : ''}
-                                        ${folder.mediumCount > 0 ? `<span style="color: #fbbf24; font-size: 0.6875rem; font-weight: 600;">🟡 ${folder.mediumCount}</span>` : ''}
-                                        ${folder.warningCount > 0 ? `<span style="color: #fbbf24; font-size: 0.6875rem; font-weight: 600;">⚠️ ${folder.warningCount}</span>` : ''}
-                                    </div>
-                                    ` : ''}
-                                </div>
-                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; font-size: 0.6875rem; color: #94a3b8;">
-                                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas fa-key" style="color: #64748b; font-size: 0.5625rem;"></i>
-                                        <span style="color: #64748b;">Explicit:</span> 
-                                        <span style="color: #e2e8f0; font-weight: 600;">${explicitPerms}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas fa-sitemap" style="color: #64748b; font-size: 0.5625rem;"></i>
-                                        <span style="color: #64748b;">Inherited:</span> 
-                                        <span style="color: #e2e8f0; font-weight: 600;">${inheritedPerms}</span>
-                                    </div>
-                                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas fa-check-circle" style="color: #10b981; font-size: 0.5625rem;"></i>
-                                        <span style="color: #64748b;">Allow:</span> 
-                                        <span style="color: #10b981; font-weight: 600;">${allowPerms}</span>
-                                    </div>
-                                    ${denyAces > 0 ? `
-                                    <div style="display: flex; align-items: center; gap: 0.25rem;">
-                                        <i class="fas fa-ban" style="color: #f59e0b; font-size: 0.5625rem;"></i>
-                                        <span style="color: #64748b;">Deny:</span> 
-                                        <span style="color: #f59e0b; font-weight: 600;">${denyAces}</span>
-                                    </div>
-                                    ` : ''}
-                                    <div style="grid-column: 1 / -1; padding-top: 0.25rem; border-top: 1px solid #1e293b;">
-                                        <div style="display: flex; align-items: flex-start; gap: 0.375rem;">
-                                            <i class="fas fa-folder-open" style="color: #64748b; font-size: 0.5625rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
-                                            <div style="flex: 1; min-width: 0;">
-                                                <span style="color: #64748b; display: block; margin-bottom: 0.125rem;">Full Path:</span>
-                                                <span style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.625rem; word-break: break-all; line-height: 1.4;" title="${folder.path || ''}">${folder.path || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 18%;">Identity</th>
-                                            <th style="width: 22%;">Rights</th>
-                                            <th style="width: 7%;">Type</th>
-                                            <th style="width: 9%;">Inherited</th>
-                                            <th style="width: 8%;">Propagation</th>
-                                            <th style="width: 9%;">Risk</th>
-                                            <th style="width: 27%;">Issues</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${folder.permissions.map(perm => {
-                                            const hasIssues = (perm.misconfigurations || []).length > 0;
-                                            const permRiskColor = perm.riskLevel === 'Critical' ? '#ef4444' : 
-                                                                perm.riskLevel === 'High' ? '#f59e0b' : 
-                                                                perm.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                            const riskIcon = perm.riskLevel === 'Critical' ? '🔴' : 
-                                                           perm.riskLevel === 'High' ? '🟠' : 
-                                                           perm.riskLevel === 'Medium' ? '🟡' : '🟢';
-                                            const propagationText = perm.propagationFlags || 'None';
-                                            const propagationShort = propagationText.includes('InheritOnly') ? 'Inherit' : 
-                                                                   propagationText.includes('NoPropagateInherit') ? 'NoProp' : 
-                                                                   propagationText.includes('None') ? 'None' : 'All';
-                                            const rightsStr = perm.fileSystemRights || 'N/A';
-                                            const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
-                                            return `
-                                            <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.03);' : ''}">
-                                                <td>
-                                                    <strong style="color: ${perm.identityReference && perm.identityReference.includes('CREATOR OWNER') ? '#f59e0b' : '#e2e8f0'}; font-size: 0.75rem; word-break: break-word;" title="${perm.identityReference || 'N/A'}">${perm.identityReference || 'N/A'}</strong>
-                                                </td>
-                                                <td>
-                                                    ${rightsArray.length > 0 ? `
-                                                    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
-                                                        ${rightsArray.map(right => {
-                                                            const rightColor = right.includes('FullControl') ? '#ef4444' : 
-                                                                             right.includes('Modify') ? '#f59e0b' : 
-                                                                             right.includes('Write') ? '#fbbf24' : 
-                                                                             right.includes('Read') ? '#10b981' : '#94a3b8';
-                                                            return `
-                                                            <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
-                                                                ${right}
-                                                            </span>
-                                                        `;
-                                                        }).join('')}
-                                                    </div>
-                                                    ` : `<span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1; word-break: break-word;" title="${rightsStr}">${rightsStr}</span>`}
-                                                </td>
-                                                <td style="color: ${perm.accessControlType === 'Deny' ? '#f59e0b' : '#94a3b8'}; font-size: 0.75rem; font-weight: ${perm.accessControlType === 'Deny' ? '600' : '400'};">${perm.accessControlType || 'N/A'}</td>
-                                                <td>
-                                                    <span style="color: ${perm.isInherited ? '#94a3b8' : '#e2e8f0'}; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
-                                                        <i class="fas fa-${perm.isInherited ? 'check' : 'times'}" style="font-size: 0.625rem;"></i>
-                                                        <span>${perm.isInherited ? 'Yes' : 'No'}</span>
-                                                    </span>
-                                                </td>
-                                                <td style="color: #94a3b8; font-size: 0.6875rem;" title="${propagationText}">
-                                                    ${propagationShort}
-                                                </td>
-                                                <td>
-                                                    <span style="background: ${permRiskColor}20; color: ${permRiskColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${permRiskColor}40; display: inline-flex; align-items: center; gap: 0.1875rem;">
-                                                        <span>${riskIcon}</span>
-                                                        <span>${perm.riskLevel || 'Low'}</span>
-                                                    </span>
-                                                </td>
-                                                <td>
-                                                    ${hasIssues ? `
-                                                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
-                                                        ${perm.misconfigurations.slice(0, 2).map(issue => {
-                                                            const issueColor = issue.match(/Critical:/) ? '#ef4444' : 
-                                                                              issue.match(/High:/) ? '#f59e0b' : 
-                                                                              issue.match(/Warning:/) ? '#fbbf24' : '#94a3b8';
-                                                            const issueIcon = issue.match(/Critical:/) ? 'times-circle' : 
-                                                                              issue.match(/High:/) ? 'exclamation-circle' : 
-                                                                              'info-circle';
-                                                            const shortIssue = issue.replace(/^(Critical|High|Warning):\s*/, '');
-                                                            return `
-                                                            <span style="color: ${issueColor}; font-size: 0.6875rem; display: flex; align-items: flex-start; gap: 0.25rem; line-height: 1.3;">
-                                                                <i class="fas fa-${issueIcon}" style="margin-top: 0.125rem; flex-shrink: 0; font-size: 0.5625rem;"></i>
-                                                                <span style="word-break: break-word;">${shortIssue}</span>
-                                                            </span>
-                                                        `;
-                                                        }).join('')}
-                                                        ${perm.misconfigurations.length > 2 ? `<span style="color: #94a3b8; font-size: 0.6875rem;">+${perm.misconfigurations.length - 2} more</span>` : ''}
-                                                    </div>
-                                                    ` : '<span style="color: #10b981; font-size: 0.6875rem;"><i class="fas fa-check" style="font-size: 0.5625rem;"></i></span>'}
-                                                </td>
-                                            </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        ` : '<div style="color: #94a3b8; font-size: 0.75rem; padding: 0.5rem; text-align: center; background: rgba(15, 23, 42, 0.4); border-radius: 0.25rem;">No permissions</div>'}
+                    ${hasChildren || folder.folderWarning || folder.error ? `
+                    <div class="folder-tree-content-${folderId}" style="display: block; margin-left: ${(depth + 1) * 0.5}rem; margin-top: 0.125rem; padding-left: 0.375rem; border-left: 1px solid ${hasIssues ? 'rgba(239, 68, 68, 0.2)' : '#334155'};">
                         ${folder.folderWarning ? `
-                        <div style="color: #f59e0b; font-size: 0.75rem; padding: 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.25rem; margin-top: 0.375rem; display: flex; align-items: flex-start; gap: 0.375rem;">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 0.6875rem; margin-top: 0.125rem; flex-shrink: 0;"></i>
+                        <div style="color: #f59e0b; font-size: 0.6875rem; padding: 0.375rem 0.5rem; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 0.25rem; margin-bottom: 0.125rem; display: flex; align-items: flex-start; gap: 0.3125rem;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 0.625rem; margin-top: 0.0625rem; flex-shrink: 0;"></i>
                             <span style="word-break: break-word;">${folder.folderWarning}</span>
                         </div>
                         ` : ''}
                         ${folder.error ? `
-                        <div style="color: #ef4444; font-size: 0.75rem; padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.25rem; margin-top: 0.375rem; display: flex; align-items: center; gap: 0.375rem;">
-                            <i class="fas fa-exclamation-triangle" style="font-size: 0.6875rem;"></i>
+                        <div style="color: #ef4444; font-size: 0.6875rem; padding: 0.375rem 0.5rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 0.25rem; margin-bottom: 0.125rem; display: flex; align-items: center; gap: 0.3125rem;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 0.625rem;"></i>
                             <span>${folder.error}</span>
                         </div>
                         ` : ''}
+                        ${childFolders.map(child => buildTree(child.path, depth + 1)).join('')}
                     </div>
-                    ${childFolders.map(child => buildTree(child.path, depth + 1)).join('')}
+                    ` : childFolders.map(child => buildTree(child.path, depth + 1)).join('')}
                 </div>
             `;
 
@@ -2759,17 +2671,296 @@ export class FileShareAuditorPage {
             return '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No root folder found</p></div>';
         }
 
+        // Store folder tree data for filtering
+        this.folderTreeData = folderTree;
+        this.folderTreeRootPath = rootPath;
+
         return buildTree(rootFolder.path, 0);
+    }
+
+    filterFolderTree(searchTerm) {
+        if (!this.folderTreeData) return;
+        
+        const container = document.getElementById('folder-tree-container');
+        if (!container) return;
+
+        const searchLower = searchTerm.toLowerCase().trim();
+        
+        if (!searchLower) {
+            // Show all folders and ensure they're all visible
+            const allNodes = container.querySelectorAll('.folder-tree-node');
+            allNodes.forEach(node => {
+                node.style.display = '';
+            });
+            return;
+        }
+
+        // Filter folders
+        const allNodes = container.querySelectorAll('.folder-tree-node');
+        const matchingPaths = new Set();
+        
+        // First pass: find all matching nodes
+        allNodes.forEach(node => {
+            const folderPath = node.getAttribute('data-folder-path') || '';
+            const folderName = folderPath.split('\\').pop() || '';
+            const matches = folderPath.toLowerCase().includes(searchLower) || 
+                          folderName.toLowerCase().includes(searchLower);
+            
+            if (matches) {
+                matchingPaths.add(folderPath);
+                // Also add all parent paths
+                let currentPath = folderPath;
+                while (currentPath) {
+                    matchingPaths.add(currentPath);
+                    const lastBackslash = currentPath.lastIndexOf('\\');
+                    if (lastBackslash === -1) break;
+                    currentPath = currentPath.substring(0, lastBackslash);
+                }
+            }
+        });
+
+        // Second pass: show/hide nodes and expand parents
+        allNodes.forEach(node => {
+            const folderPath = node.getAttribute('data-folder-path') || '';
+            const shouldShow = matchingPaths.has(folderPath);
+            
+            if (shouldShow) {
+                node.style.display = '';
+                // Expand parent nodes to show this node
+                let parent = node.parentElement;
+                while (parent) {
+                    if (parent.classList && parent.classList.contains('folder-tree-node')) {
+                        const header = parent.querySelector('.folder-tree-header');
+                        if (header) {
+                            const folderId = header.getAttribute('data-folder-id');
+                            if (folderId) {
+                                const content = document.querySelector(`.folder-tree-content-${folderId}`);
+                                const icon = document.querySelector(`.folder-chevron-${folderId}`);
+                                if (content) {
+                                    const currentDisplay = window.getComputedStyle(content).display;
+                                    if (currentDisplay === 'none') {
+                                        content.style.display = 'block';
+                                        if (icon) {
+                                            icon.classList.remove('fa-chevron-right');
+                                            icon.classList.add('fa-chevron-down');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    parent = parent.parentElement;
+                }
+            } else {
+                node.style.display = 'none';
+            }
+        });
+    }
+
+    showFolderPermissionsModalByPath(folderPathEncoded) {
+        try {
+            const folderPath = decodeURIComponent(folderPathEncoded);
+            const folder = this.folderTreeMap?.get(folderPath);
+            if (folder) {
+                this.selectedFolderForModal = folder;
+                this.lockBodyScroll();
+                this.updateDisplay();
+            }
+        } catch (error) {
+            console.error('Error getting folder data:', error);
+        }
+    }
+
+    closeFolderPermissionsModal() {
+        this.selectedFolderForModal = null;
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
+            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen && 
+            this.selectedGroupModal === null && this.selectedUserModal === null) {
+            this.unlockBodyScroll();
+        }
+        this.updateDisplay();
+    }
+
+    renderFolderPermissionsModal() {
+        if (!this.selectedFolderForModal) return '';
+        
+        const folder = this.selectedFolderForModal;
+        const explicitPerms = (folder.permissions || []).filter(p => !p.isInherited);
+        const inheritedPerms = (folder.permissions || []).filter(p => p.isInherited);
+        const allowPerms = (folder.permissions || []).filter(p => p.accessControlType === 'Allow');
+        const denyAces = (folder.permissions || []).filter(p => p.accessControlType === 'Deny');
+        const issueCount = (folder.criticalCount || 0) + (folder.highCount || 0) + (folder.mediumCount || 0) + (folder.warningCount || 0);
+        const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' : 
+                        folder.riskLevel === 'High' ? '#f59e0b' : 
+                        folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+
+        return `
+            <div class="modal-overlay" onclick="fileShareAuditorInstance.closeFolderPermissionsModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+                <div class="modal-content" onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem; max-width: 1200px; width: 100%; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
+                    <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(59, 130, 246, 0.3); display: flex; align-items: center; justify-content: space-between; background: rgba(59, 130, 246, 0.1);">
+                        <h3 style="color: #3b82f6; font-size: 1.125rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+                            <i class="fas fa-folder" style="color: ${riskColor};"></i> ${folder.name || folder.relativePath || 'Folder'} - Permissions
+                        </h3>
+                        <button onclick="fileShareAuditorInstance.closeFolderPermissionsModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer; padding: 0.25rem; line-height: 1; transition: color 0.2s;" onmouseover="this.style.color='#e2e8f0'" onmouseout="this.style.color='#94a3b8'">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body" style="padding: 1.5rem; overflow-y: auto; flex: 1;">
+                        <!-- Permissions Summary -->
+                        <div style="margin-bottom: 1.5rem; padding: 1rem; background: rgba(15, 23, 42, 0.4); border: 1px solid #334155; border-radius: 0.375rem;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                                <div style="text-align: center;">
+                                    <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem;">Total Permissions</div>
+                                    <div style="color: #3b82f6; font-size: 1.5rem; font-weight: 600;">${folder.permissions?.length || 0}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem;">Explicit</div>
+                                    <div style="color: #e2e8f0; font-size: 1.5rem; font-weight: 600;">${explicitPerms.length}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem;">Inherited</div>
+                                    <div style="color: #94a3b8; font-size: 1.5rem; font-weight: 600;">${inheritedPerms.length}</div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem;">Allow</div>
+                                    <div style="color: #10b981; font-size: 1.5rem; font-weight: 600;">${allowPerms.length}</div>
+                                </div>
+                                ${denyAces.length > 0 ? `
+                                <div style="text-align: center;">
+                                    <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem;">Deny</div>
+                                    <div style="color: #f59e0b; font-size: 1.5rem; font-weight: 600;">${denyAces.length}</div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div style="padding-top: 1rem; border-top: 1px solid #334155;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.375rem;">
+                                    <i class="fas fa-folder-open" style="color: #64748b;"></i> Full Path:
+                                </div>
+                                <div style="color: #e2e8f0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8125rem; word-break: break-all; padding: 0.5rem; background: rgba(15, 23, 42, 0.6); border-radius: 0.25rem; border: 1px solid #334155;">
+                                    ${folder.path || 'N/A'}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Table -->
+                        ${(folder.permissions || []).length > 0 ? `
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 18%;">Identity</th>
+                                        <th style="width: 22%;">Rights</th>
+                                        <th style="width: 7%;">Type</th>
+                                        <th style="width: 9%;">Inherited</th>
+                                        <th style="width: 8%;">Propagation</th>
+                                        <th style="width: 9%;">Risk</th>
+                                        <th style="width: 27%;">Issues</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${folder.permissions.map(perm => {
+                                        const hasIssues = (perm.misconfigurations || []).length > 0;
+                                        const permRiskColor = perm.riskLevel === 'Critical' ? '#ef4444' : 
+                                                            perm.riskLevel === 'High' ? '#f59e0b' : 
+                                                            perm.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+                                        const riskIcon = perm.riskLevel === 'Critical' ? '🔴' : 
+                                                       perm.riskLevel === 'High' ? '🟠' : 
+                                                       perm.riskLevel === 'Medium' ? '🟡' : '🟢';
+                                        const propagationText = perm.propagationFlags || 'None';
+                                        const propagationShort = propagationText.includes('InheritOnly') ? 'Inherit' : 
+                                                               propagationText.includes('NoPropagateInherit') ? 'NoProp' : 
+                                                               propagationText.includes('None') ? 'None' : 'All';
+                                        const rightsStr = perm.fileSystemRights || 'N/A';
+                                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
+                                        return `
+                                        <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.03);' : ''}">
+                                            <td>
+                                                <strong style="color: ${perm.identityReference && perm.identityReference.includes('CREATOR OWNER') ? '#f59e0b' : '#e2e8f0'}; font-size: 0.75rem; word-break: break-word;" title="${perm.identityReference || 'N/A'}">${perm.identityReference || 'N/A'}</strong>
+                                            </td>
+                                            <td>
+                                                ${rightsArray.length > 0 ? `
+                                                <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                                    ${rightsArray.map(right => {
+                                                        const rightColor = right.includes('FullControl') ? '#ef4444' : 
+                                                                         right.includes('Modify') ? '#f59e0b' : 
+                                                                         right.includes('Write') ? '#fbbf24' : 
+                                                                         right.includes('Read') ? '#10b981' : '#94a3b8';
+                                                        return `
+                                                        <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
+                                                            ${right}
+                                                        </span>
+                                                    `;
+                                                    }).join('')}
+                                                </div>
+                                                ` : `<span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1; word-break: break-word;" title="${rightsStr}">${rightsStr}</span>`}
+                                            </td>
+                                            <td style="color: ${perm.accessControlType === 'Deny' ? '#f59e0b' : '#94a3b8'}; font-size: 0.75rem; font-weight: ${perm.accessControlType === 'Deny' ? '600' : '400'};">${perm.accessControlType || 'N/A'}</td>
+                                            <td>
+                                                <span style="color: ${perm.isInherited ? '#94a3b8' : '#e2e8f0'}; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                                                    <i class="fas fa-${perm.isInherited ? 'check' : 'times'}" style="font-size: 0.625rem;"></i>
+                                                    <span>${perm.isInherited ? 'Yes' : 'No'}</span>
+                                                </span>
+                                            </td>
+                                            <td style="color: #94a3b8; font-size: 0.6875rem;" title="${propagationText}">
+                                                ${propagationShort}
+                                            </td>
+                                            <td>
+                                                <span style="background: ${permRiskColor}20; color: ${permRiskColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${permRiskColor}40; display: inline-flex; align-items: center; gap: 0.1875rem;">
+                                                    <span>${riskIcon}</span>
+                                                    <span>${perm.riskLevel || 'Low'}</span>
+                                                </span>
+                                            </td>
+                                            <td>
+                                                ${hasIssues ? `
+                                                <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                                    ${perm.misconfigurations.map(issue => {
+                                                        const issueColor = issue.match(/Critical:/) ? '#ef4444' : 
+                                                                          issue.match(/High:/) ? '#f59e0b' : 
+                                                                          issue.match(/Warning:/) ? '#fbbf24' : '#94a3b8';
+                                                        const issueIcon = issue.match(/Critical:/) ? 'times-circle' : 
+                                                                          issue.match(/High:/) ? 'exclamation-circle' : 
+                                                                          'info-circle';
+                                                        const shortIssue = issue.replace(/^(Critical|High|Warning):\s*/, '');
+                                                        return `
+                                                        <span style="color: ${issueColor}; font-size: 0.6875rem; display: flex; align-items: flex-start; gap: 0.25rem; line-height: 1.3;">
+                                                            <i class="fas fa-${issueIcon}" style="margin-top: 0.125rem; flex-shrink: 0; font-size: 0.5625rem;"></i>
+                                                            <span style="word-break: break-word;">${shortIssue}</span>
+                                                        </span>
+                                                    `;
+                                                    }).join('')}
+                                                </div>
+                                                ` : '<span style="color: #10b981; font-size: 0.6875rem;"><i class="fas fa-check" style="font-size: 0.5625rem;"></i></span>'}
+                                            </td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ` : '<div style="color: #94a3b8; font-size: 0.875rem; padding: 1rem; text-align: center; background: rgba(15, 23, 42, 0.4); border-radius: 0.25rem;">No permissions</div>'}
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     toggleFolder(folderId) {
         const content = document.querySelector(`.folder-tree-content-${folderId}`);
         const icon = document.querySelector(`.folder-chevron-${folderId}`);
-        if (content && icon) {
-            const isVisible = content.style.display !== 'none';
+        
+        if (content) {
+            const currentDisplay = window.getComputedStyle(content).display;
+            const isVisible = currentDisplay !== 'none';
             content.style.display = isVisible ? 'none' : 'block';
-            icon.classList.toggle('fa-chevron-down');
-            icon.classList.toggle('fa-chevron-right');
+            if (icon) {
+                if (isVisible) {
+                    icon.classList.remove('fa-chevron-down');
+                    icon.classList.add('fa-chevron-right');
+                } else {
+                    icon.classList.remove('fa-chevron-right');
+                    icon.classList.add('fa-chevron-down');
+                }
+            }
         }
     }
 
@@ -2946,6 +3137,42 @@ export class FileShareAuditorPage {
                 </div>
             </div>
         `;
+    }
+
+    async deleteReport() {
+        if (!this.reportId) {
+            this.showMessage('No report ID available', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this report?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/file-share-reports/delete?id=${this.reportId}`, {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete report');
+            }
+
+            this.showMessage('Report deleted successfully!', 'success');
+            
+            // Navigate back to list page
+            setTimeout(() => {
+                if (window.appInstance) {
+                    window.appInstance.navigateTo('file-share-auditor-list');
+                } else {
+                    window.location.hash = '#file-share-auditor-list';
+                    window.location.reload();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error deleting report:', error);
+            this.showMessage('Error deleting report: ' + error.message, 'error');
+        }
     }
 }
 

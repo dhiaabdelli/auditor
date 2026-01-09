@@ -5,13 +5,18 @@ export class PacketAnalyzerPage {
         this.interfaces = [];
         this.showCaptureModal = false;
         this.maxPackets = 1000000; // Store up to 1M packets in memory
-        this.virtualScrollRowHeight = 32; // Approximate row height in pixels
-        this.virtualScrollBuffer = 100; // Extra rows to render above/below viewport (increased for fast scrolling)
+        this.virtualScrollRowHeight = 32; // Fixed row height matching CSS
+        this.virtualScrollBuffer = 100;
         this.lastScrollTop = 0;
         this.isAtBottom = true;
-        this.scrollRafPending = false; // Track if scroll RAF is pending
-        this.lastRenderedStart = null; // Track last rendered range for optimization
+        this.scrollRafPending = false;
+        this.lastRenderedStart = null;
         this.lastRenderedEnd = null;
+        
+        // Virtual scroll range optimization
+        this.lastStartIndex = -1;
+        this.lastEndIndex = -1;
+        this.forceRerender = false;
         
         // Column configuration
         this.availableColumns = [
@@ -230,7 +235,7 @@ export class PacketAnalyzerPage {
                         </div>
                     </div>
 
-                    <div class="packet-details-sidebar">
+                    <div class="packet-details-sidebar" id="packetDetailsSidebar" onclick="event.stopPropagation()">
                         <div class="packet-details-header">
                             <h4><i class="fas fa-info-circle"></i> Packet Details</h4>
                             ${session.selectedPacketIndex !== null ? `
@@ -748,9 +753,46 @@ export class PacketAnalyzerPage {
             .trim();
     }
 
+    setupMobileModalHandlers() {
+        // Close modal when clicking outside (on backdrop)
+        const contentArea = document.querySelector('.packet-content-area');
+        if (contentArea) {
+            // Remove existing handler if any
+            const existingHandler = contentArea._modalBackdropHandler;
+            if (existingHandler) {
+                contentArea.removeEventListener('click', existingHandler);
+            }
+            // Create new handler
+            const handler = (e) => {
+                const sidebar = document.getElementById('packetDetailsSidebar');
+                if (sidebar && contentArea.classList.contains('has-selection')) {
+                    // Only close if clicking directly on content area (backdrop), not on sidebar
+                    if (e.target === contentArea || e.target.classList.contains('packet-list-panel')) {
+                        const session = this.sessions[0];
+                        if (session) {
+                            window.packetAnalyzerSelectPacket(null);
+                        }
+                    }
+                }
+            };
+            contentArea._modalBackdropHandler = handler;
+            contentArea.addEventListener('click', handler);
+        }
+    }
+
     updatePacketDetails(session) {
         const detailsScroll = document.querySelector('.packet-details-scroll');
         if (!detailsScroll) return;
+        
+        // Update content area class for mobile CSS
+        const contentArea = document.querySelector('.packet-content-area');
+        if (contentArea) {
+            if (session.selectedPacketIndex !== null) {
+                contentArea.classList.add('has-selection');
+            } else {
+                contentArea.classList.remove('has-selection');
+            }
+        }
         
         if (session.selectedPacketIndex !== null && session.packets[session.selectedPacketIndex]) {
             detailsScroll.innerHTML = this.renderPacketDetails(session.packets[session.selectedPacketIndex]);
@@ -784,6 +826,9 @@ export class PacketAnalyzerPage {
         window.packetAnalyzerInstance = this;
         this.attachGlobalHandlers();
         await this.loadInterfaces();
+        
+        // Setup mobile touch scrolling
+        this.setupMobileTouchScrolling();
         
         // Initialize virtual scroll after render
         setTimeout(() => {
@@ -941,6 +986,16 @@ export class PacketAnalyzerPage {
                 // Update selected index
                 session.selectedPacketIndex = index;
                 
+                // Update content area class for mobile CSS
+                const contentArea = document.querySelector('.packet-content-area');
+                if (contentArea) {
+                    if (index !== null) {
+                        contentArea.classList.add('has-selection');
+                    } else {
+                        contentArea.classList.remove('has-selection');
+                    }
+                }
+                
                 // Update row selection styling
                 const allRows = document.querySelectorAll('.packet-row');
                 allRows.forEach(row => row.classList.remove('selected'));
@@ -979,14 +1034,17 @@ export class PacketAnalyzerPage {
             // Check if user is at bottom
             this.isAtBottom = (scrollHeight - scrollTop - clientHeight) < 50;
 
+            // On mobile, use immediate rendering for better touch responsiveness
+            const isMobile = window.innerWidth <= 768;
+            
             // Use requestAnimationFrame for smooth rendering during fast scrolling
-            if (this.scrollRafPending) {
-                return; // Already scheduled
+            if (this.scrollRafPending && !isMobile) {
+                return; // Already scheduled (desktop only)
             }
             
             this.scrollRafPending = true;
             requestAnimationFrame(() => {
-                this.renderVirtualRows(session, false);
+                this.renderVirtualRows(session, isMobile); // Immediate on mobile
                 this.scrollRafPending = false;
             });
         };
@@ -1002,7 +1060,7 @@ export class PacketAnalyzerPage {
             // Render immediately on wheel scroll for better responsiveness
             this.renderVirtualRows(session, true);
         };
-
+        
         window.packetAnalyzerClearPackets = async () => {
             const session = this.sessions[0];
             if (session && !session.capturing) {
@@ -1362,6 +1420,9 @@ export class PacketAnalyzerPage {
             content.innerHTML = html;
             console.log('Rerender - innerHTML set');
             
+            // Setup mobile modal backdrop click handler
+            this.setupMobileModalHandlers();
+            
             // Force a synchronous reflow to ensure DOM is updated
             void content.offsetHeight;
             
@@ -1492,48 +1553,38 @@ export class PacketAnalyzerPage {
         if (!tbody || !panel || !session) return;
 
         const filteredPackets = this.getFilteredPackets(session);
+        const totalCount = filteredPackets.length;
         
         // If no packets, set height to 0 and return
-        if (filteredPackets.length === 0) {
+        if (totalCount === 0) {
             tbody.innerHTML = '';
             tbody.style.position = 'relative';
             tbody.style.height = '0px';
             return;
         }
 
+        const isMobile = window.innerWidth <= 768;
         const scrollTop = panel.scrollTop;
         const clientHeight = panel.clientHeight;
         
-        // Calculate visible range with larger buffer for fast scrolling
-        const visibleStart = Math.floor(scrollTop / this.virtualScrollRowHeight);
-        const visibleEnd = Math.ceil((scrollTop + clientHeight) / this.virtualScrollRowHeight);
-        
-        // Use larger buffer for fast scrolling (wheel events) to prevent empty rows
-        const buffer = immediate ? 200 : this.virtualScrollBuffer;
-        const startIndex = Math.max(0, visibleStart - buffer);
-        const endIndex = Math.min(filteredPackets.length, visibleEnd + buffer);
-        
-        // Always re-render on immediate (wheel) scroll, or if range changed significantly
-        const currentStart = this.lastRenderedStart !== null ? Math.floor(this.lastRenderedStart / this.virtualScrollRowHeight) : -1;
-        const currentEnd = this.lastRenderedEnd !== null ? Math.ceil(this.lastRenderedEnd / this.virtualScrollRowHeight) : -1;
-        
-        // Re-render if immediate, or if we're outside the current rendered range
-        const needsRerender = immediate || 
-                             startIndex < currentStart || 
-                             endIndex > currentEnd ||
-                             this.lastRenderedStart === null;
-        
-        if (needsRerender) {
+        // On mobile, render all rows to show full info (no virtual scrolling)
+        if (isMobile) {
             // Clear existing rows
             tbody.innerHTML = '';
+            tbody.style.position = 'relative';
+            tbody.style.height = 'auto';
+            tbody.style.display = 'block';
             
-            // Render visible rows
-            for (let i = startIndex; i < endIndex; i++) {
+            // Use a document fragment for better performance
+            const fragment = document.createDocumentFragment();
+            
+            // Render all rows
+            for (let i = 0; i < totalCount; i++) {
                 const packet = filteredPackets[i];
-                if (!packet) continue; // Safety check
+                if (!packet) continue;
                 
                 const packetIndex = session.packets.indexOf(packet);
-                if (packetIndex === -1) continue; // Packet not found in session
+                if (packetIndex === -1) continue;
                 
                 const protocol = (packet.protocol || 'UNKNOWN').toLowerCase();
                 const time = packet.timestamp ? (packet.timestamp.includes(' ') ? packet.timestamp.split(' ')[1] : packet.timestamp) : '';
@@ -1541,10 +1592,9 @@ export class PacketAnalyzerPage {
                 
                 const row = document.createElement('tr');
                 row.className = `packet-row protocol-${protocol} traffic-${trafficType} ${packetIndex === session.selectedPacketIndex ? 'selected' : ''}`;
-                row.style.transform = `translateY(${i * this.virtualScrollRowHeight}px)`;
-                row.style.position = 'absolute';
+                row.style.position = 'relative';
                 row.style.width = '100%';
-                row.style.top = '0';
+                
                 row.dataset.packetIndex = packetIndex;
                 row.onclick = () => window.packetAnalyzerSelectPacket(packetIndex);
                 
@@ -1553,23 +1603,92 @@ export class PacketAnalyzerPage {
                     .filter(col => col.enabled)
                     .map(col => {
                         const value = this.getColumnValue(packet, col.id, time);
-                        return `<td style="width: ${col.width}">${value}</td>`;
+                        const style = col.width === 'auto' ? 'flex: 1;' : `width: ${col.width}; min-width: ${col.width}; max-width: ${col.width};`;
+                        return `<td style="${style}">${value}</td>`;
                     })
                     .join('');
                 
                 row.innerHTML = cells;
-                
-                tbody.appendChild(row);
+                fragment.appendChild(row);
             }
             
-            // Store rendered range
-            this.lastRenderedStart = startIndex * this.virtualScrollRowHeight;
-            this.lastRenderedEnd = endIndex * this.virtualScrollRowHeight;
+            tbody.appendChild(fragment);
+            this.lastStartIndex = 0;
+            this.lastEndIndex = totalCount;
+            return;
         }
+        
+        // Desktop: use virtual scrolling with fixed row height
+        const rowHeight = 32; // Force a consistent row height (matching CSS)
+        
+        // Calculate visible range
+        const visibleCount = Math.ceil(clientHeight / rowHeight);
+        const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - 20); // 20 rows buffer
+        const endIndex = Math.min(totalCount, startIndex + visibleCount + 40); // 40 rows buffer
+        
+        // Only re-render if the range changed or forced
+        if (!immediate && this.lastStartIndex === startIndex && this.lastEndIndex === endIndex && !this.forceRerender) {
+            // Still update tbody height to be safe
+            tbody.style.height = `${totalCount * rowHeight}px`;
+            return;
+        }
+
+        this.lastStartIndex = startIndex;
+        this.lastEndIndex = endIndex;
+        this.forceRerender = false;
+
+        // Clear existing rows
+        tbody.innerHTML = '';
+        
+        // Use a document fragment for better performance
+        const fragment = document.createDocumentFragment();
+        
+        // Render visible rows
+        for (let i = startIndex; i < endIndex; i++) {
+            const packet = filteredPackets[i];
+            if (!packet) continue;
+            
+            const packetIndex = session.packets.indexOf(packet);
+            if (packetIndex === -1) continue;
+            
+            const protocol = (packet.protocol || 'UNKNOWN').toLowerCase();
+            const time = packet.timestamp ? (packet.timestamp.includes(' ') ? packet.timestamp.split(' ')[1] : packet.timestamp) : '';
+            const trafficType = this.getTrafficType(packet);
+            
+            const row = document.createElement('tr');
+            row.className = `packet-row protocol-${protocol} traffic-${trafficType} ${packetIndex === session.selectedPacketIndex ? 'selected' : ''}`;
+            
+            // Critical for virtual scroll: absolute positioning with top
+            row.style.position = 'absolute';
+            row.style.top = `${i * rowHeight}px`;
+            row.style.left = '0';
+            row.style.right = '0';
+            row.style.height = `${rowHeight}px`;
+            row.style.width = '100%';
+            
+            row.dataset.packetIndex = packetIndex;
+            row.onclick = () => window.packetAnalyzerSelectPacket(packetIndex);
+            
+            // Build row with enabled columns
+            const cells = this.availableColumns
+                .filter(col => col.enabled)
+                .map(col => {
+                    const value = this.getColumnValue(packet, col.id, time);
+                    const style = col.width === 'auto' ? 'flex: 1;' : `width: ${col.width}; min-width: ${col.width}; max-width: ${col.width};`;
+                    return `<td style="${style}">${value}</td>`;
+                })
+                .join('');
+            
+            row.innerHTML = cells;
+            fragment.appendChild(row);
+        }
+        
+        tbody.appendChild(fragment);
         
         // Always update tbody height to maintain scroll
         tbody.style.position = 'relative';
-        tbody.style.height = `${filteredPackets.length * this.virtualScrollRowHeight}px`;
+        tbody.style.height = `${totalCount * rowHeight}px`;
+        tbody.style.display = 'block';
     }
 
     addPacketToTable(packet, session) {

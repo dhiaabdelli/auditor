@@ -7,11 +7,11 @@
     max-width: 100% !important;
     position: fixed;
     background: #0f172a;
-    top: 90px;
+    top: 45px; /* Just header on desktop */
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(100vh - 90px);
+    height: calc(100vh - 45px);
     padding-bottom: 56px !important;
     box-sizing: border-box;
     display: flex;
@@ -20,11 +20,24 @@
     z-index: 50;
 }
 
-body:not(.has-sub-navbar) .page-container-full:has(.ping-tracer-full-container) {
-    top: 50px;
-    height: calc(100vh - 50px);
+body.has-sub-navbar .page-container-full:has(.ping-tracer-full-container) {
+    top: 81px; /* Header (45px) + sub-navbar (36px) */
+    height: calc(100vh - 81px);
     padding-bottom: 56px !important;
     box-sizing: border-box;
+}
+
+/* On mobile, account for page navbar */
+@media (max-width: 768px) {
+    .page-container-full:has(.ping-tracer-full-container) {
+        top: 45px; /* Header only (no page-navbar) */
+        height: calc(100vh - 45px);
+    }
+
+    body.has-sub-navbar .page-container-full:has(.ping-tracer-full-container) {
+        top: 81px; /* Header (45px) + sub-navbar (36px) */
+        height: calc(100vh - 81px);
+    }
 }
 
 #main-content:has(.ping-tracer-full-container),
@@ -77,28 +90,37 @@ body:has(.ping-tracer-full-container) {
     flex-direction: column;
 }
 
+/* Hide mobile buttons on desktop */
+.ping-tracer-config-toggle,
+.ping-tracer-form-close {
+    display: none;
+}
+
 .ping-tracer-form-header {
-    padding: 0.625rem 1rem;
+    padding: 0.5rem 0.75rem;
     border-bottom: 1px solid #334155;
     background: #1e293b;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .ping-tracer-form-header h3 {
     margin: 0;
     color: #e2e8f0;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
 }
 
 .ping-tracer-form-header h3 i {
     color: #3b82f6;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
 }
 
 .ping-tracer-form-content {
@@ -114,9 +136,9 @@ body:has(.ping-tracer-full-container) {
 }
 
 .ping-tracer-form .form-group h4 {
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.375rem 0;
     color: #94a3b8;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -124,24 +146,24 @@ body:has(.ping-tracer-full-container) {
 
 .ping-tracer-form label {
     display: block;
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.25rem;
     color: #e2e8f0;
     font-weight: 500;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
 }
 
 .ping-tracer-form label input[type="checkbox"] {
-    margin-right: 0.5rem;
+    margin-right: 0.4rem;
 }
 
 .ping-tracer-form .form-input {
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    padding: 0.4rem 0.6rem;
     background: #1e293b;
     border: 1px solid #334155;
-    border-radius: 6px;
+    border-radius: 5px;
     color: #e2e8f0;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     transition: all 0.2s ease;
     box-sizing: border-box;
 }
@@ -160,15 +182,15 @@ body:has(.ping-tracer-full-container) {
 .ping-tracer-form .form-actions-bottom {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
     margin-top: auto;
-    padding-top: 1rem;
+    padding-top: 0.75rem;
 }
 
 .ping-tracer-form .btn {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 5px;
+    font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -176,7 +198,7 @@ body:has(.ping-tracer-full-container) {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: 0.4rem;
     width: 100%;
 }
 
@@ -210,20 +232,21 @@ body:has(.ping-tracer-full-container) {
     height: 100%;
 }
 
+
 .results-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
     margin-bottom: 0.75rem;
     padding-bottom: 0.75rem;
     border-bottom: 1px solid #334155;
+    flex-shrink: 0;
+    gap: 0.75rem;
 }
 
 .results-header-left {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    flex: 1; /* Allow it to grow */
+    gap: 0.75rem;
 }
 
 .results-header h3 {
@@ -231,6 +254,42 @@ body:has(.ping-tracer-full-container) {
     color: #e2e8f0;
     font-size: 1rem;
     font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.results-header h3 i {
+    color: #3b82f6;
+    font-size: 0.875rem;
+}
+
+/* Mobile config toggle button - show on desktop too but styled differently */
+.mobile-config-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: 1px solid #334155;
+    border-radius: 4px;
+    color: #94a3b8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    margin-right: 0.5rem;
+    padding: 0;
+}
+
+.mobile-config-toggle:hover {
+    background: #1e293b;
+    border-color: #475569;
+    color: #3b82f6;
+}
+
+.mobile-config-toggle i {
+    font-size: 0.75rem;
 }
 
 .discovery-status {
@@ -368,14 +427,285 @@ body:has(.ping-tracer-full-container) {
 }
 
 
+/* Sidebar Overlay */
+.ping-tracer-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out;
+    visibility: hidden;
+}
+
+.ping-tracer-sidebar-overlay.show {
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    pointer-events: all;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
+    .page-container-full:has(.ping-tracer-full-container) {
+        top: 50px;
+        height: calc(100vh - 50px);
+        padding-bottom: 0 !important;
+        overflow: hidden;
+    }
+
     .ping-tracer-split {
-        flex-direction: column;
+        flex-direction: row;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
     }
 
     .ping-tracer-form {
+        position: fixed;
+        top: 45px; /* Start below header (no page-navbar) */
+        left: -320px;
+        width: 320px;
+        height: calc(100vh - 45px - 50px); /* Full height minus header and footer */
+        z-index: 999;
+        transform: translateX(0);
+        border-right: 1px solid #334155;
+        box-shadow: 2px 0 16px rgba(0, 0, 0, 0.4);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Adjust for sub-navbar */
+    body.has-sub-navbar .ping-tracer-form {
+        top: 81px; /* Header (45px) + sub-navbar (36px) */
+        height: calc(100vh - 81px - 50px);
+    }
+
+    .ping-tracer-form.sidebar-open {
+        transform: translateX(320px);
+    }
+
+    .ping-tracer-sidebar-overlay {
+        top: 45px; /* Below header */
+        bottom: 50px;
+    }
+
+    /* Adjust overlay for sub-navbar */
+    body.has-sub-navbar .ping-tracer-sidebar-overlay {
+        top: 81px;
+    }
+
+    .ping-tracer-results {
         width: 100%;
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.75rem;
+    }
+
+
+    .ping-tracer-form-close {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: transparent;
+        border: 1px solid #334155;
+        border-radius: 4px;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+        padding: 0;
+    }
+
+    .ping-tracer-form-close:hover {
+        background: #1e293b;
+        border-color: #475569;
+        color: #ef4444;
+    }
+
+    .ping-tracer-form-close i {
+        font-size: 0.75rem;
+    }
+
+    .ping-tracer-form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .ping-tracer-form-header {
+        padding: 0.5rem 0.75rem;
+        min-height: 40px;
+    }
+
+    .ping-tracer-form-header h3 {
+        font-size: 0.75rem;
+    }
+
+    .ping-tracer-form-content {
+        padding: 0.75rem;
+    }
+
+    .ping-tracer-form .form-group {
+        margin-bottom: 0.625rem;
+    }
+
+    .ping-tracer-form .form-group h4 {
+        margin: 0 0 0.375rem 0;
+        font-size: 0.7rem;
+    }
+
+    .ping-tracer-form label {
+        margin-bottom: 0.25rem;
+        font-size: 0.75rem;
+    }
+
+    .ping-tracer-form label input[type="checkbox"] {
+        margin-right: 0.4rem;
+    }
+
+    .ping-tracer-form .form-input {
+        padding: 0.4rem 0.6rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+    }
+
+    .ping-tracer-form .form-actions-bottom {
+        padding-top: 0.75rem;
+    }
+
+    .ping-tracer-form .btn {
+        padding: 0.4rem 0.75rem;
+        border-radius: 5px;
+        font-size: 0.75rem;
+    }
+
+    .results-header {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #334155;
+        flex-shrink: 0;
+        gap: 0.75rem;
+    }
+
+    .results-header-left {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .results-header h3 {
+        margin: 0;
+        color: #e2e8f0;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .results-header h3 i {
+        color: #3b82f6;
+        font-size: 0.875rem;
+    }
+
+    .results-stats {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 0.875rem;
+        color: #94a3b8;
+    }
+
+    .discovery-status {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 0.8125rem;
+        color: #3b82f6;
+        font-weight: 500;
+    }
+
+    .graphs-container {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .hop-graph {
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .hop-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .graph-canvas {
+        height: 40px;
+    }
+
+    .graphs-empty {
+        min-height: 300px;
+        padding: 1.5rem 1rem;
+    }
+
+    .empty-icon-wrapper {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 1rem;
+    }
+
+    .empty-icon-wrapper i {
+        font-size: 2.5rem;
+    }
+
+    .graphs-empty h3 {
+        font-size: 1.125rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .graphs-empty p {
+        font-size: 0.875rem;
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .ping-tracer-form {
         max-height: 50%;
+    }
+
+    .ping-tracer-form-content {
+        padding: 0.5rem;
+    }
+
+    .ping-tracer-results {
+        padding: 0.5rem;
+    }
+
+    .results-header {
+        gap: 0.5rem;
+    }
+
+    .discovery-status {
+        font-size: 0.7rem;
+    }
+
+    .results-stats {
+        font-size: 0.7rem;
+    }
+
+    .graph-canvas {
+        height: 35px;
     }
 }

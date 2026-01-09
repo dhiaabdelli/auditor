@@ -1007,6 +1007,9 @@ func executeCommandNode(node *AutomationNodeRequest, connectionMap map[string][]
 
 	switch shell {
 	case "powershell":
+		if runtime.GOOS != "windows" {
+			return nil, fmt.Errorf("PowerShell is only available on Windows")
+		}
 		if resolvedHost != "" && resolvedHost != "localhost" && resolvedHost != "127.0.0.1" {
 			// Remote PowerShell execution
 			cmdName = "powershell.exe"
@@ -1017,6 +1020,9 @@ func executeCommandNode(node *AutomationNodeRequest, connectionMap map[string][]
 			cmdArgs = []string{"-Command", resolvedCommand}
 		}
 	case "cmd":
+		if runtime.GOOS != "windows" {
+			return nil, fmt.Errorf("CMD is only available on Windows")
+		}
 		if resolvedHost != "" && resolvedHost != "localhost" && resolvedHost != "127.0.0.1" {
 			// Remote CMD execution (requires psexec or similar)
 			return nil, fmt.Errorf("remote CMD execution not directly supported, use PowerShell or SSH")

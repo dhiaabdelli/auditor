@@ -21,6 +21,11 @@ import (
 	"network-script-generator/internal/security"
 )
 
+// staticFileSystem returns an http.FileSystem for serving static files
+func staticFileSystem() http.FileSystem {
+	return http.Dir("static")
+}
+
 func main() {
 	/*cfg, err := license.GetLicenseConfig()
 	if err != nil {
@@ -51,17 +56,6 @@ func main() {
 		// Close database connection
 		if database.DB != nil {
 			database.DB.Close()
-		}
-
-		// Encrypt database on shutdown
-		log.Println("Shutting down - encrypting database...")
-		if err := database.EncryptDatabase(); err != nil {
-			log.Printf("Error encrypting database on shutdown: %v", err)
-		}
-
-		// Cleanup temporary files
-		if err := database.CleanupDatabase(); err != nil {
-			log.Printf("Error cleaning up database: %v", err)
 		}
 	}()
 

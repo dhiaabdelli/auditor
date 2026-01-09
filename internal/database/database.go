@@ -137,12 +137,6 @@ func InitDatabase() error {
 		log.Printf("Warning: Failed to ensure database security: %v", err)
 	}
 
-	// Decrypt database if encrypted
-	if err := DecryptDatabase(); err != nil {
-		log.Printf("Warning: Failed to decrypt database: %v", err)
-		// Continue anyway - might be first run
-	}
-
 	var err error
 	// Open database with connection string that includes PRAGMA settings
 	dbPath := GetDatabasePath()

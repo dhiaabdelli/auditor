@@ -11,11 +11,16 @@ export class IPScannerPage {
         return `
             <div class="page-container-full">
                 <div class="ip-scanner-full-container">
-                <div class="ip-scanner-split">
-                    <div class="ip-scanner-form">
-                        <div class="ip-scanner-form-header">
-                            <h3><i class="fas fa-cog"></i> Configuration</h3>
-                        </div>
+                    <!-- Sidebar Overlay (Mobile) -->
+                    <div class="ip-scanner-sidebar-overlay" id="ip-scanner-overlay" onclick="ipScannerInstance.closeConfigSidebar()"></div>
+                    <div class="ip-scanner-split">
+                        <div class="ip-scanner-form" id="ip-scanner-form">
+                            <div class="ip-scanner-form-header">
+                                <h3><i class="fas fa-cog"></i> Configuration</h3>
+                                <button class="ip-scanner-form-close" id="ip-scanner-form-close" onclick="ipScannerInstance.closeConfigSidebar()" title="Close">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         <div class="ip-scanner-form-content">
                             <div class="form-group">
                             <label for="ip-range">IP Range</label>
@@ -104,23 +109,18 @@ export class IPScannerPage {
 
                     <div class="ip-scanner-results">
                         <div class="results-header" id="results-header" style="display: none;">
-                            <div class="results-header-left">
-                                <div class="results-header-top">
-                                    <h3>Scan Results</h3>
-                                    <div class="results-stats" id="results-stats">
-                                        <span>Total: <strong id="total-count">0</strong></span>
-                                        <span>Online: <strong id="online-count" style="color: #10b981;">0</strong></span>
-                                        <span>Offline: <strong id="offline-count" style="color: #ef4444;">0</strong></span>
-                                    </div>
+                            <div class="scan-status-inline" id="scan-status-inline" style="display: none;">
+                                <span class="scan-status-text" id="scan-status-text">Scanning...</span>
+                            </div>
+                            <div class="scan-progress-inline" id="scan-progress-inline" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
                                 </div>
-                                <div class="scan-status-inline" id="scan-status-inline" style="display: none;">
-                                    <span class="scan-status-text" id="scan-status-text">Scanning...</span>
-                                </div>
-                                <div class="scan-progress-inline" id="scan-progress-inline" style="display: none;">
-                                    <div class="progress-bar">
-                                        <div class="progress-fill" id="progress-fill"></div>
-                                    </div>
-                                </div>
+                            </div>
+                            <div class="results-stats" id="results-stats">
+                                <span>Total: <strong id="total-count">0</strong></span>
+                                <span>Online: <strong id="online-count" style="color: #10b981;">0</strong></span>
+                                <span>Offline: <strong id="offline-count" style="color: #ef4444;">0</strong></span>
                             </div>
                         </div>
 
@@ -164,6 +164,24 @@ export class IPScannerPage {
                 </div>
             </div>
         `;
+    }
+
+    toggleConfigSidebar() {
+        const form = document.getElementById('ip-scanner-form');
+        const overlay = document.getElementById('ip-scanner-overlay');
+        if (form && overlay) {
+            form.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    closeConfigSidebar() {
+        const form = document.getElementById('ip-scanner-form');
+        const overlay = document.getElementById('ip-scanner-overlay');
+        if (form && overlay) {
+            form.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
     }
 
     mount() {

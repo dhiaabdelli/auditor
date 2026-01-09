@@ -28,11 +28,16 @@ export class PingTracerPage {
         return `
             <div class="page-container-full">
                 <div class="ping-tracer-full-container">
+                    <!-- Sidebar Overlay (Mobile) -->
+                    <div class="ping-tracer-sidebar-overlay" id="ping-tracer-overlay" onclick="pingTracerInstance.closeConfigSidebar()"></div>
                     <div class="ping-tracer-split">
                         <!-- Left Side: Configuration -->
-                        <div class="ping-tracer-form">
+                        <div class="ping-tracer-form" id="ping-tracer-form">
                             <div class="ping-tracer-form-header">
                                 <h3><i class="fas fa-cog"></i> Configuration</h3>
+                                <button class="ping-tracer-form-close" id="ping-tracer-form-close" onclick="pingTracerInstance.closeConfigSidebar()" title="Close">
+                                    <i class="fas fa-times"></i>
+                                </button>
                             </div>
                             <div class="ping-tracer-form-content">
                                 <div class="form-group">
@@ -157,14 +162,11 @@ export class PingTracerPage {
                         <!-- Right Side: Graphs and Results -->
                         <div class="ping-tracer-results">
                             <div class="results-header" id="results-header">
-                                <div class="results-header-left">
-                                    <h3>Ping Tracer</h3>
-                                    <div id="discovery-status" class="discovery-status" style="display: none;">
-                                        <div class="discovery-spinner"></div>
-                                        <span>Discovering network path...</span>
-                                        <div class="discovery-progress-bar">
-                                            <div class="discovery-progress-value"></div>
-                                        </div>
+                                <div id="discovery-status" class="discovery-status" style="display: none;">
+                                    <div class="discovery-spinner"></div>
+                                    <span>Discovering network path...</span>
+                                    <div class="discovery-progress-bar">
+                                        <div class="discovery-progress-value"></div>
                                     </div>
                                 </div>
                                 <div class="results-stats" id="results-stats">
@@ -216,6 +218,7 @@ export class PingTracerPage {
             alert('Please enter a host');
             return;
         }
+
 
         // Stop any existing scan first
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -699,6 +702,28 @@ export class PingTracerPage {
         const totalFailedEl = document.getElementById('total-failed');
         if (totalSuccessfulEl) totalSuccessfulEl.textContent = totalSuccessful;
         if (totalFailedEl) totalFailedEl.textContent = totalFailed;
+    }
+
+    toggleConfigSidebar() {
+        const form = document.getElementById('ping-tracer-form');
+        const overlay = document.getElementById('ping-tracer-overlay');
+        if (form && overlay) {
+            form.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    closeConfigSidebar() {
+        const form = document.getElementById('ping-tracer-form');
+        const overlay = document.getElementById('ping-tracer-overlay');
+        if (form && overlay) {
+            form.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+    }
+
+    async mount() {
+        window.pingTracerInstance = this;
     }
 
 }

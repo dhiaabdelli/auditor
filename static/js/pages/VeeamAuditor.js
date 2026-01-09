@@ -4,6 +4,9 @@ export class VeeamAuditorPage {
         this.reportId = null;
         this.loading = false;
         this.currentLanguage = localStorage.getItem('language') || 'en';
+        this.activeView = 'overview'; // 'overview', 'license', 'database', 'backup-jobs', 'repositories', 'sobrs', 'proxies', 'wan-accelerators', 'managed-servers', 'restore-points'
+        this.showRestorePointDetailsModalFlag = false;
+        this.selectedRestorePointDetails = null;
         this.translations = {
             en: {
                 title: 'Veeam Backup & Replication Audit',
@@ -121,16 +124,9 @@ export class VeeamAuditorPage {
         if (this.loading) {
             return `
                 <div class="page-container-full">
-                    <div class="page-header">
-                        <div class="page-header-content">
-                            <div>
-                                <h1 class="page-title">☁️ ${this.t('title')}</h1>
-                                <p class="page-subtitle">${this.t('loading')}</p>
-                            </div>
-                        </div>
-                    </div>
                     <div class="loading-container">
                         <div class="spinner"></div>
+                        <p>${this.t('loading') || 'Loading...'}</p>
                     </div>
                 </div>
             `;
@@ -139,38 +135,14 @@ export class VeeamAuditorPage {
         if (!this.reportData) {
             return `
                 <div class="page-container-full">
-                    <div class="page-header">
-                        <div class="page-header-content">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <button class="btn btn-icon" onclick="veeamAuditorInstance.goBack()">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
-                                <div>
-                                    <h1 class="page-title">☁️ ${this.t('title')}</h1>
-                                    <p class="page-subtitle">${this.t('subtitle')}</p>
-                                </div>
-                            </div>
-                            <div class="page-header-actions">
-                                <button type="button" class="btn btn-sm btn-primary" onclick="veeamAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                    <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="veeamAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                    <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success" onclick="veeamAuditorInstance.importReport()" title="Import">
-                                    <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                                </button>
-                                <input type="file" id="veeam-report-file-input" accept=".json" style="display: none;" onchange="veeamAuditorInstance.handleFileSelect(event)">
-                            </div>
-                        </div>
-                    </div>
                     <div class="reports-empty-state">
-                        <i class="fas fa-cloud-upload-alt"></i>
+                        <i class="fas fa-cloud-upload-alt fa-3x"></i>
                         <p>${this.t('noData')}</p>
                         <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
                             Click "Script" to download the PowerShell script, run it on your Veeam server, then click "Import" to upload the JSON output.
                         </p>
                     </div>
+                    <input type="file" id="veeam-report-file-input" accept=".json" style="display: none;" onchange="veeamAuditorInstance.handleFileSelect(event)">
                 </div>
             `;
         }
@@ -178,35 +150,152 @@ export class VeeamAuditorPage {
         const data = this.reportData;
         const veeam = data.veeam || {};
 
+        // Extract data for sidebar counts
+        const licenseInfo = veeam.licenseInfo || {};
+        const backupServerInfo = veeam.backupServerInfo || {};
+        const jobInfo = veeam.jobInfo || {};
+        const repositories = veeam.repositories || [];
+        const sobrs = veeam.sobrs || [];
+        const proxies = veeam.proxies || [];
+        const wanAccelerators = veeam.wanAccelerators || [];
+        const managedServers = veeam.managedServers || [];
+        const jobSessionSummary = veeam.jobSessionSummary || [];
+        const restorePoints = veeam.restorePoints || [];
+
+        // Count jobs
+        let totalJobs = 0;
+        if (jobInfo.backupJobs && Array.isArray(jobInfo.backupJobs)) totalJobs += jobInfo.backupJobs.length;
+        if (jobInfo.replicaJobs && Array.isArray(jobInfo.replicaJobs)) totalJobs += jobInfo.replicaJobs.length;
+        if (jobInfo.fileCopyJobs && Array.isArray(jobInfo.fileCopyJobs)) totalJobs += jobInfo.fileCopyJobs.length;
+        if (jobInfo.backupCopyJobs && Array.isArray(jobInfo.backupCopyJobs)) totalJobs += jobInfo.backupCopyJobs.length;
+        if (jobInfo.fileBackupJobs && Array.isArray(jobInfo.fileBackupJobs)) totalJobs += jobInfo.fileBackupJobs.length;
+        if (jobInfo.tapeJobs && Array.isArray(jobInfo.tapeJobs)) totalJobs += jobInfo.tapeJobs.length;
+
+        // Count total sessions
+        let totalSessions = 0;
+        if (jobSessionSummary && Array.isArray(jobSessionSummary)) {
+            jobSessionSummary.forEach(job => {
+                if (job.Sessions && Array.isArray(job.Sessions)) {
+                    totalSessions += job.Sessions.length;
+                }
+            });
+        }
+
         return `
-            <div class="page-container-full">
-                <div class="page-header">
-                    <div class="page-header-content">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-icon" onclick="veeamAuditorInstance.goBack()">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                            <div>
-                                <h1 class="page-title">☁️ ${this.t('title')}</h1>
-                                <p class="page-subtitle">${data.serverName || 'Veeam Backup & Replication'}</p>
-                            </div>
+            <div class="page-container-full file-share-auditor-layout">
+                <input type="file" id="veeam-report-file-input" accept=".json" style="display: none;" onchange="veeamAuditorInstance.handleFileSelect(event)">
+                <!-- Sidebar Overlay (Mobile) -->
+                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="veeamAuditorInstance.closeSidebar()"></div>
+                <!-- Sidebar Navigation -->
+                <div class="file-share-auditor-sidebar" id="auditor-sidebar">
+                    <div class="file-share-auditor-sidebar-nav">
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('overview')">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Overview</span>
                         </div>
-                        <div class="page-header-actions">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="veeamAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="veeamAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-success" onclick="veeamAuditorInstance.importReport()" title="Import">
-                                <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                            </button>
-                            <input type="file" id="veeam-report-file-input" accept=".json" style="display: none;" onchange="veeamAuditorInstance.handleFileSelect(event)">
+                        ${licenseInfo && Object.keys(licenseInfo).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'license' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('license')">
+                            <i class="fas fa-key"></i>
+                            <span>License</span>
                         </div>
+                        ` : ''}
+                        ${backupServerInfo.databaseType || backupServerInfo.databaseName ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'database' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('database')">
+                            <i class="fas fa-database"></i>
+                            <span>Database</span>
+                        </div>
+                        ` : ''}
+                        ${totalJobs > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'backup-jobs' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('backup-jobs')">
+                            <i class="fas fa-tasks"></i>
+                            <span>Backup Jobs</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${totalJobs})</span>
+                        </div>
+                        ` : ''}
+                        ${repositories.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'repositories' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('repositories')">
+                            <i class="fas fa-hdd"></i>
+                            <span>Repositories</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${repositories.length})</span>
+                        </div>
+                        ` : ''}
+                        ${sobrs.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'sobrs' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('sobrs')">
+                            <i class="fas fa-layer-group"></i>
+                            <span>SOBRs</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${sobrs.length})</span>
+                        </div>
+                        ` : ''}
+                        ${proxies.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'proxies' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('proxies')">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Proxies</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${proxies.length})</span>
+                        </div>
+                        ` : ''}
+                        ${wanAccelerators.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'wan-accelerators' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('wan-accelerators')">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>WAN Accelerators</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${wanAccelerators.length})</span>
+                        </div>
+                        ` : ''}
+                        ${managedServers.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'managed-servers' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('managed-servers')">
+                            <i class="fas fa-server"></i>
+                            <span>Managed Servers</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${managedServers.length})</span>
+                        </div>
+                        ` : ''}
+                        ${totalSessions > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'sessions' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('sessions')">
+                            <i class="fas fa-history"></i>
+                            <span>Session Logs</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${totalSessions})</span>
+                        </div>
+                        ` : ''}
+                        ${restorePoints.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'restore-points' ? 'active' : ''}" 
+                             onclick="veeamAuditorInstance.switchView('restore-points')">
+                            <i class="fas fa-clock"></i>
+                            <span>Restore Points</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${restorePoints.length})</span>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
+                <!-- Main Content -->
+                <div class="file-share-auditor-main">
+                    ${this.activeView === 'license' ? this.renderLicenseView(licenseInfo) :
+                      this.activeView === 'database' ? this.renderDatabaseView(backupServerInfo) :
+                      this.activeView === 'backup-jobs' ? this.renderBackupJobsView(jobInfo) :
+                      this.activeView === 'repositories' ? this.renderRepositoriesView(repositories) :
+                      this.activeView === 'sobrs' ? this.renderSOBRsView(sobrs) :
+                      this.activeView === 'proxies' ? this.renderProxiesView(proxies) :
+                      this.activeView === 'wan-accelerators' ? this.renderWANAcceleratorsView(wanAccelerators) :
+                      this.activeView === 'managed-servers' ? this.renderManagedServersView(managedServers) :
+                      this.activeView === 'restore-points' ? this.renderRestorePointsView(restorePoints) :
+                      this.activeView === 'sessions' ? this.renderSessionsView(jobSessionSummary) :
+                      this.renderOverviewView(veeam, data)}
+                    ${this.showRestorePointDetailsModalFlag ? this.renderRestorePointDetailsModal() : ''}
+                </div>
+            </div>
+        `;
+    }
 
-                <div class="audit-content" style="padding: 0; margin: 0; width: 100%; max-width: 100%;">
+    renderOverviewView(veeam, data) {
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
                     ${veeam.installed !== false ? `
                             
                             ${veeam.error ? `
@@ -718,6 +807,82 @@ export class VeeamAuditorPage {
                                 </div>
                             ` : ''}
 
+                            ${veeam.complianceSummary && veeam.complianceTable ? `
+                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
+                                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-shield-alt" style="color: #10b981;"></i>Security & Compliance
+                                    </h2>
+                                    
+                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
+                                        <div style="background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                                            <h3 style="color: #f8fafc; font-size: 0.95rem; margin-bottom: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 0.5rem;">Best Practices</h3>
+                                            <div style="position: relative; width: 100%; height: 200px;">
+                                                <canvas id="complianceChart" style="width: 100%; height: 100%; display: block;"></canvas>
+                                            </div>
+                                        </div>
+                                        <div style="background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
+                                            <h3 style="color: #f8fafc; font-size: 0.95rem; margin-bottom: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 0.5rem;">Summary</h3>
+                                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
+                                                <div style="padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.375rem; border: 1px solid rgba(16, 185, 129, 0.3);">
+                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Passed</div>
+                                                    <div style="color: #10b981; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.passed || 0}</div>
+                                                </div>
+                                                <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.375rem; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Not Implemented</div>
+                                                    <div style="color: #ef4444; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.notImplemented || 0}</div>
+                                                </div>
+                                                <div style="padding: 0.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 0.375rem; border: 1px solid rgba(59, 130, 246, 0.3);">
+                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Unable to Detect</div>
+                                                    <div style="color: #3b82f6; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.unableToDetect || 0}</div>
+                                                </div>
+                                                <div style="padding: 0.5rem; background: rgba(245, 158, 11, 0.1); border-radius: 0.375rem; border: 1px solid rgba(245, 158, 11, 0.3);">
+                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Suppressed</div>
+                                                    <div style="color: #f59e0b; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.suppressed || 0}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
+                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Best Practice</th>
+                                                    <th style="padding: 0.4rem; text-align: center; width: 140px; font-size: 0.8rem;">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${Array.isArray(veeam.complianceTable) && veeam.complianceTable.length > 0 ? veeam.complianceTable.map(item => {
+                                                    let statusColor = '#94a3b8'; // Default gray
+                                                    let bgColor = 'rgba(148, 163, 184, 0.1)';
+                                                    if (item.status === 'Passed') {
+                                                        statusColor = '#10b981'; // Green
+                                                        bgColor = 'rgba(16, 185, 129, 0.1)';
+                                                    } else if (item.status === 'Not Implemented') {
+                                                        statusColor = '#ef4444'; // Red
+                                                        bgColor = 'rgba(239, 68, 68, 0.1)';
+                                                    } else if (item.status === 'Suppressed') {
+                                                        statusColor = '#f59e0b'; // Orange
+                                                        bgColor = 'rgba(245, 158, 11, 0.1)';
+                                                    } else if (item.status === 'Unable to detect' || item.status === 'Unable to Detect') {
+                                                        statusColor = '#3b82f6'; // Blue
+                                                        bgColor = 'rgba(59, 130, 246, 0.1)';
+                                                    }
+                                                    return `
+                                                    <tr>
+                                                        <td style="padding: 0.4rem;">${item.bestPractice || 'N/A'}</td>
+                                                        <td style="padding: 0.4rem; text-align: center;">
+                                                            <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${statusColor}; background-color: ${bgColor}; border: 1px solid ${statusColor}40;">${item.status || 'N/A'}</span>
+                                                        </td>
+                                                    </tr>
+                                                `;
+                                                }).join('') : '<tr><td colspan="2" style="padding: 0.4rem; text-align: center;">No compliance data available</td></tr>'}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ` : ''}
+
                             ${veeam.license ? `
                                 <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
                                     <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
@@ -985,76 +1150,65 @@ export class VeeamAuditorPage {
                                 </div>
                             ` : ''}
 
-                            ${veeam.complianceSummary && veeam.complianceTable ? `
+                            ${veeam.securityCredentials && Array.isArray(veeam.securityCredentials) && veeam.securityCredentials.length > 0 ? `
                                 <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
-                                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-shield-alt" style="color: #10b981;"></i>Security & Compliance
-                                    </h2>
-                                    
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;">
-                                        <div style="background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                            <h3 style="color: #f8fafc; font-size: 0.95rem; margin-bottom: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 0.5rem;">Best Practices</h3>
-                                            <div style="position: relative; width: 100%; height: 200px;">
-                                                <canvas id="complianceChart" style="width: 100%; height: 100%; display: block;"></canvas>
-                                            </div>
-                                        </div>
-                                        <div style="background: linear-gradient(145deg, #1e293b, #0f172a); border-radius: 0.75rem; padding: 1rem; border: 1px solid rgba(148, 163, 184, 0.1); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);">
-                                            <h3 style="color: #f8fafc; font-size: 0.95rem; margin-bottom: 0.75rem; font-weight: 600; border-bottom: 1px solid rgba(148, 163, 184, 0.1); padding-bottom: 0.5rem;">Summary</h3>
-                                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem;">
-                                                <div style="padding: 0.5rem; background: rgba(16, 185, 129, 0.1); border-radius: 0.375rem; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Passed</div>
-                                                    <div style="color: #10b981; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.passed || 0}</div>
-                                                </div>
-                                                <div style="padding: 0.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 0.375rem; border: 1px solid rgba(239, 68, 68, 0.3);">
-                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Not Implemented</div>
-                                                    <div style="color: #ef4444; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.notImplemented || 0}</div>
-                                                </div>
-                                                <div style="padding: 0.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 0.375rem; border: 1px solid rgba(59, 130, 246, 0.3);">
-                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Unable to Detect</div>
-                                                    <div style="color: #3b82f6; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.unableToDetect || 0}</div>
-                                                </div>
-                                                <div style="padding: 0.5rem; background: rgba(245, 158, 11, 0.1); border-radius: 0.375rem; border: 1px solid rgba(245, 158, 11, 0.3);">
-                                                    <div style="color: #94a3b8; font-size: 0.7rem; margin-bottom: 0.25rem;">Suppressed</div>
-                                                    <div style="color: #f59e0b; font-size: 1.1rem; font-weight: 600;">${veeam.complianceSummary.suppressed || 0}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
+                                    <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-key" style="color: #f59e0b;"></i>Security Credentials
+                                    </h3>
+                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.75rem;">The following table provides information about the credentials managed by Veeam Backup & Replication.</p>
                                     <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
                                         <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
                                             <thead>
                                                 <tr>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Best Practice</th>
-                                                    <th style="padding: 0.4rem; text-align: center; width: 140px; font-size: 0.8rem;">Status</th>
+                                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Name</th>
+                                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Description</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                ${Array.isArray(veeam.complianceTable) && veeam.complianceTable.length > 0 ? veeam.complianceTable.map(item => {
-                                                    let statusColor = '#94a3b8'; // Default gray
-                                                    let bgColor = 'rgba(148, 163, 184, 0.1)';
-                                                    if (item.status === 'Passed') {
-                                                        statusColor = '#10b981'; // Green
-                                                        bgColor = 'rgba(16, 185, 129, 0.1)';
-                                                    } else if (item.status === 'Not Implemented') {
-                                                        statusColor = '#ef4444'; // Red
-                                                        bgColor = 'rgba(239, 68, 68, 0.1)';
-                                                    } else if (item.status === 'Suppressed') {
-                                                        statusColor = '#f59e0b'; // Orange
-                                                        bgColor = 'rgba(245, 158, 11, 0.1)';
-                                                    } else if (item.status === 'Unable to detect' || item.status === 'Unable to Detect') {
-                                                        statusColor = '#3b82f6'; // Blue
-                                                        bgColor = 'rgba(59, 130, 246, 0.1)';
-                                                    }
+                                                ${veeam.securityCredentials.map(cred => `
+                                                    <tr>
+                                                        <td style="padding: 0.5rem; color: #e2e8f0;">${cred.name || 'N/A'}</td>
+                                                        <td style="padding: 0.5rem; color: #e2e8f0;">${cred.description || 'N/A'}</td>
+                                                    </tr>
+                                                `).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                            ${veeam.servicesStatus && Array.isArray(veeam.servicesStatus) && veeam.servicesStatus.length > 0 ? `
+                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
+                                    <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                        <i class="fas fa-cogs" style="color: #8b5cf6;"></i>HealthCheck - Services Status
+                                    </h3>
+                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
+                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Display Name</th>
+                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Short Name</th>
+                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                ${veeam.servicesStatus.map(service => {
+                                                    const isRunning = service.status && service.status.toLowerCase() === 'running';
+                                                    const statusColor = isRunning ? '#10b981' : '#ef4444';
+                                                    const bgColor = isRunning ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                                                    const borderColor = isRunning ? '#10b98140' : '#ef444440';
                                                     return `
                                                     <tr>
-                                                        <td style="padding: 0.4rem;">${item.bestPractice || 'N/A'}</td>
-                                                        <td style="padding: 0.4rem; text-align: center;">
-                                                            <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${statusColor}; background-color: ${bgColor}; border: 1px solid ${statusColor}40;">${item.status || 'N/A'}</span>
+                                                        <td style="padding: 0.4rem;">${service.displayName || 'N/A'}</td>
+                                                        <td style="padding: 0.4rem;">${service.shortName || 'N/A'}</td>
+                                                        <td style="padding: 0.4rem;">
+                                                            <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${statusColor}; background-color: ${bgColor}; border: 1px solid ${borderColor};">
+                                                                ${service.status || 'N/A'}
+                                                            </span>
                                                         </td>
                                                     </tr>
                                                 `;
-                                                }).join('') : '<tr><td colspan="2" style="padding: 0.4rem; text-align: center;">No compliance data available</td></tr>'}
+                                                }).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1290,452 +1444,10 @@ export class VeeamAuditorPage {
                                     </div>
                                 </div>
                             ` : ''}
-                                    
-                                    ${(() => {
-                                        // Helper function to format boolean values
-                                        const formatBoolean = (value) => {
-                                            // Check if value is explicitly set (not null/undefined)
-                                            if (value === null || value === undefined) return 'N/A';
-                                            if (value === true || value === 'true' || value === 'True' || value === 1 || value === '1') return 'Yes';
-                                            if (value === false || value === 'false' || value === 'False' || value === 0 || value === '0') return 'No';
-                                            return 'N/A';
-                                        };
-                                        
-                                        // Helper function to render regular job row (non-tape)
-                                        const renderJobRow = (job, jobType) => {
-                                            const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
-                                                             (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
-                                                             (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
-                                                             (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
-                                            
-                                            let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
-                                            if (typeof lastResult === 'number') {
-                                                if (lastResult === 0) lastResult = 'Success';
-                                                else if (lastResult === 1) lastResult = 'Warning';
-                                                else if (lastResult === 2) lastResult = 'Failed';
-                                                else lastResult = 'None';
-                                            }
-                                            if (typeof lastResult === 'string') {
-                                                lastResult = lastResult.trim();
-                                                if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
-                                                    lastResult = 'None';
-                                                }
-                                            }
-                                            let resultColor = '#94a3b8';
-                                            let resultBg = 'rgba(148, 163, 184, 0.1)';
-                                            const lastResultLower = String(lastResult).toLowerCase();
-                                            if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
-                                                resultColor = '#10b981';
-                                                resultBg = 'rgba(16, 185, 129, 0.1)';
-                                                lastResult = 'Success';
-                                            } else if (lastResultLower === 'warning' || lastResultLower === '1') {
-                                                resultColor = '#f59e0b';
-                                                resultBg = 'rgba(245, 158, 11, 0.1)';
-                                                lastResult = 'Warning';
-                                            } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
-                                                resultColor = '#ef4444';
-                                                resultBg = 'rgba(239, 68, 68, 0.1)';
-                                                lastResult = 'Failed';
-                                            } else {
-                                                lastResult = 'None';
-                                            }
-                                            
-                                            // Get all job properties
-                                            const repository = job.Repository || job.repository || 'N/A';
-                                            const sourceSize = job.SourceSize || job.sourceSize || 'N/A';
-                                            const retentionScheme = job.RetentionScheme || job.retentionScheme || 'N/A';
-                                            const restorePoints = job.RestorePoints || job.restorePoints || 'N/A';
-                                            const encrypted = formatBoolean(job.Encrypted || job.encrypted);
-                                            const compressionLevel = job.CompressionLevel || job.compressionLevel || 'N/A';
-                                            const blockSize = job.BlockSize || job.blockSize || 'N/A';
-                                            const gfsEnabled = formatBoolean(job.GfsEnabled || job.gfsEnabled);
-                                            const gfsRetention = job.GfsRetention || job.gfsRetention || 'N/A';
-                                            const activeFullEnabled = formatBoolean(job.ActiveFullEnabled || job.activeFullEnabled);
-                                            // Check multiple property name variations for SyntheticFullEnabled
-                                            let syntheticFullEnabledValue = null;
-                                            if (job.hasOwnProperty('SyntheticFullEnabled')) {
-                                                syntheticFullEnabledValue = job.SyntheticFullEnabled;
-                                            } else if (job.hasOwnProperty('syntheticFullEnabled')) {
-                                                syntheticFullEnabledValue = job.syntheticFullEnabled;
-                                            } else if (job.hasOwnProperty('SyntheticFull')) {
-                                                syntheticFullEnabledValue = job.SyntheticFull;
-                                            } else if (job.hasOwnProperty('syntheticFull')) {
-                                                syntheticFullEnabledValue = job.syntheticFull;
-                                            }
-                                            const syntheticFullEnabled = formatBoolean(syntheticFullEnabledValue);
-                                            const backupChainType = job.BackupChainType || job.backupChainType || 'N/A';
-                                            const indexingEnabled = formatBoolean(job.IndexingEnabled || job.indexingEnabled);
-                                            
-                                            // Encode job data for click handler
-                                            const jobData = encodeURIComponent(JSON.stringify(job));
-                                            
-                                            return `
-                                                <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
-                                                    <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
-                                                    <td style="padding: 0.4rem;">${repository}</td>
-                                                    <td style="padding: 0.4rem;">${sourceSize}</td>
-                                                    <td style="padding: 0.4rem;">${retentionScheme}</td>
-                                                    <td style="padding: 0.4rem;">${restorePoints}</td>
-                                                    <td style="padding: 0.4rem;">${encrypted}</td>
-                                                    <td style="padding: 0.4rem;">${jobType}</td>
-                                                    <td style="padding: 0.4rem;">${compressionLevel}</td>
-                                                    <td style="padding: 0.4rem;">${blockSize}</td>
-                                                    <td style="padding: 0.4rem;">${gfsEnabled}</td>
-                                                    <td style="padding: 0.4rem;">${gfsRetention}</td>
-                                                    <td style="padding: 0.4rem;">${activeFullEnabled}</td>
-                                                    <td style="padding: 0.4rem;">${syntheticFullEnabled}</td>
-                                                    <td style="padding: 0.4rem;">${backupChainType}</td>
-                                                    <td style="padding: 0.4rem;">${indexingEnabled}</td>
-                                                    <td style="padding: 0.4rem;">
-                                                        <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
-                                                            ${lastResult}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            `;
-                                        };
-                                        
-                                        // Helper function to render tape job row
-                                        const renderTapeJobRow = (job, jobType) => {
-                                            const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
-                                                             (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
-                                                             (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
-                                                             (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
-                                            
-                                            let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
-                                            if (typeof lastResult === 'number') {
-                                                if (lastResult === 0) lastResult = 'Success';
-                                                else if (lastResult === 1) lastResult = 'Warning';
-                                                else if (lastResult === 2) lastResult = 'Failed';
-                                                else lastResult = 'None';
-                                            }
-                                            if (typeof lastResult === 'string') {
-                                                lastResult = lastResult.trim();
-                                                if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
-                                                    lastResult = 'None';
-                                                }
-                                            }
-                                            let resultColor = '#94a3b8';
-                                            let resultBg = 'rgba(148, 163, 184, 0.1)';
-                                            const lastResultLower = String(lastResult).toLowerCase();
-                                            if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
-                                                resultColor = '#10b981';
-                                                resultBg = 'rgba(16, 185, 129, 0.1)';
-                                                lastResult = 'Success';
-                                            } else if (lastResultLower === 'warning' || lastResultLower === '1') {
-                                                resultColor = '#f59e0b';
-                                                resultBg = 'rgba(245, 158, 11, 0.1)';
-                                                lastResult = 'Warning';
-                                            } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
-                                                resultColor = '#ef4444';
-                                                resultBg = 'rgba(239, 68, 68, 0.1)';
-                                                lastResult = 'Failed';
-                                            } else {
-                                                lastResult = 'None';
-                                            }
-                                            
-                                            const isScheduleEnabled = (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1) ||
-                                                                       (job.isScheduleEnabled === true || job.isScheduleEnabled === 'true' || job.isScheduleEnabled === 'True' || job.isScheduleEnabled === 1);
-                                            const nextRun = job.NextRun || job.nextRun || job.NextRunTime || (job.ScheduleOptions && job.ScheduleOptions.NextRun) || null;
-                                            const hasNextRun = nextRun && nextRun !== 'N/A' && nextRun !== null && nextRun !== '' && nextRun !== 'null' && nextRun !== 'undefined' && nextRun !== '0001-01-01 00:00:00';
-                                            
-                                            // Get tape job specific properties
-                                            const mediaPoolFull = job.MediaPoolFull || job.mediaPoolFull || job.MediaPool || job.mediaPool || 'N/A';
-                                            const incrementalEnabled = formatBoolean(job.IncrementalEnabled || job.incrementalEnabled);
-                                            const mediaPoolIncremental = job.MediaPoolIncremental || job.mediaPoolIncremental || 'N/A';
-                                            const hardwareCompression = formatBoolean(job.HardwareCompression || job.hardwareCompression);
-                                            const ejectMedium = formatBoolean(job.EjectMedium || job.ejectMedium);
-                                            const exportMediaSet = formatBoolean(job.ExportMediaSet || job.exportMediaSet);
-                                            const jobIsEnabled = formatBoolean(isEnabled);
-                                            
-                                            // Encode job data for click handler
-                                            const jobData = encodeURIComponent(JSON.stringify(job));
-                                            
-                                            return `
-                                                <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
-                                                    <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
-                                                    <td style="padding: 0.4rem;">${mediaPoolFull}</td>
-                                                    <td style="padding: 0.4rem;">${incrementalEnabled}</td>
-                                                    <td style="padding: 0.4rem;">${mediaPoolIncremental}</td>
-                                                    <td style="padding: 0.4rem;">${hardwareCompression}</td>
-                                                    <td style="padding: 0.4rem;">${ejectMedium}</td>
-                                                    <td style="padding: 0.4rem;">${exportMediaSet}</td>
-                                                    <td style="padding: 0.4rem;">${jobIsEnabled}</td>
-                                                    <td style="padding: 0.4rem;">${hasNextRun ? nextRun : 'N/A'}</td>
-                                                    <td style="padding: 0.4rem;">
-                                                        <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
-                                                            ${lastResult}
-                                                        </span>
-                                                    </td>
-                                                </tr>
-                                            `;
-                                        };
-                                        
-                                        // Group jobs by type
-                                        const jobGroups = {
-                                            'Backup Jobs': [],
-                                            'Replica Jobs': [],
-                                            'File Copy Jobs': [],
-                                            'Backup Copy Jobs': [],
-                                            'File Backup Jobs': [],
-                                            'Tape Jobs': []
-                                        };
-                                        
-                                        if (veeam.jobInfo.backupJobs && Array.isArray(veeam.jobInfo.backupJobs)) {
-                                            veeam.jobInfo.backupJobs.forEach(job => {
-                                                let jobType = job.JobType || job.jobType || 'N/A';
-                                                if (jobType === 'Hyper-V Backup' || jobType === 'VMware Backup') {
-                                                    jobGroups['Backup Jobs'].push({ job, jobType });
-                                                } else {
-                                                    jobGroups['Backup Jobs'].push({ job, jobType });
-                                                }
-                                            });
-                                        }
-                                        if (veeam.jobInfo.replicaJobs && Array.isArray(veeam.jobInfo.replicaJobs)) {
-                                            veeam.jobInfo.replicaJobs.forEach(job => {
-                                                jobGroups['Replica Jobs'].push({ job, jobType: 'Replica' });
-                                            });
-                                        }
-                                        if (veeam.jobInfo.fileCopyJobs && Array.isArray(veeam.jobInfo.fileCopyJobs)) {
-                                            veeam.jobInfo.fileCopyJobs.forEach(job => {
-                                                jobGroups['File Copy Jobs'].push({ job, jobType: 'File Copy' });
-                                            });
-                                        }
-                                        if (veeam.jobInfo.backupCopyJobs && Array.isArray(veeam.jobInfo.backupCopyJobs)) {
-                                            veeam.jobInfo.backupCopyJobs.forEach(job => {
-                                                jobGroups['Backup Copy Jobs'].push({ job, jobType: 'Backup Copy' });
-                                            });
-                                        }
-                                        if (veeam.jobInfo.fileBackupJobs && Array.isArray(veeam.jobInfo.fileBackupJobs)) {
-                                            veeam.jobInfo.fileBackupJobs.forEach(job => {
-                                                jobGroups['File Backup Jobs'].push({ job, jobType: 'File Backup' });
-                                            });
-                                        }
-                                        if (veeam.jobInfo.tapeJobs && Array.isArray(veeam.jobInfo.tapeJobs)) {
-                                            veeam.jobInfo.tapeJobs.forEach(job => {
-                                                jobGroups['Tape Jobs'].push({ job, jobType: 'Tape' });
-                                            });
-                                        }
-                                        
-                                        // Render tables for each job type
-                                        let tablesHtml = '';
-                                        Object.keys(jobGroups).forEach(groupName => {
-                                            const jobs = jobGroups[groupName];
-                                            if (jobs.length === 0) return;
-                                            
-                                            // Use different headers and render function for tape jobs
-                                            const isTapeJobs = groupName === 'Tape Jobs';
-                                            
-                                            const headers = isTapeJobs ? `
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Name</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Media Pool - Full</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Incremental Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Media Pool - Incremental</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Hardware Compression</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Eject Medium</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Export Media Set</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Is Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Next Run</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Last Result</th>
-                                            ` : `
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Name</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Repository</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Source Size</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Retention Scheme</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Restore Points</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Encrypted</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Type</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Compression Level</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Block Size</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">GFS Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">GFS Retention</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Active Full Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Synthetic Full Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Backup Chain Type</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Indexing Enabled</th>
-                                                <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Last Result</th>
-                                            `;
-                                            
-                                            tablesHtml += `
-                                                <div style="margin-bottom: 1.5rem;">
-                                                    <h3 style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                                        <i class="fas fa-list" style="color: #8b5cf6;"></i>${groupName} (${jobs.length})
-                                                    </h3>
-                                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
-                                                            <thead>
-                                                                <tr>
-                                                                    ${headers}
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                ${jobs.map(({ job, jobType }) => isTapeJobs ? renderTapeJobRow(job, jobType) : renderJobRow(job, jobType)).join('')}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            `;
-                                        });
-                                        
-                                        return tablesHtml || '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No jobs found</div>';
-                                    })()}
                                 </div>
                             ` : ''}
 
-                            ${veeam.managedServers && Array.isArray(veeam.managedServers) && veeam.managedServers.length > 0 ? `
-                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
-                                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-server" style="color: #8b5cf6;"></i>Managed Server Info
-                                    </h2>
-                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.75rem;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem;">Name</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Cores</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">RAM</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem;">Type</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem;">OS Info</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem;">API Version</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Protected VMs</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Not Protected VMs</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Total VMs</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Is Proxy</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Is Repo</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Is WAN Acc.</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem;">Is Unavailable</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${veeam.managedServers.map(server => {
-                                                    const isProxy = server.isProxy === true || server.isProxy === 'true' || server.isProxy === 'True' || server.isProxy === 1;
-                                                    const isRepo = server.isRepo === true || server.isRepo === 'true' || server.isRepo === 'True' || server.isRepo === 1;
-                                                    const isWANAcc = server.isWANAcc === true || server.isWANAcc === 'true' || server.isWANAcc === 'True' || server.isWANAcc === 1;
-                                                    const isUnavailable = server.isUnavailable === true || server.isUnavailable === 'true' || server.isUnavailable === 'True' || server.isUnavailable === 1;
-                                                    
-                                                    const formatBoolean = (value) => {
-                                                        if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                                        return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                                    };
-                                                    
-                                                    const cores = server.cores || server.Cores || 0;
-                                                    const ram = server.ram || server.RAM || 0;
-                                                    const ramDisplay = ram > 0 ? `${ram} GB` : '0';
-                                                    
-                                                    return `
-                                                        <tr>
-                                                            <td style="padding: 0.4rem;">${server.name || server.Name || 'N/A'}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${cores}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${ramDisplay}</td>
-                                                            <td style="padding: 0.4rem;">${server.type || server.Type || 'N/A'}</td>
-                                                            <td style="padding: 0.4rem;">${server.osInfo || server.OSInfo || server.OsInfo || ''}</td>
-                                                            <td style="padding: 0.4rem;">${server.apiVersion || server.ApiVersion || ''}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${server.protectedVMs || server.ProtectedVMs || 0}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${server.notProtectedVMs || server.NotProtectedVMs || 0}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${server.totalVMs || server.TotalVMs || 0}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${formatBoolean(isProxy)}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${formatBoolean(isRepo)}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${formatBoolean(isWANAcc)}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${formatBoolean(isUnavailable)}</td>
-                                                        </tr>
-                                                    `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            ` : ''}
 
-                            ${veeam.repositories && Array.isArray(veeam.repositories) && veeam.repositories.length > 0 ? `
-                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
-                                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-database" style="color: #8b5cf6;"></i>Standalone Repository Details
-                                    </h2>
-                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.7rem;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem;">Name</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Job Count</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Set Tasks</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Cores</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">RAM</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Auto Gateway</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem;">Host</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem;">Path</th>
-                                                    <th style="padding: 0.4rem; text-align: right; font-size: 0.7rem;">Free Space (TB)</th>
-                                                    <th style="padding: 0.4rem; text-align: right; font-size: 0.7rem;">Total Space (TB)</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Free Space %</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Per-VM</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">DeCompress</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Align Blocks</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Rotated Drives</th>
-                                                    <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem;">Use Immutability</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem;">Type</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${veeam.repositories.map(repo => {
-                                                    const formatBoolean = (value) => {
-                                                        if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                                        return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                                    };
-                                                    
-                                                    const formatWarning = (value) => {
-                                                        if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>';
-                                                        return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                                    };
-                                                    
-                                                    const freeSpaceGB = repo.CachedFreeSpaceGB || repo.cachedFreeSpaceGB || 0;
-                                                    const totalSpaceGB = repo.CachedTotalSpaceGB || repo.cachedTotalSpaceGB || 0;
-                                                    const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
-                                                    const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
-                                                    const freeSpacePercent = repo.FreeSpacePercent || repo.freeSpacePercent || 0;
-                                                    
-                                                    const jobCount = repo.JobCount || repo.jobCount || 0;
-                                                    const setTasks = repo.SetTasks || repo.setTasks || 0;
-                                                    const cores = repo.Cores || repo.cores || 0;
-                                                    const ram = repo.Ram || repo.ram || 0;
-                                                    const ramDisplay = ram > 0 ? `${ram} GB` : '0';
-                                                    
-                                                    const host = repo.Host || repo.host || 'N/A';
-                                                    const path = repo.Path || repo.path || 'N/A';
-                                                    const type = repo.Type || repo.type || 'N/A';
-                                                    
-                                                    const autoGateway = formatBoolean(repo.AutoGateway || repo.autoGateway);
-                                                    const perVM = formatWarning(repo.PerVM || repo.perVM);
-                                                    const decompress = formatBoolean(repo.Decompress || repo.decompress);
-                                                    const alignBlocks = formatBoolean(repo.AlignBlocks || repo.alignBlocks);
-                                                    const rotatedDrives = formatBoolean(repo.RotatedDrives || repo.rotatedDrives);
-                                                    const useImmutability = formatBoolean(repo.UseImmutability || repo.useImmutability);
-                                                    
-                                                    return `
-                                                        <tr>
-                                                            <td style="padding: 0.4rem;">${repo.Name || repo.name || 'N/A'}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${jobCount}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${setTasks}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${cores}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${ramDisplay}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${autoGateway}</td>
-                                                            <td style="padding: 0.4rem;">${host}</td>
-                                                            <td style="padding: 0.4rem;">${path}</td>
-                                                            <td style="padding: 0.4rem; text-align: right;">${freeSpaceTB}</td>
-                                                            <td style="padding: 0.4rem; text-align: right;">${totalSpaceTB}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${freeSpacePercent}%</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${perVM}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${decompress}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${alignBlocks}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${rotatedDrives}</td>
-                                                            <td style="padding: 0.4rem; text-align: center;">${useImmutability}</td>
-                                                            <td style="padding: 0.4rem;">${type}</td>
-                                                        </tr>
-                                                    `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            ` : ''}
 
                             ${veeam.sobrs && Array.isArray(veeam.sobrs) && veeam.sobrs.length > 0 ? `
                                 <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
@@ -1901,44 +1613,6 @@ export class VeeamAuditorPage {
                                 </div>
                             </div>
 
-                            ${veeam.servicesStatus && Array.isArray(veeam.servicesStatus) && veeam.servicesStatus.length > 0 ? `
-                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
-                                    <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-cogs" style="color: #8b5cf6;"></i>HealthCheck - Services Status
-                                    </h3>
-                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Display Name</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Short Name</th>
-                                                    <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${veeam.servicesStatus.map(service => {
-                                                    const isRunning = service.status && service.status.toLowerCase() === 'running';
-                                                    const statusColor = isRunning ? '#10b981' : '#ef4444';
-                                                    const bgColor = isRunning ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-                                                    const borderColor = isRunning ? '#10b98140' : '#ef444440';
-                                                    return `
-                                                    <tr>
-                                                        <td style="padding: 0.4rem;">${service.displayName || 'N/A'}</td>
-                                                        <td style="padding: 0.4rem;">${service.shortName || 'N/A'}</td>
-                                                        <td style="padding: 0.4rem;">
-                                                            <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${statusColor}; background-color: ${bgColor}; border: 1px solid ${borderColor};">
-                                                                ${service.status || 'N/A'}
-                                                            </span>
-                                                        </td>
-                                                    </tr>
-                                                `;
-                                                }).join('')}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            ` : ''}
-
                             ${veeam.enterpriseManager ? `
                                 <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
                                     <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
@@ -1965,33 +1639,6 @@ export class VeeamAuditorPage {
                                                         </span>
                                                     </td>
                                                 </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            ` : ''}
-
-                            ${veeam.securityCredentials && Array.isArray(veeam.securityCredentials) && veeam.securityCredentials.length > 0 ? `
-                                <div style="margin-top: 1.5rem; width: 100%; max-width: 100%;">
-                                    <h3 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
-                                        <i class="fas fa-key" style="color: #f59e0b;"></i>Security Credentials
-                                    </h3>
-                                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.75rem;">The following table provides information about the credentials managed by Veeam Backup & Replication.</p>
-                                    <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
-                                            <thead>
-                                                <tr>
-                                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Name</th>
-                                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Description</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                ${veeam.securityCredentials.map(cred => `
-                                                    <tr>
-                                                        <td style="padding: 0.5rem; color: #e2e8f0;">${cred.name || 'N/A'}</td>
-                                                        <td style="padding: 0.5rem; color: #e2e8f0;">${cred.description || 'N/A'}</td>
-                                                    </tr>
-                                                `).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -2117,13 +1764,727 @@ export class VeeamAuditorPage {
                             <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>Veeam Backup & Replication is not installed on this server.
                         </div>
                     `}
+            </div>
+        `;
+    }
+
+    renderLicenseView(licenseInfo) {
+        // This will be implemented to show license information
+        return `<div class="audit-content" style="padding: 1rem;"><h2>License Information</h2><p>License view coming soon...</p></div>`;
+    }
+
+    renderDatabaseView(backupServerInfo) {
+        // This will be implemented to show database configuration
+        return `<div class="audit-content" style="padding: 1rem;"><h2>Database Configuration</h2><p>Database view coming soon...</p></div>`;
+    }
+
+    renderBackupJobsView(jobInfo) {
+        const veeam = this.reportData?.veeam || {};
+        if (!jobInfo || (!jobInfo.backupJobs && !jobInfo.replicaJobs && !jobInfo.fileCopyJobs && !jobInfo.backupCopyJobs && !jobInfo.fileBackupJobs && !jobInfo.tapeJobs)) {
+            return `<div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;"><div style="padding: 2rem; text-align: center; color: #94a3b8;">No backup jobs found</div></div>`;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                ${(() => {
+                    // Helper function to format boolean values
+                    const formatBoolean = (value) => {
+                        // Check if value is explicitly set (not null/undefined)
+                        if (value === null || value === undefined || value === '') return 'N/A';
+                        // Handle boolean true values
+                        if (value === true || value === 'true' || value === 'True' || value === 1 || value === '1') return 'Yes';
+                        // Handle boolean false values
+                        if (value === false || value === 'false' || value === 'False' || value === 0 || value === '0') return 'No';
+                        // For any other value, try to convert to boolean
+                        const boolValue = Boolean(value);
+                        return boolValue ? 'Yes' : 'No';
+                    };
+                    
+                    // Helper function to render regular job row (non-tape)
+                    const renderJobRow = (job, jobType) => {
+                        const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
+                                         (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
+                                         (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
+                                         (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
+                        
+                        let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
+                        if (typeof lastResult === 'number') {
+                            if (lastResult === 0) lastResult = 'Success';
+                            else if (lastResult === 1) lastResult = 'Warning';
+                            else if (lastResult === 2) lastResult = 'Failed';
+                            else lastResult = 'None';
+                        }
+                        if (typeof lastResult === 'string') {
+                            lastResult = lastResult.trim();
+                            if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
+                                lastResult = 'None';
+                            }
+                        }
+                        let resultColor = '#94a3b8';
+                        let resultBg = 'rgba(148, 163, 184, 0.1)';
+                        const lastResultLower = String(lastResult).toLowerCase();
+                        if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
+                            resultColor = '#10b981';
+                            resultBg = 'rgba(16, 185, 129, 0.1)';
+                            lastResult = 'Success';
+                        } else if (lastResultLower === 'warning' || lastResultLower === '1') {
+                            resultColor = '#f59e0b';
+                            resultBg = 'rgba(245, 158, 11, 0.1)';
+                            lastResult = 'Warning';
+                        } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
+                            resultColor = '#ef4444';
+                            resultBg = 'rgba(239, 68, 68, 0.1)';
+                            lastResult = 'Failed';
+                        } else {
+                            lastResult = 'None';
+                        }
+                        
+                        // Get all job properties
+                        const repository = job.Repository || job.repository || 'N/A';
+                        const sourceSize = job.SourceSize || job.sourceSize || 'N/A';
+                        const retentionScheme = job.RetentionScheme || job.retentionScheme || 'N/A';
+                        const restorePoints = job.RestorePoints || job.restorePoints || 'N/A';
+                        // Get Encrypted - check multiple property names and handle false values
+                        let encryptedValue = job.Encrypted !== undefined ? job.Encrypted : (job.encrypted !== undefined ? job.encrypted : (job.StorageEncryption !== undefined ? job.StorageEncryption : null));
+                        const encrypted = formatBoolean(encryptedValue);
+                        
+                        // Get GfsEnabled - check multiple property names and handle false values
+                        let gfsEnabledValue = job.GfsEnabled !== undefined ? job.GfsEnabled : (job.gfsEnabled !== undefined ? job.gfsEnabled : null);
+                        const gfsEnabled = formatBoolean(gfsEnabledValue);
+                        
+                        // Get GfsRetention - format as Yes/No if it's a boolean, otherwise show the value
+                        let gfsRetentionValue = job.GfsRetention !== undefined ? job.GfsRetention : (job.gfsRetention !== undefined ? job.gfsRetention : null);
+                        let gfsRetention = 'N/A';
+                        if (gfsRetentionValue !== null && gfsRetentionValue !== undefined && gfsRetentionValue !== '') {
+                            // If it's a boolean, format it
+                            if (typeof gfsRetentionValue === 'boolean' || gfsRetentionValue === 'true' || gfsRetentionValue === 'false' || gfsRetentionValue === 'True' || gfsRetentionValue === 'False' || gfsRetentionValue === 1 || gfsRetentionValue === 0) {
+                                gfsRetention = formatBoolean(gfsRetentionValue);
+                            } else {
+                                // Otherwise show the value as is
+                                gfsRetention = String(gfsRetentionValue);
+                            }
+                        }
+                        const activeFullEnabled = formatBoolean(job.ActiveFullEnabled || job.activeFullEnabled);
+                        // Check multiple property name variations for SyntheticFullEnabled
+                        let syntheticFullEnabledValue = null;
+                        if (job.hasOwnProperty('SyntheticFullEnabled')) {
+                            syntheticFullEnabledValue = job.SyntheticFullEnabled;
+                        } else if (job.hasOwnProperty('syntheticFullEnabled')) {
+                            syntheticFullEnabledValue = job.syntheticFullEnabled;
+                        } else if (job.hasOwnProperty('SyntheticFull')) {
+                            syntheticFullEnabledValue = job.SyntheticFull;
+                        } else if (job.hasOwnProperty('syntheticFull')) {
+                            syntheticFullEnabledValue = job.syntheticFull;
+                        }
+                        const syntheticFullEnabled = formatBoolean(syntheticFullEnabledValue);
+                        const backupChainType = job.BackupChainType || job.backupChainType || 'N/A';
+                        
+                        // Get IndexingEnabled - check multiple property names and handle false values
+                        let indexingEnabledValue = job.IndexingEnabled !== undefined ? job.IndexingEnabled : (job.indexingEnabled !== undefined ? job.indexingEnabled : null);
+                        const indexingEnabled = formatBoolean(indexingEnabledValue);
+                        
+                        // Encode job data for click handler
+                        const jobData = encodeURIComponent(JSON.stringify(job));
+                        
+                        return `
+                            <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
+                                <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
+                                <td style="padding: 0.4rem;">
+                                    <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
+                                        ${lastResult}
+                                    </span>
+                                </td>
+                                <td style="padding: 0.4rem;">${repository}</td>
+                                <td style="padding: 0.4rem;">${sourceSize}</td>
+                                <td style="padding: 0.4rem;">${restorePoints}</td>
+                                <td style="padding: 0.4rem;">${encrypted}</td>
+                                <td style="padding: 0.4rem;">${jobType}</td>
+                                <td style="padding: 0.4rem;">${gfsEnabled}</td>
+                                <td style="padding: 0.4rem;">${gfsRetention}</td>
+                                <td style="padding: 0.4rem;">${activeFullEnabled}</td>
+                                <td style="padding: 0.4rem;">${syntheticFullEnabled}</td>
+                                <td style="padding: 0.4rem;">${indexingEnabled}</td>
+                            </tr>
+                        `;
+                    };
+                    
+                    // Helper function to render tape job row
+                    const renderTapeJobRow = (job, jobType) => {
+                        const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
+                                         (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
+                                         (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
+                                         (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
+                        
+                        let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
+                        if (typeof lastResult === 'number') {
+                            if (lastResult === 0) lastResult = 'Success';
+                            else if (lastResult === 1) lastResult = 'Warning';
+                            else if (lastResult === 2) lastResult = 'Failed';
+                            else lastResult = 'None';
+                        }
+                        if (typeof lastResult === 'string') {
+                            lastResult = lastResult.trim();
+                            if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
+                                lastResult = 'None';
+                            }
+                        }
+                        let resultColor = '#94a3b8';
+                        let resultBg = 'rgba(148, 163, 184, 0.1)';
+                        const lastResultLower = String(lastResult).toLowerCase();
+                        if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
+                            resultColor = '#10b981';
+                            resultBg = 'rgba(16, 185, 129, 0.1)';
+                            lastResult = 'Success';
+                        } else if (lastResultLower === 'warning' || lastResultLower === '1') {
+                            resultColor = '#f59e0b';
+                            resultBg = 'rgba(245, 158, 11, 0.1)';
+                            lastResult = 'Warning';
+                        } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
+                            resultColor = '#ef4444';
+                            resultBg = 'rgba(239, 68, 68, 0.1)';
+                            lastResult = 'Failed';
+                        } else {
+                            lastResult = 'None';
+                        }
+                        
+                        const isScheduleEnabled = (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1) ||
+                                               (job.isScheduleEnabled === true || job.isScheduleEnabled === 'true' || job.isScheduleEnabled === 'True' || job.isScheduleEnabled === 1);
+                        const nextRun = job.NextRun || job.nextRun || job.NextRunTime || (job.ScheduleOptions && job.ScheduleOptions.NextRun) || null;
+                        const hasNextRun = nextRun && nextRun !== 'N/A' && nextRun !== null && nextRun !== '' && nextRun !== 'null' && nextRun !== 'undefined' && nextRun !== '0001-01-01 00:00:00';
+                        
+                        // Get tape job specific properties
+                        const mediaPoolFull = job.MediaPoolFull || job.mediaPoolFull || job.MediaPool || job.mediaPool || 'N/A';
+                        const incrementalEnabled = formatBoolean(job.IncrementalEnabled || job.incrementalEnabled);
+                        const mediaPoolIncremental = job.MediaPoolIncremental || job.mediaPoolIncremental || 'N/A';
+                        const hardwareCompression = formatBoolean(job.HardwareCompression || job.hardwareCompression);
+                        const ejectMedium = formatBoolean(job.EjectMedium || job.ejectMedium);
+                        const exportMediaSet = formatBoolean(job.ExportMediaSet || job.exportMediaSet);
+                        const jobIsEnabled = formatBoolean(isEnabled);
+                        
+                        // Encode job data for click handler
+                        const jobData = encodeURIComponent(JSON.stringify(job));
+                        
+                        return `
+                            <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
+                                <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
+                                <td style="padding: 0.4rem;">
+                                    <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
+                                        ${lastResult}
+                                    </span>
+                                </td>
+                                <td style="padding: 0.4rem;">${mediaPoolFull}</td>
+                                <td style="padding: 0.4rem;">${incrementalEnabled}</td>
+                                <td style="padding: 0.4rem;">${mediaPoolIncremental}</td>
+                                <td style="padding: 0.4rem;">${hardwareCompression}</td>
+                                <td style="padding: 0.4rem;">${ejectMedium}</td>
+                                <td style="padding: 0.4rem;">${exportMediaSet}</td>
+                                <td style="padding: 0.4rem;">${jobIsEnabled}</td>
+                                <td style="padding: 0.4rem;">${hasNextRun ? nextRun : 'N/A'}</td>
+                            </tr>
+                        `;
+                    };
+                    
+                    // Group jobs by type
+                    const jobGroups = {
+                        'Backup Jobs': [],
+                        'Replica Jobs': [],
+                        'File Copy Jobs': [],
+                        'Backup Copy Jobs': [],
+                        'File Backup Jobs': [],
+                        'Tape Jobs': []
+                    };
+                    
+                    if (jobInfo.backupJobs && Array.isArray(jobInfo.backupJobs)) {
+                        jobInfo.backupJobs.forEach(job => {
+                            let jobType = job.JobType || job.jobType || 'N/A';
+                            if (jobType === 'Hyper-V Backup' || jobType === 'VMware Backup') {
+                                jobGroups['Backup Jobs'].push({ job, jobType });
+                            } else {
+                                jobGroups['Backup Jobs'].push({ job, jobType });
+                            }
+                        });
+                    }
+                    if (jobInfo.replicaJobs && Array.isArray(jobInfo.replicaJobs)) {
+                        jobInfo.replicaJobs.forEach(job => {
+                            jobGroups['Replica Jobs'].push({ job, jobType: 'Replica' });
+                        });
+                    }
+                    if (jobInfo.fileCopyJobs && Array.isArray(jobInfo.fileCopyJobs)) {
+                        jobInfo.fileCopyJobs.forEach(job => {
+                            jobGroups['File Copy Jobs'].push({ job, jobType: 'File Copy' });
+                        });
+                    }
+                    if (jobInfo.backupCopyJobs && Array.isArray(jobInfo.backupCopyJobs)) {
+                        jobInfo.backupCopyJobs.forEach(job => {
+                            jobGroups['Backup Copy Jobs'].push({ job, jobType: 'Backup Copy' });
+                        });
+                    }
+                    if (jobInfo.fileBackupJobs && Array.isArray(jobInfo.fileBackupJobs)) {
+                        jobInfo.fileBackupJobs.forEach(job => {
+                            jobGroups['File Backup Jobs'].push({ job, jobType: 'File Backup' });
+                        });
+                    }
+                    if (jobInfo.tapeJobs && Array.isArray(jobInfo.tapeJobs)) {
+                        jobInfo.tapeJobs.forEach(job => {
+                            jobGroups['Tape Jobs'].push({ job, jobType: 'Tape' });
+                        });
+                    }
+                    
+                    // Render tables for each job type
+                    let tablesHtml = '';
+                    Object.keys(jobGroups).forEach(groupName => {
+                        const jobs = jobGroups[groupName];
+                        if (jobs.length === 0) return;
+                        
+                        // Use different headers and render function for tape jobs
+                        const isTapeJobs = groupName === 'Tape Jobs';
+                        
+                        const headers = isTapeJobs ? `
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Name</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Last Result</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Media Pool - Full</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Incremental Enabled</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Media Pool - Incremental</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Hardware Compression</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Eject Medium</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Export Media Set</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Is Enabled</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Next Run</th>
+                        ` : `
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Name</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Last Result</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Repository</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Source Size</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Restore Points</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Encrypted</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Type</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">GFS Enabled</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">GFS Retention</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Active Full Enabled</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Synthetic Full Enabled</th>
+                            <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Indexing Enabled</th>
+                        `;
+                        
+                        tablesHtml += `
+                            <div style="margin-bottom: 1.5rem;">
+                                <h3 style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="fas fa-list" style="color: #8b5cf6;"></i>${groupName} (${jobs.length})
+                                </h3>
+                                <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
+                                    <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                                        <thead>
+                                            <tr>
+                                                ${headers}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${jobs.map(({ job, jobType }) => isTapeJobs ? renderTapeJobRow(job, jobType) : renderJobRow(job, jobType)).join('')}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    return tablesHtml || '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No jobs found</div>';
+                })()}
+            </div>
+        `;
+    }
+
+    renderRepositoriesView(repositories) {
+        if (!repositories || !Array.isArray(repositories) || repositories.length === 0) {
+            return `<div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;"><div style="padding: 2rem; text-align: center; color: #94a3b8;">No repositories data available</div></div>`;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                <div style="margin-bottom: 1rem;">
+                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-database" style="color: #8b5cf6;"></i>Standalone Repository Details
+                        <span style="margin-left: auto; color: #64748b; font-size: 0.875rem; font-weight: normal;">Total: ${repositories.length} repositories</span>
+                    </h2>
                 </div>
+                <div class="table-container-modern" style="max-height: calc(100vh - 200px); display: flex; flex-direction: column;">
+                    <table class="table-compact" style="display: block; width: 100%;">
+                        <thead style="display: block; position: sticky; top: 0; z-index: 10; background: #0f172a;">
+                            <tr style="display: table; width: 100%; table-layout: fixed;">
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 10%;">Name</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Job Count</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Set Tasks</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 4%;">Cores</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 4%;">RAM</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Auto Gateway</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 8%;">Host</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 12%;">Path</th>
+                                <th style="padding: 0.4rem; text-align: right; font-size: 0.7rem; width: 6%;">Free Space (TB)</th>
+                                <th style="padding: 0.4rem; text-align: right; font-size: 0.7rem; width: 6%;">Total Space (TB)</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Free Space %</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Per-VM</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">DeCompress</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Align Blocks</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Rotated Drives</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 5%;">Use Immutability</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 6%;">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
+                            ${repositories.map(repo => {
+                                const formatBoolean = (value) => {
+                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                                    return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+                                };
+                                
+                                const formatWarning = (value) => {
+                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>';
+                                    return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                                };
+                                
+                                const freeSpaceGB = repo.CachedFreeSpaceGB || repo.cachedFreeSpaceGB || 0;
+                                const totalSpaceGB = repo.CachedTotalSpaceGB || repo.cachedTotalSpaceGB || 0;
+                                const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
+                                const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
+                                const freeSpacePercent = repo.FreeSpacePercent || repo.freeSpacePercent || 0;
+                                
+                                const jobCount = repo.JobCount || repo.jobCount || 0;
+                                const setTasks = repo.SetTasks || repo.setTasks || 0;
+                                const cores = repo.Cores || repo.cores || 0;
+                                const ram = repo.Ram || repo.ram || 0;
+                                const ramDisplay = ram > 0 ? `${ram} GB` : '0';
+                                
+                                const host = repo.Host || repo.host || 'N/A';
+                                const path = repo.Path || repo.path || 'N/A';
+                                const type = repo.Type || repo.type || 'N/A';
+                                
+                                const autoGateway = formatBoolean(repo.AutoGateway || repo.autoGateway);
+                                const perVM = formatWarning(repo.PerVM || repo.perVM);
+                                const decompress = formatBoolean(repo.Decompress || repo.decompress);
+                                const alignBlocks = formatBoolean(repo.AlignBlocks || repo.alignBlocks);
+                                const rotatedDrives = formatBoolean(repo.RotatedDrives || repo.rotatedDrives);
+                                const useImmutability = formatBoolean(repo.UseImmutability || repo.useImmutability);
+                                
+                                return `
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <td style="padding: 0.4rem; width: 10%;">${repo.Name || repo.name || 'N/A'}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${jobCount}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${setTasks}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 4%;">${cores}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 4%;">${ramDisplay}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${autoGateway}</td>
+                                        <td style="padding: 0.4rem; width: 8%;">${host}</td>
+                                        <td style="padding: 0.4rem; width: 12%;">${path}</td>
+                                        <td style="padding: 0.4rem; text-align: right; width: 6%;">${freeSpaceTB}</td>
+                                        <td style="padding: 0.4rem; text-align: right; width: 6%;">${totalSpaceTB}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${freeSpacePercent}%</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${perVM}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${decompress}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${alignBlocks}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${rotatedDrives}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${useImmutability}</td>
+                                        <td style="padding: 0.4rem; width: 6%;">${type}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    renderSOBRsView(sobrs) {
+        // This will be implemented to show SOBRs
+        return `<div class="audit-content" style="padding: 1rem;"><h2>SOBRs</h2><p>SOBRs view coming soon...</p></div>`;
+    }
+
+    renderProxiesView(proxies) {
+        if (!proxies || !Array.isArray(proxies) || proxies.length === 0) {
+            return `<div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;"><div style="padding: 2rem; text-align: center; color: #94a3b8;">No proxies data available</div></div>`;
+        }
+
+        const formatBoolean = (value) => {
+            if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+            if (value === false || value === 'false' || value === 'False' || value === 0) return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+            return 'N/A';
+        };
+
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                <div style="margin-bottom: 1rem;">
+                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-network-wired" style="color: #8b5cf6;"></i>Backup Proxies
+                    </h2>
+                </div>
+                <div class="table-container-modern" style="max-height: calc(100vh - 200px); display: flex; flex-direction: column;">
+                    <table class="table-compact" style="display: block; width: 100%;">
+                        <thead style="display: block; position: sticky; top: 0; z-index: 10; background: #0f172a;">
+                            <tr style="display: table; width: 100%; table-layout: fixed;">
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 15%;">Name</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 12%;">Host</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 10%;">Type</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 6%;">Port</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.7rem; width: 12%;">Transport Mode</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 8%;">Max Tasks</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 8%;">Disabled</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.7rem; width: 8%;">Traffic Rules</th>
+                            </tr>
+                        </thead>
+                        <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
+                            ${proxies.map(proxy => {
+                                const name = proxy.Name || proxy.name || 'N/A';
+                                const host = proxy.Host || proxy.host || 'N/A';
+                                const type = proxy.Type || proxy.type || 'N/A';
+                                const port = proxy.Port || proxy.port || 'N/A';
+                                const transportMode = proxy.TransportMode || proxy.transportMode || 'N/A';
+                                const maxTasks = proxy.MaxTasksCount || proxy.maxTasksCount || 'N/A';
+                                const isDisabled = formatBoolean(proxy.IsDisabled !== undefined ? proxy.IsDisabled : (proxy.isDisabled !== undefined ? proxy.isDisabled : false));
+                                const trafficRules = proxy.TrafficRules || proxy.trafficRules || [];
+                                const trafficRulesCount = Array.isArray(trafficRules) ? trafficRules.length : 0;
+                                
+                                return `
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <td style="padding: 0.4rem; width: 15%;">${name}</td>
+                                        <td style="padding: 0.4rem; width: 12%;">${host}</td>
+                                        <td style="padding: 0.4rem; width: 10%;">${type}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${port}</td>
+                                        <td style="padding: 0.4rem; width: 12%;">${transportMode}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 8%;">${maxTasks}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 8%;">${isDisabled}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 8%;">${trafficRulesCount}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    renderWANAcceleratorsView(wanAccelerators) {
+        // This will be implemented to show WAN accelerators
+        return `<div class="audit-content" style="padding: 1rem;"><h2>WAN Accelerators</h2><p>WAN Accelerators view coming soon...</p></div>`;
+    }
+
+    renderManagedServersView(managedServers) {
+        if (!managedServers || !Array.isArray(managedServers) || managedServers.length === 0) {
+            return `<div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;"><div style="padding: 2rem; text-align: center; color: #94a3b8;">No managed servers data available</div></div>`;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                <div style="margin-bottom: 1rem;">
+                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-server" style="color: #8b5cf6;"></i>Managed Server Info
+                        <span style="margin-left: auto; color: #64748b; font-size: 0.875rem; font-weight: normal;">Total: ${managedServers.length} servers</span>
+                    </h2>
+                </div>
+                <div class="table-container-modern" style="max-height: calc(100vh - 200px); display: flex; flex-direction: column;">
+                    <table class="table-compact" style="display: block; width: 100%;">
+                        <thead style="display: block; position: sticky; top: 0; z-index: 10; background: #0f172a;">
+                            <tr style="display: table; width: 100%; table-layout: fixed;">
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem; width: 15%;">Name</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 6%;">Cores</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 6%;">RAM</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem; width: 8%;">Type</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem; width: 15%;">OS Info</th>
+                                <th style="padding: 0.4rem; text-align: left; font-size: 0.75rem; width: 8%;">API Version</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 6%;">Protected VMs</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 6%;">Not Protected VMs</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 6%;">Total VMs</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 5%;">Is Proxy</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 5%;">Is Repo</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 5%;">Is WAN Acc.</th>
+                                <th style="padding: 0.4rem; text-align: center; font-size: 0.75rem; width: 5%;">Is Unavailable</th>
+                            </tr>
+                        </thead>
+                        <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
+                            ${managedServers.map(server => {
+                                const isProxy = server.isProxy === true || server.isProxy === 'true' || server.isProxy === 'True' || server.isProxy === 1;
+                                const isRepo = server.isRepo === true || server.isRepo === 'true' || server.isRepo === 'True' || server.isRepo === 1;
+                                const isWANAcc = server.isWANAcc === true || server.isWANAcc === 'true' || server.isWANAcc === 'True' || server.isWANAcc === 1;
+                                const isUnavailable = server.isUnavailable === true || server.isUnavailable === 'true' || server.isUnavailable === 'True' || server.isUnavailable === 1;
+                                
+                                const formatBoolean = (value) => {
+                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                                    return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+                                };
+                                
+                                const cores = server.cores || server.Cores || 0;
+                                const ram = server.ram || server.RAM || 0;
+                                const ramDisplay = ram > 0 ? `${ram} GB` : '0';
+                                
+                                return `
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <td style="padding: 0.4rem; width: 15%;">${server.name || server.Name || 'N/A'}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${cores}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${ramDisplay}</td>
+                                        <td style="padding: 0.4rem; width: 8%;">${server.type || server.Type || 'N/A'}</td>
+                                        <td style="padding: 0.4rem; width: 15%;">${server.osInfo || server.OSInfo || server.OsInfo || ''}</td>
+                                        <td style="padding: 0.4rem; width: 8%;">${server.apiVersion || server.ApiVersion || ''}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${server.protectedVMs || server.ProtectedVMs || 0}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${server.notProtectedVMs || server.NotProtectedVMs || 0}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 6%;">${server.totalVMs || server.TotalVMs || 0}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${formatBoolean(isProxy)}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${formatBoolean(isRepo)}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${formatBoolean(isWANAcc)}</td>
+                                        <td style="padding: 0.4rem; text-align: center; width: 5%;">${formatBoolean(isUnavailable)}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    renderSessionsView(jobSessionSummary) {
+        if (!jobSessionSummary || !Array.isArray(jobSessionSummary) || jobSessionSummary.length === 0) {
+            return `<div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;"><div style="padding: 2rem; text-align: center; color: #94a3b8;">No session data available</div></div>`;
+        }
+
+        // Collect all sessions from all jobs
+        const allSessions = [];
+        jobSessionSummary.forEach(job => {
+            if (job.Sessions && Array.isArray(job.Sessions)) {
+                job.Sessions.forEach(session => {
+                    allSessions.push({
+                        ...session,
+                        JobName: job.JobName || 'N/A',
+                        JobType: job.JobType || 'N/A'
+                    });
+                });
+            }
+        });
+
+        // Sort by creation time (newest first)
+        allSessions.sort((a, b) => {
+            const timeA = a.CreationTime || '';
+            const timeB = b.CreationTime || '';
+            return timeB.localeCompare(timeA);
+        });
+
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+                <div style="margin-bottom: 1rem;">
+                    <h2 style="color: #e2e8f0; font-size: 1rem; margin-bottom: 0.5rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-history" style="color: #8b5cf6;"></i>Session Logs
+                        <span style="margin-left: auto; color: #64748b; font-size: 0.875rem; font-weight: normal;">Total: ${allSessions.length} sessions</span>
+                    </h2>
+                </div>
+                ${allSessions.length > 0 ? `
+                    <div class="table-container-modern" style="max-height: calc(100vh - 200px); display: flex; flex-direction: column;">
+                        <table class="table-compact" style="display: block; width: 100%;">
+                            <thead style="display: block; position: sticky; top: 0; z-index: 10; background: #0f172a;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 15%;">Job Name</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 10%;">Job Type</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 10%;">Result</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 12%;">Creation Time</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 12%;">End Time</th>
+                                    <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem; width: 8%;">Duration</th>
+                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem; width: 8%;">State</th>
+                                    <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem; width: 6%;">Backup Size (TB)</th>
+                                    <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem; width: 6%;">Data Size (TB)</th>
+                                    <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem; width: 6%;">Change Rate %</th>
+                                    <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem; width: 5%;">Is Retry</th>
+                                </tr>
+                            </thead>
+                            <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
+                                ${allSessions.map(session => {
+                                    // Try multiple possible property names for result
+                                    let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
+                                    
+                                    // Normalize result value first
+                                    if (result === null || result === undefined) {
+                                        result = 'None';
+                                    } else if (typeof result === 'number') {
+                                        if (result === 0) result = 'Success';
+                                        else if (result === 1) result = 'Warning';
+                                        else if (result === 2) result = 'Failed';
+                                        else result = 'None';
+                                    } else if (typeof result === 'string') {
+                                        result = result.trim();
+                                        if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
+                                            result = 'None';
+                                        }
+                                    }
+                                    
+                                    // If result is still 'None' or empty, try to infer from State
+                                    if ((result === 'None' || result === '' || result === null || result === undefined) && session.State) {
+                                        const state = String(session.State || '').toLowerCase();
+                                        if (state === 'stopped' || state === 'completed' || state === 'success') {
+                                            result = 'Success';
+                                        } else if (state === 'warning' || state === 'warn') {
+                                            result = 'Warning';
+                                        } else if (state === 'failed' || state === 'error' || state === 'failure') {
+                                            result = 'Failed';
+                                        }
+                                    }
+                                    
+                                    const resultLower = String(result).toLowerCase();
+                                    let resultColor = '#94a3b8';
+                                    let resultBg = 'rgba(148, 163, 184, 0.1)';
+                                    
+                                    // Check if it's a success (multiple ways - the PowerShell script stores it in lowercase)
+                                    if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
+                                        resultColor = '#10b981';
+                                        resultBg = 'rgba(16, 185, 129, 0.1)';
+                                        result = 'Success';
+                                    } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
+                                        resultColor = '#f59e0b';
+                                        resultBg = 'rgba(245, 158, 11, 0.1)';
+                                        result = 'Warning';
+                                    } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
+                                        resultColor = '#ef4444';
+                                        resultBg = 'rgba(239, 68, 68, 0.1)';
+                                        result = 'Failed';
+                                    } else if (resultLower === 'none' || result === null || result === undefined) {
+                                        result = 'None';
+                                    } else {
+                                        // If we have a value but don't recognize it, keep it as is but style as unknown
+                                        result = String(result);
+                                    }
+                                    
+                                    return `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td style="padding: 0.5rem; width: 15%;">${session.JobName || 'N/A'}</td>
+                                            <td style="padding: 0.5rem; width: 10%;">${session.JobType || 'N/A'}</td>
+                                            <td style="padding: 0.5rem; width: 10%;">
+                                                <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
+                                                    ${result}
+                                                </span>
+                                            </td>
+                                            <td style="padding: 0.5rem; width: 12%;">${session.CreationTime || 'N/A'}</td>
+                                            <td style="padding: 0.5rem; width: 12%;">${session.EndTime || 'N/A'}</td>
+                                            <td style="padding: 0.5rem; text-align: center; width: 8%;">${session.Duration || '00:00:00'}</td>
+                                            <td style="padding: 0.5rem; width: 8%;">${session.State || 'N/A'}</td>
+                                            <td style="padding: 0.5rem; text-align: center; width: 6%;">${(session.BackupSize || 0).toFixed(4)}</td>
+                                            <td style="padding: 0.5rem; text-align: center; width: 6%;">${(session.DataSize || 0).toFixed(4)}</td>
+                                            <td style="padding: 0.5rem; text-align: center; width: 6%;">${(session.ChangeRate || 0).toFixed(2)}</td>
+                                            <td style="padding: 0.5rem; text-align: center; width: 5%;">
+                                                ${session.IsRetry ? '<i class="fas fa-check-circle" style="color: #10b981;"></i>' : '<i class="fas fa-times-circle" style="color: #64748b;"></i>'}
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                ` : `
+                    <div style="text-align: center; padding: 2rem; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        <p>No sessions found.</p>
+                    </div>
+                `}
             </div>
         `;
     }
 
     async mount() {
         window.veeamAuditorInstance = this;
+        window.veeamAuditorPage = this;
         const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
         this.reportId = urlParams.get('id');
 
@@ -2153,9 +2514,16 @@ export class VeeamAuditorPage {
 
     async generateScript(options = {}) {
         const { encrypt = true, obfuscate = true } = options;
+        
+        // If no reportId, allow generating a generic script
+        // This is useful when creating a new report
         if (!this.reportId) {
-            this.showMessage('Please select a report first', 'error');
-            return;
+            // Try to get reportId from URL
+            const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
+            const idFromUrl = urlParams.get('id');
+            if (idFromUrl) {
+                this.reportId = parseInt(idFromUrl);
+            }
         }
 
         this.showMessage(encrypt ? 'Generating script...' : 'Generating plain script...', 'info');
@@ -2171,9 +2539,35 @@ export class VeeamAuditorPage {
                 })
             });
 
-            if (!response.ok) throw new Error('Failed to generate script');
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMessage = 'Failed to generate script';
+                try {
+                    if (errorText) {
+                        const errorData = JSON.parse(errorText);
+                        errorMessage = errorData.error || errorMessage;
+                    }
+                } catch (e) {
+                    // If it's not JSON, use the text as error message
+                    errorMessage = errorText || errorMessage;
+                }
+                throw new Error(errorMessage);
+            }
             
-            const data = await response.json();
+            // Get response as text first to check if it's valid JSON
+            const responseText = await response.text();
+            let data;
+            try {
+                data = JSON.parse(responseText);
+            } catch (e) {
+                console.error('Failed to parse JSON response:', e);
+                console.error('Response text:', responseText.substring(0, 200));
+                throw new Error('Invalid JSON response from server');
+            }
+            
+            if (!data || !data.script) {
+                throw new Error('No script data received from server');
+            }
             
             // Create a blob and download
             const blob = new Blob([data.script], { type: 'text/plain' });
@@ -2277,6 +2671,10 @@ export class VeeamAuditorPage {
         if (content) {
             this.render().then(html => {
                 content.innerHTML = html;
+                // Update page navbar title after rendering
+                if (window.pageNavbarInstance) {
+                    window.pageNavbarInstance.updateTitle();
+                }
                 // Draw charts after rendering
                 setTimeout(() => {
                     this.drawComplianceChart();
@@ -3194,13 +3592,40 @@ export class VeeamAuditorPage {
     showJobDetails(jobDataEncoded) {
         try {
             const job = JSON.parse(decodeURIComponent(jobDataEncoded));
-            const modal = document.getElementById('jobDetailsModal');
+            
+            // Create or get modal
+            let modal = document.getElementById('jobDetailsModal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'jobDetailsModal';
+                modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000; overflow-y: auto; align-items: center; justify-content: center; flex-direction: column;';
+                document.body.appendChild(modal);
+            }
+            
             const content = document.getElementById('jobDetailsContent');
+            if (!content) {
+                // Create modal structure if it doesn't exist
+                modal.innerHTML = `
+                    <div style="background-color: #0f172a; margin: auto; padding: 0; border: 1px solid #334155; width: 90%; max-width: 1200px; height: 75vh; border-radius: 0.375rem; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);">
+                        <div style="padding: 0.75rem 1rem; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; background: #1e293b;">
+                            <h2 style="color: #e2e8f0; font-size: 1rem; font-weight: 600; margin: 0; display: flex; align-items: center;">
+                                <i class="fas fa-info-circle" style="color: #8b5cf6; margin-right: 0.5rem; font-size: 0.9rem;"></i>
+                                <span id="jobDetailsTitle">Job Details</span>
+                            </h2>
+                            <button onclick="document.getElementById('jobDetailsModal').style.display='none'" style="background: transparent; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer; padding: 0.25rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 0.25rem; transition: all 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'">&times;</button>
+                        </div>
+                        <div id="jobDetailsContent" style="padding: 0.75rem; overflow-y: auto; flex: 1;">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+                `;
+            }
             
-            if (!modal || !content) return;
+            const contentElement = document.getElementById('jobDetailsContent');
+            if (!contentElement) return;
             
-            // Update modal title with job name
-            const modalTitle = modal.querySelector('h2');
+            // Update modal title
+            const modalTitle = document.getElementById('jobDetailsTitle');
             if (modalTitle) {
                 modalTitle.textContent = `${job.Name || job.name || 'Job'} Details`;
             }
@@ -3210,6 +3635,20 @@ export class VeeamAuditorPage {
                 if (value === null || value === undefined || value === '') return 'N/A';
                 if (typeof value === 'boolean') return value ? 'Yes' : 'No';
                 if (typeof value === 'object') {
+                    // If it's an array, join it
+                    if (Array.isArray(value)) {
+                        return value.length > 0 ? value.join(', ') : 'N/A';
+                    }
+                    // If it's an object, try to get a meaningful value
+                    // Priority: FullName > Name > DisplayName > toString
+                    if (value.FullName) return value.FullName;
+                    if (value.Name) return value.Name;
+                    if (value.DisplayName) return value.DisplayName;
+                    if (value.toString && typeof value.toString === 'function') {
+                        const str = value.toString();
+                        if (str !== '[object Object]') return str;
+                    }
+                    // Last resort: return JSON string
                     try {
                         return JSON.stringify(value, null, 2);
                     } catch {
@@ -3232,21 +3671,21 @@ export class VeeamAuditorPage {
                     if (value === 'N/A' && !p.showIfEmpty) return '';
                     return `
                         <tr>
-                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${p.label}</td>
-                            <td style="padding: 0.5rem; word-break: break-word; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${value}</td>
+                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.75rem; width: 35%;">${p.label}</td>
+                            <td style="padding: 0.35rem 0.5rem; word-break: break-word; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.75rem;">${value}</td>
                         </tr>
                     `;
                 }).filter(h => h).join('');
                 
-                if (!rows) return '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No data available.</div>';
+                if (!rows) return '<div style="padding: 0.75rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">No data available.</div>';
                 
                 return `
                     <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
                             <thead>
                                 <tr>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 40%;">Property</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Value</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 35%; background: #1e293b;">Property</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Value</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -3276,34 +3715,96 @@ export class VeeamAuditorPage {
                 { key: 'LatestRunLocal', label: 'Latest Run (Local)' }
             ]);
             if (commonInfo && !commonInfo.includes('No data available')) {
-                tabs.push({ id: 'common', label: 'Common Information', active: tabs.length === 0 });
-                tabContent += `<div id="tab-common" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 1rem 0;">${commonInfo}</div>`;
+            tabs.push({ id: 'common', label: 'Common Information', active: tabs.length === 0 });
+            tabContent += `<div id="tab-common" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 0.5rem 0;">${commonInfo}</div>`;
             }
             
             // Tab 2: Virtual Machines
-            const vmsData = job.Objects || job.VMs || job.VMList || [];
+            // Try multiple property names and handle different data structures
+            let vmsData = [];
+            
+            // Check if Objects is an array
+            if (job.Objects && Array.isArray(job.Objects)) {
+                vmsData = job.Objects;
+            } else if (job.VMs && Array.isArray(job.VMs)) {
+                vmsData = job.VMs;
+            } else if (job.VMList && Array.isArray(job.VMList)) {
+                vmsData = job.VMList;
+            } else if (job.Objects && typeof job.Objects === 'object' && !Array.isArray(job.Objects)) {
+                // If Objects is an object (not array), try to extract array from it
+                if (job.Objects.Items && Array.isArray(job.Objects.Items)) {
+                    vmsData = job.Objects.Items;
+                } else if (job.Objects.VMs && Array.isArray(job.Objects.VMs)) {
+                    vmsData = job.Objects.VMs;
+                } else if (job.Objects.List && Array.isArray(job.Objects.List)) {
+                    vmsData = job.Objects.List;
+                }
+            }
+            
+            // Filter out invalid entries (e.g., if Objects contains the job name instead of VM objects)
+            vmsData = vmsData.filter(vm => {
+                // Check if it's a valid VM object (has Name property and it's not the job name)
+                if (!vm || typeof vm !== 'object') return false;
+                const vmName = vm.Name || vm.name;
+                const jobName = job.Name || job.name;
+                
+                // Exclude if the VM name is the same as the job name (likely a default/fallback entry from backend)
+                // But only if it doesn't have other VM-like properties that indicate it's a real VM
+                if (vmName && jobName && vmName === jobName) {
+                    // Check if it has VM-specific properties (if it does, it might be valid)
+                    const hasVmProperties = vm.ApproxSize || vm.approxSize || vm.Size || vm.size || 
+                                          (vm.ResourceType && vm.ResourceType !== 'Virtual Machine') ||
+                                          (vm.resourceType && vm.resourceType !== 'Virtual Machine') ||
+                                          vm.DiskFilterMode || vm.diskFilterMode ||
+                                          vm.GuestProcessingEnabled !== undefined ||
+                                          vm.ApplicationProcessing !== undefined;
+                    // If it's just the job name with default values, exclude it
+                    if (!hasVmProperties) return false;
+                }
+                
+                // Include if it has a Name property or other VM-like properties
+                return vmName || vm.ResourceType || vm.resourceType || vm.ApproxSize || vm.approxSize;
+            });
+            
+            // If after filtering we still have only one entry that matches the job name, 
+            // it's likely a fallback entry - try to get VMs from other sources
+            if (vmsData.length === 1 && vmsData[0] && (vmsData[0].Name || vmsData[0].name) === (job.Name || job.name)) {
+                // Try alternative sources
+                if (job.IncludedVMs && Array.isArray(job.IncludedVMs) && job.IncludedVMs.length > 0) {
+                    vmsData = job.IncludedVMs;
+                } else if (job.VMNames && Array.isArray(job.VMNames) && job.VMNames.length > 0) {
+                    vmsData = job.VMNames.map(name => ({ Name: name, ResourceType: 'Virtual Machine', Role: 'Include', ApproxSize: 'N/A', DiskFilterMode: 'AllDisks' }));
+                } else if (job.TargetVMs && Array.isArray(job.TargetVMs) && job.TargetVMs.length > 0) {
+                    vmsData = job.TargetVMs;
+                } else if (job.VMList && Array.isArray(job.VMList) && job.VMList.length > 0) {
+                    vmsData = job.VMList;
+                }
+            }
+            
             let vmsTable = '';
-            if (Array.isArray(vmsData) && vmsData.length > 0) {
+            if (vmsData.length > 0) {
                 vmsTable = `
                     <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
                             <thead>
                                 <tr>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Name</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Resource Type</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Role</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Approx Size</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Disk Filter Mode</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Name</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Resource Type</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Role</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Approx Size</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Location</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Disk Filter Mode</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${vmsData.map(vm => `
                                     <tr>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${vm.Name || vm.name || 'N/A'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${vm.Role || vm.role || 'Include'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${vm.ApproxSize || vm.approxSize || vm.Size || vm.size || 'N/A'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${vm.DiskFilterMode || vm.diskFilterMode || 'AllDisks'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.Name || vm.name || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.Role || vm.role || 'Include'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ApproxSize || vm.approxSize || vm.Size || vm.size || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.Location || vm.location || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.DiskFilterMode || vm.diskFilterMode || 'AllDisks'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -3311,12 +3812,41 @@ export class VeeamAuditorPage {
                     </div>
                 `;
             } else {
-                vmsTable = '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No virtual machines data available.</div>';
+                vmsTable = '<div style="padding: 0.75rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">No virtual machines data available.</div>';
             }
             tabs.push({ id: 'vms', label: 'Virtual Machines', active: tabs.length === 0 && !commonInfo.includes('No data available') ? false : tabs.length === 0 });
-            tabContent += `<div id="tab-vms" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 1rem 0;">${vmsTable}</div>`;
+            tabContent += `<div id="tab-vms" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 0.5rem 0;">${vmsTable}</div>`;
             
-            // Tab 3: Storage
+            // Tab 3: Schedule
+            const scheduleInfo = renderTable([
+                { key: 'IsScheduleEnabled', label: 'Schedule Enabled', format: 'boolean' },
+                { key: 'ScheduleEnabled', label: 'Schedule Enabled', format: 'boolean' },
+                { key: 'ScheduleType', label: 'Schedule Type' },
+                { key: 'NextRun', label: 'Next Run' },
+                { key: 'LastRun', label: 'Last Run' },
+                { key: 'SchedulePeriod', label: 'Schedule Period' },
+                { key: 'ScheduleDayOfWeek', label: 'Schedule Day Of Week' },
+                { key: 'DailyScheduleTime', label: 'Daily Schedule Time' },
+                { key: 'DailyScheduleDays', label: 'Daily Schedule Days' },
+                { key: 'WeeklyScheduleDays', label: 'Weekly Schedule Days' },
+                { key: 'WeeklyScheduleTime', label: 'Weekly Schedule Time' },
+                { key: 'MonthlyScheduleDay', label: 'Monthly Schedule Day' },
+                { key: 'MonthlyScheduleTime', label: 'Monthly Schedule Time' },
+                { key: 'MonthlyScheduleDayOfWeek', label: 'Monthly Schedule Day Of Week' },
+                { key: 'MonthlyScheduleDayNumberInMonth', label: 'Monthly Schedule Day Number In Month' },
+                { key: 'MonthlyScheduleMonths', label: 'Monthly Schedule Months' },
+                { key: 'PeriodicallyEvery', label: 'Periodically Every' },
+                { key: 'PeriodicallyAt', label: 'Periodically At' },
+                { key: 'RunTimes', label: 'Run Times' },
+                { key: 'ContinuousSchedule', label: 'Continuous Schedule' },
+                { key: 'AfterJobSchedule', label: 'After Job Schedule' }
+            ]);
+            if (scheduleInfo && !scheduleInfo.includes('No data available')) {
+                tabs.push({ id: 'schedule', label: 'Schedule', active: false });
+                tabContent += `<div id="tab-schedule" class="tab-content" style="display: none; padding: 0.5rem 0;">${scheduleInfo}</div>`;
+            }
+            
+            // Tab 4: Advanced Settings (Combined)
             const storageInfo = renderTable([
                 { key: 'BackupProxy', label: 'Backup Proxy' },
                 { key: 'Repository', label: 'Backup Repository' },
@@ -3340,12 +3870,7 @@ export class VeeamAuditorPage {
                 { key: 'GfsEnabled', label: 'Keep certain full backup longer for archival purposes (GFS)', format: 'boolean' },
                 { key: 'GfsRetention', label: 'GFS Retention' }
             ]);
-            if (storageInfo && !storageInfo.includes('No data available')) {
-                tabs.push({ id: 'storage', label: 'Storage', active: false });
-                tabContent += `<div id="tab-storage" class="tab-content" style="display: none; padding: 1rem 0;">${storageInfo}</div>`;
-            }
             
-            // Tab 4: Advanced Settings (Maintenance)
             const maintenanceInfo = renderTable([
                 { key: 'StorageLevelCorruptionGuard', label: 'Storage-Level Corruption Guard (SLCG)', format: 'boolean' },
                 { key: 'SlcgScheduleType', label: 'SLCG Schedule Type' },
@@ -3357,12 +3882,7 @@ export class VeeamAuditorPage {
                 { key: 'DcfbBackupMonthlySchedule', label: 'DCFB Backup Monthly Schedule' },
                 { key: 'RemoveDeletedItemDataAfter', label: 'Remove deleted item data after' }
             ]);
-            if (maintenanceInfo && !maintenanceInfo.includes('No data available')) {
-                tabs.push({ id: 'maintenance', label: 'Advanced Settings (Maintenance)', active: false });
-                tabContent += `<div id="tab-maintenance" class="tab-content" style="display: none; padding: 1rem 0;">${maintenanceInfo}</div>`;
-            }
             
-            // Tab 5: Advanced Settings (Storage)
             const storageAdvancedInfo = renderTable([
                 { key: 'InlineDataDeduplication', label: 'Inline Data Deduplication', format: 'boolean' },
                 { key: 'Deduplication', label: 'Deduplication', format: 'boolean' },
@@ -3375,12 +3895,7 @@ export class VeeamAuditorPage {
                 { key: 'EnabledBackupFileEncryption', label: 'Enabled Backup File Encryption', format: 'boolean' },
                 { key: 'EncryptionKey', label: 'Encryption Key' }
             ]);
-            if (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) {
-                tabs.push({ id: 'storage-advanced', label: 'Advanced Settings (Storage)', active: false });
-                tabContent += `<div id="tab-storage-advanced" class="tab-content" style="display: none; padding: 1rem 0;">${storageAdvancedInfo}</div>`;
-            }
             
-            // Tab 6: Advanced Settings (Notification)
             const notificationInfo = renderTable([
                 { key: 'SendSnmpNotification', label: 'Send Snmp Notification', format: 'boolean' },
                 { key: 'SendEmailNotification', label: 'Send Email Notification', format: 'boolean' },
@@ -3396,24 +3911,14 @@ export class VeeamAuditorPage {
                 { key: 'VmAttributeNoteValue', label: 'VM Attribute Note Value' },
                 { key: 'AppendToExistingAttribute', label: 'Append to Existing Attribute', format: 'boolean' }
             ]);
-            if (notificationInfo && !notificationInfo.includes('No data available')) {
-                tabs.push({ id: 'notification', label: 'Advanced Settings (Notification)', active: false });
-                tabContent += `<div id="tab-notification" class="tab-content" style="display: none; padding: 1rem 0;">${notificationInfo}</div>`;
-            }
             
-            // Tab 7: Advanced Settings (vSphere)
             const vsphereInfo = renderTable([
                 { key: 'EnableVmwareToolsQuiescence', label: 'Enable VMware Tools Quiescence', format: 'boolean' },
                 { key: 'UseChangeBlockTracking', label: 'Use Change Block Tracking', format: 'boolean' },
                 { key: 'EnableCbtForAllProtectedVms', label: 'Enable CBT for all protected VMs', format: 'boolean' },
                 { key: 'ResetCbtOnEachActiveFullBackup', label: 'Reset CBT On each Active Full Backup', format: 'boolean' }
             ]);
-            if (vsphereInfo && !vsphereInfo.includes('No data available')) {
-                tabs.push({ id: 'vsphere', label: 'Advanced Settings (vSphere)', active: false });
-                tabContent += `<div id="tab-vsphere" class="tab-content" style="display: none; padding: 1rem 0;">${vsphereInfo}</div>`;
-            }
             
-            // Tab 8: Advanced Settings (Script)
             const scriptInfo = renderTable([
                 { key: 'RunTheFollowingScriptBefore', label: 'Run the Following Script Before', format: 'boolean' },
                 { key: 'RunScriptBeforeTheJob', label: 'Run Script Before the Job' },
@@ -3422,9 +3927,74 @@ export class VeeamAuditorPage {
                 { key: 'RunScriptFrequency', label: 'Run Script Frequency' },
                 { key: 'RunScriptEveryBackupSession', label: 'Run Script Every Backup Session' }
             ]);
-            if (scriptInfo && !scriptInfo.includes('No data available')) {
-                tabs.push({ id: 'script', label: 'Advanced Settings (Script)', active: false });
-                tabContent += `<div id="tab-script" class="tab-content" style="display: none; padding: 1rem 0;">${scriptInfo}</div>`;
+            
+            // Combine all advanced settings into one tab
+            const hasAdvancedSettings = (storageInfo && !storageInfo.includes('No data available')) ||
+                                      (maintenanceInfo && !maintenanceInfo.includes('No data available')) ||
+                                      (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) ||
+                                      (notificationInfo && !notificationInfo.includes('No data available')) ||
+                                      (vsphereInfo && !vsphereInfo.includes('No data available')) ||
+                                      (scriptInfo && !scriptInfo.includes('No data available'));
+            
+            if (hasAdvancedSettings) {
+                let advancedSettingsContent = '';
+                
+                if (storageInfo && !storageInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Storage</h4>
+                            ${storageInfo}
+                        </div>
+                    `;
+                }
+                
+                if (maintenanceInfo && !maintenanceInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Maintenance</h4>
+                            ${maintenanceInfo}
+                        </div>
+                    `;
+                }
+                
+                if (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Storage Advanced</h4>
+                            ${storageAdvancedInfo}
+                        </div>
+                    `;
+                }
+                
+                if (notificationInfo && !notificationInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Notification</h4>
+                            ${notificationInfo}
+                        </div>
+                    `;
+                }
+                
+                if (vsphereInfo && !vsphereInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">vSphere</h4>
+                            ${vsphereInfo}
+                        </div>
+                    `;
+                }
+                
+                if (scriptInfo && !scriptInfo.includes('No data available')) {
+                    advancedSettingsContent += `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Script</h4>
+                            ${scriptInfo}
+                        </div>
+                    `;
+                }
+                
+                tabs.push({ id: 'advanced', label: 'Advanced Settings', active: false });
+                tabContent += `<div id="tab-advanced" class="tab-content" style="display: none; padding: 0.5rem 0;">${advancedSettingsContent}</div>`;
             }
             
             // Tab 9: Guest Processing
@@ -3449,132 +4019,132 @@ export class VeeamAuditorPage {
                     };
                     
                     return `
-                        <div style="margin-bottom: 2rem;">
-                            <h4 style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 600; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="margin-bottom: 1.25rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                                 ${vm.Name || vm.name || 'N/A'}
                             </h4>
                             <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                                <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
                                     <thead>
                                         <tr>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 40%;">Property</th>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Value</th>
+                                            <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 35%; background: #1e293b;">Property</th>
+                                            <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Value</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Name</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.Name || vm.name || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Name</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.Name || vm.name || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Enabled</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.GuestProcessingEnabled)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Enabled</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.GuestProcessingEnabled)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Resource Type</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Resource Type</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Ignore Errors</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.GuestProcessingIgnoreErrors)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Ignore Errors</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.GuestProcessingIgnoreErrors)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Guest Proxy Auto Detect</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.GuestProxyAutoDetect)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Guest Proxy Auto Detect</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.GuestProxyAutoDetect)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Default Credential</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.DefaultCredential || vm.defaultCredential || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Default Credential</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.DefaultCredential || vm.defaultCredential || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Object Credential</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.ObjectCredential || vm.objectCredential || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Object Credential</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ObjectCredential || vm.objectCredential || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Application Processing</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.ApplicationProcessing)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Application Processing</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.ApplicationProcessing)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Transaction Logs</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.TransactionLogs || vm.transactionLogs || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Transaction Logs</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.TransactionLogs || vm.transactionLogs || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Use Persistent Guest Agent</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.UsePersistentGuestAgent)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Use Persistent Guest Agent</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.UsePersistentGuestAgent)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">SQL Transaction Logs Processing</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.SqlTransactionLogsProcessing || vm.sqlTransactionLogsProcessing || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">SQL Transaction Logs Processing</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.SqlTransactionLogsProcessing || vm.sqlTransactionLogsProcessing || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">SQL Backup Log Every</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.SqlBackupLogEvery || vm.sqlBackupLogEvery || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">SQL Backup Log Every</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.SqlBackupLogEvery || vm.sqlBackupLogEvery || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">SQL Retain Log Backups</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.SqlRetainLogBackups || vm.sqlRetainLogBackups || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">SQL Retain Log Backups</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.SqlRetainLogBackups || vm.sqlRetainLogBackups || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Oracle Account Type</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.OracleAccountType || vm.oracleAccountType || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Oracle Account Type</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.OracleAccountType || vm.oracleAccountType || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Oracle Sysdba Creds</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.OracleSysdbaCreds || vm.oracleSysdbaCreds || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Oracle Sysdba Creds</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.OracleSysdbaCreds || vm.oracleSysdbaCreds || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Oracle Backup Logs Every</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.OracleBackupLogsEvery || vm.oracleBackupLogsEvery || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Oracle Backup Logs Every</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.OracleBackupLogsEvery || vm.oracleBackupLogsEvery || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Oracle Archive Logs</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.OracleArchiveLogs || vm.oracleArchiveLogs || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Oracle Archive Logs</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.OracleArchiveLogs || vm.oracleArchiveLogs || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Oracle Retain Log Backups</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.OracleRetainLogBackups || vm.oracleRetainLogBackups || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Oracle Retain Log Backups</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.OracleRetainLogBackups || vm.oracleRetainLogBackups || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">File Exclusions</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.FileExclusions)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">File Exclusions</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.FileExclusions)}</td>
                                         </tr>
                                         ${vm.FileExclusions ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.FileExclusionsMode || vm.fileExclusionsMode || 'Exclude/Include the following file and folders'}</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.FileExclusionsPaths || vm.fileExclusionsPaths || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.FileExclusionsMode || vm.fileExclusionsMode || 'Exclude/Include the following file and folders'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.FileExclusionsPaths || vm.fileExclusionsPaths || 'N/A'}</td>
                                         </tr>
                                         ` : ''}
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Scripts</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.Scripts)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Scripts</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.Scripts)}</td>
                                         </tr>
                                         ${vm.Scripts ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Scripts Mode</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.ScriptsMode || vm.scriptsMode || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Scripts Mode</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ScriptsMode || vm.scriptsMode || 'N/A'}</td>
                                         </tr>
                                         ${vm.LinuxPreFreezeScript && vm.LinuxPreFreezeScript !== 'N/A' ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Linux Pre-freeze script</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.LinuxPreFreezeScript || vm.linuxPreFreezeScript || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Linux Pre-freeze script</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.LinuxPreFreezeScript || vm.linuxPreFreezeScript || 'N/A'}</td>
                                         </tr>
                                         ` : ''}
                                         ${vm.LinuxPostThawScript && vm.LinuxPostThawScript !== 'N/A' ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Linux Post-thaw script</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.LinuxPostThawScript || vm.linuxPostThawScript || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Linux Post-thaw script</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.LinuxPostThawScript || vm.linuxPostThawScript || 'N/A'}</td>
                                         </tr>
                                         ` : ''}
                                         ${vm.WindowsPreFreezeScript && vm.WindowsPreFreezeScript !== 'N/A' ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Windows Pre-freeze script</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.WindowsPreFreezeScript || vm.windowsPreFreezeScript || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Windows Pre-freeze script</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.WindowsPreFreezeScript || vm.windowsPreFreezeScript || 'N/A'}</td>
                                         </tr>
                                         ` : ''}
                                         ${vm.WindowsPostThawScript && vm.WindowsPostThawScript !== 'N/A' ? `
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Windows Post-thaw script</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.WindowsPostThawScript || vm.windowsPostThawScript || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Windows Post-thaw script</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.WindowsPostThawScript || vm.windowsPostThawScript || 'N/A'}</td>
                                         </tr>
                                         ` : ''}
                                         ` : ''}
@@ -3594,30 +4164,30 @@ export class VeeamAuditorPage {
                     };
                     
                     return `
-                        <div style="margin-bottom: 2rem;">
-                            <h4 style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 600; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="margin-bottom: 1.25rem;">
+                            <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                                 ${vm.Name || vm.name || 'N/A'}
                             </h4>
                             <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                                <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                                <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
                                     <thead>
                                         <tr>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 40%;">Property</th>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Value</th>
+                                            <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); width: 35%; background: #1e293b;">Property</th>
+                                            <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Value</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Name</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.Name || vm.name || 'N/A'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Name</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.Name || vm.name || 'N/A'}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Enabled</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${formatBool(vm.GuestProcessingEnabled)}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Enabled</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${formatBool(vm.GuestProcessingEnabled)}</td>
                                         </tr>
                                         <tr>
-                                            <td style="padding: 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Resource Type</td>
-                                            <td style="padding: 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
+                                            <td style="padding: 0.35rem 0.5rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">Resource Type</td>
+                                            <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${vm.ResourceType || vm.resourceType || 'Virtual Machine'}</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -3626,11 +4196,11 @@ export class VeeamAuditorPage {
                     `;
                 }).join('');
             } else {
-                guestProcessingTable = '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No guest processing data available.</div>';
+                guestProcessingTable = '<div style="padding: 0.75rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">No guest processing data available.</div>';
             }
             if (vmsData.length > 0) {
                 tabs.push({ id: 'guest-processing', label: 'Guest Processing', active: false });
-                tabContent += `<div id="tab-guest-processing" class="tab-content" style="display: none; padding: 1rem 0;">${guestProcessingTable}</div>`;
+                tabContent += `<div id="tab-guest-processing" class="tab-content" style="display: none; padding: 0.5rem 0;">${guestProcessingTable}</div>`;
             }
             
             // Tab 10: Secondary Target
@@ -3639,22 +4209,22 @@ export class VeeamAuditorPage {
             if (Array.isArray(secondaryTargetData) && secondaryTargetData.length > 0) {
                 secondaryTargetTable = `
                     <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
-                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: auto; font-size: 0.8rem;">
+                        <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
                             <thead>
                                 <tr>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Job Name</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Type</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">State</th>
-                                    <th style="padding: 0.5rem; text-align: left; font-size: 0.8rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">Description</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Job Name</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Type</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">State</th>
+                                    <th style="padding: 0.4rem 0.5rem; text-align: left; font-size: 0.7rem; font-weight: 600; color: #94a3b8; border-bottom: 1px solid rgba(255, 255, 255, 0.1); background: #1e293b;">Description</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${secondaryTargetData.map(target => `
                                     <tr>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${target.Name || target.name || 'N/A'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${target.Type || target.type || 'N/A'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${target.State || target.state || 'N/A'}</td>
-                                        <td style="padding: 0.5rem; color: #e2e8f0;">${target.Description || target.description || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${target.Name || target.name || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${target.Type || target.type || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${target.State || target.state || 'N/A'}</td>
+                                        <td style="padding: 0.35rem 0.5rem; color: #e2e8f0; border-bottom: 1px solid rgba(255, 255, 255, 0.08);">${target.Description || target.description || 'N/A'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -3662,33 +4232,34 @@ export class VeeamAuditorPage {
                     </div>
                 `;
             } else {
-                secondaryTargetTable = '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No secondary target data available.</div>';
+                secondaryTargetTable = '<div style="padding: 0.75rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">No secondary target data available.</div>';
             }
             tabs.push({ id: 'secondary', label: 'Secondary Target', active: false });
-            tabContent += `<div id="tab-secondary" class="tab-content" style="display: none; padding: 1rem 0;">${secondaryTargetTable}</div>`;
+            tabContent += `<div id="tab-secondary" class="tab-content" style="display: none; padding: 0.5rem 0;">${secondaryTargetTable}</div>`;
             
             // Build tabs HTML
             const tabsHtml = `
-                <div style="border-bottom: 1px solid #334155; margin-bottom: 1rem;">
-                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="border-bottom: 1px solid #334155; margin-bottom: 0.75rem;">
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.25rem; justify-content: center;">
                         ${tabs.map((tab, index) => `
                             <button 
                                 onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.switchJobDetailsTab('${tab.id}')}"
                                 class="job-details-tab"
                                 data-tab="${tab.id}"
                                 style="
-                                    padding: 0.5rem 1rem;
+                                    padding: 0.35rem 0.75rem;
                                     background: ${tab.active ? '#3b82f6' : 'transparent'};
                                     color: ${tab.active ? '#ffffff' : '#94a3b8'};
                                     border: none;
                                     border-bottom: 2px solid ${tab.active ? '#3b82f6' : 'transparent'};
                                     cursor: pointer;
-                                    font-size: 0.85rem;
+                                    font-size: 0.75rem;
                                     font-weight: ${tab.active ? '600' : '400'};
                                     transition: all 0.2s;
+                                    border-radius: 0.25rem 0.25rem 0 0;
                                 "
-                                onmouseover="if(!this.classList.contains('active')){this.style.color='#e2e8f0';}"
-                                onmouseout="if(!this.classList.contains('active')){this.style.color='#94a3b8';}"
+                                onmouseover="if(!this.classList.contains('active')){this.style.color='#e2e8f0'; this.style.background='rgba(255,255,255,0.05)';}"
+                                onmouseout="if(!this.classList.contains('active')){this.style.color='#94a3b8'; this.style.background='transparent';}"
                             >
                                 ${tab.label}
                             </button>
@@ -3699,8 +4270,8 @@ export class VeeamAuditorPage {
             
             const html = tabsHtml + tabContent;
             
-            content.innerHTML = html || '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No job details available.</div>';
-            modal.style.display = 'block';
+            contentElement.innerHTML = html || '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No job details available.</div>';
+            modal.style.display = 'flex';
             
             // Close modal when clicking outside
             modal.onclick = (e) => {
@@ -3782,8 +4353,6 @@ export class VeeamAuditorPage {
                                     <thead>
                                         <tr>
                                             <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem;">Result</th>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem;">Reason</th>
-                                            <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem;">Message</th>
                                             <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem;">Creation Time</th>
                                             <th style="padding: 0.5rem; text-align: left; font-size: 0.75rem;">End Time</th>
                                             <th style="padding: 0.5rem; text-align: center; font-size: 0.75rem;">Duration</th>
@@ -3796,27 +4365,54 @@ export class VeeamAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${sessions.map(session => {
-                                            const result = session.Result || 'None';
-                                            const resultLower = result.toLowerCase();
-                                            const resultColor = resultLower === 'success' || resultLower === '0' ? '#10b981' : 
-                                                               resultLower === 'warning' || resultLower === '1' ? '#f59e0b' : 
-                                                               resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' ? '#ef4444' : '#94a3b8';
+                                            // Try multiple possible property names for result
+                                            let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
                                             
-                                            // Only show reason and message for failed or warning sessions
-                                            const showReasonMessage = resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === 'warning' || resultLower === '2' || resultLower === '1';
-                                            const reason = session.Reason || session.reason || 'N/A';
-                                            const message = session.Message || session.message || 'N/A';
+                                            // Normalize result value
+                                            if (result === null || result === undefined) {
+                                                result = 'None';
+                                            } else if (typeof result === 'number') {
+                                                if (result === 0) result = 'Success';
+                                                else if (result === 1) result = 'Warning';
+                                                else if (result === 2) result = 'Failed';
+                                                else result = 'None';
+                                            } else if (typeof result === 'string') {
+                                                result = result.trim();
+                                                if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
+                                                    result = 'None';
+                                                }
+                                            }
+                                            
+                                            const resultLower = String(result).toLowerCase();
+                                            let resultColor = '#94a3b8';
+                                            let resultBg = 'rgba(148, 163, 184, 0.1)';
+                                            
+                                            // Check if it's a success (multiple ways)
+                                            if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
+                                                resultColor = '#10b981';
+                                                resultBg = 'rgba(16, 185, 129, 0.1)';
+                                                result = 'Success';
+                                            } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
+                                                resultColor = '#f59e0b';
+                                                resultBg = 'rgba(245, 158, 11, 0.1)';
+                                                result = 'Warning';
+                                            } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
+                                                resultColor = '#ef4444';
+                                                resultBg = 'rgba(239, 68, 68, 0.1)';
+                                                result = 'Failed';
+                                            } else if (resultLower === 'none' || result === null || result === undefined) {
+                                                result = 'None';
+                                            } else {
+                                                // If we have a value but don't recognize it, keep it as is but style as unknown
+                                                result = String(result);
+                                            }
                                             
                                             return `
                                                 <tr>
                                                     <td style="padding: 0.5rem;">
-                                                        <span style="color: ${resultColor}; font-weight: 500;">${result}</span>
-                                                    </td>
-                                                    <td style="padding: 0.5rem; max-width: 200px; word-wrap: break-word; ${showReasonMessage && reason !== 'N/A' ? 'color: #f59e0b;' : 'color: #94a3b8;'}">
-                                                        ${showReasonMessage ? reason : '-'}
-                                                    </td>
-                                                    <td style="padding: 0.5rem; max-width: 300px; word-wrap: break-word; ${showReasonMessage && message !== 'N/A' ? 'color: #ef4444;' : 'color: #94a3b8;'}">
-                                                        ${showReasonMessage ? message : '-'}
+                                                        <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
+                                                            ${result}
+                                                        </span>
                                                     </td>
                                                     <td style="padding: 0.5rem;">${session.CreationTime || 'N/A'}</td>
                                                     <td style="padding: 0.5rem;">${session.EndTime || 'N/A'}</td>
@@ -3845,7 +4441,7 @@ export class VeeamAuditorPage {
             `;
 
             modal.innerHTML = modalContent;
-            modal.style.display = 'block';
+            modal.style.display = 'flex';
 
             // Close modal when clicking outside
             modal.onclick = (e) => {
@@ -3856,6 +4452,225 @@ export class VeeamAuditorPage {
         } catch (error) {
             console.error('Error showing job sessions modal:', error);
         }
+    }
+
+    async deleteReport() {
+        if (!this.reportId) {
+            this.showMessage('No report ID available', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this report?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/veeam-reports/delete?id=${this.reportId}`, {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete report');
+            }
+
+            this.showMessage('Report deleted successfully!', 'success');
+            
+            // Navigate back to list page
+            setTimeout(() => {
+                if (window.appInstance) {
+                    window.appInstance.navigateTo('veeam-auditor-list');
+                } else {
+                    window.location.hash = '#veeam-auditor-list';
+                    window.location.reload();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error deleting report:', error);
+            this.showMessage('Error deleting report: ' + error.message, 'error');
+        }
+    }
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+    }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
+        // Close sidebar on mobile when switching views
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
+    }
+
+    renderRestorePointsView(restorePoints) {
+        if (!restorePoints || restorePoints.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No restore points available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="restore-points-search" 
+                            placeholder="Search restore points by VM name, job name, type, repository..."
+                            oninput="veeamAuditorInstance.filterRestorePoints(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 20%;">VM Name</th>
+                                        <th style="width: 18%;">Creation Time</th>
+                                        <th style="width: 12%;">Type</th>
+                                        <th style="width: 18%;">Job Name</th>
+                                        <th style="width: 12%;">Size</th>
+                                        <th style="width: 20%;">Repository</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="restore-points-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${this.renderRestorePointsRows(restorePoints)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderRestorePointsRows(restorePoints) {
+        if (!restorePoints || restorePoints.length === 0) {
+            return '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No restore points found</td></tr>';
+        }
+
+        return restorePoints.map((rp, index) => `
+            <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
+                data-restore-point-index="${index}" 
+                onclick="veeamAuditorInstance.showRestorePointDetailsModalByIndex(${index})">
+                <td style="width: 20%;"><strong>${rp.vmName || 'N/A'}</strong></td>
+                <td style="width: 18%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem;">${rp.creationTime || 'N/A'}</td>
+                <td style="width: 12%; color: #8b5cf6; font-weight: 600;">${rp.type || 'N/A'}</td>
+                <td style="width: 18%; color: #60a5fa;">${rp.jobName || 'N/A'}</td>
+                <td style="width: 12%; color: #34d399; font-family: 'Consolas', 'Monaco', monospace;">${rp.size || 'N/A'}</td>
+                <td style="width: 20%; color: #e2e8f0;">${rp.repository || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    filterRestorePoints(searchTerm) {
+        const tbody = document.getElementById('restore-points-table-body');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = (searchTerm || '').toLowerCase();
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? 'table-row' : 'none';
+        });
+    }
+
+    showRestorePointDetailsModalByIndex(index) {
+        const restorePoints = this.reportData?.veeam?.restorePoints || [];
+        if (index >= 0 && index < restorePoints.length) {
+            this.selectedRestorePointDetails = restorePoints[index];
+            this.showRestorePointDetailsModalFlag = true;
+            this.updateDisplay();
+        }
+    }
+
+    closeRestorePointDetailsModal() {
+        this.showRestorePointDetailsModalFlag = false;
+        this.selectedRestorePointDetails = null;
+        this.updateDisplay();
+    }
+
+    renderRestorePointDetailsModal() {
+        if (!this.showRestorePointDetailsModalFlag || !this.selectedRestorePointDetails) return '';
+
+        const rp = this.selectedRestorePointDetails;
+
+        return `
+            <div class="modal-overlay" onclick="veeamAuditorInstance.closeRestorePointDetailsModal()">
+                <div class="modal-container modal-wide" onclick="event.stopPropagation()">
+                    <div class="modal-header-compact">
+                        <div class="modal-title-section">
+                            <div class="modal-icon-compact" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="modal-title-info">
+                                <h3>${rp.vmName || 'N/A'}</h3>
+                                <p class="modal-description">Restore Point Details</p>
+                            </div>
+                        </div>
+                        <button class="modal-close-compact" onclick="veeamAuditorInstance.closeRestorePointDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body-compact" style="max-height: 80vh; overflow-y: auto;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">VM Name</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 600;">${rp.vmName || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Creation Time</div>
+                                <div style="color: #94a3b8; font-size: 1rem; font-family: 'Consolas', 'Monaco', monospace;">${rp.creationTime || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Type</div>
+                                <div style="color: #8b5cf6; font-size: 1rem; font-weight: 600;">${rp.type || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Job Name</div>
+                                <div style="color: #60a5fa; font-size: 1rem; font-weight: 500;">${rp.jobName || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Size</div>
+                                <div style="color: #34d399; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${rp.size || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Repository</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 500;">${rp.repository || 'N/A'}</div>
+                            </div>
+                            ${rp.backupName && rp.backupName !== 'N/A' ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Backup Name</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 500;">${rp.backupName}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 }
 

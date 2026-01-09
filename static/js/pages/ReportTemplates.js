@@ -87,6 +87,23 @@ export class ReportTemplatesPage {
                 groups: ['{{group.name}}', '{{group.members}}', '{{group.type}}', '{{group.scope}}'],
                 computers: ['{{computer.name}}', '{{computer.os}}', '{{computer.lastLogon}}', '{{computer.ou}}']
             },
+            fileshare: {
+                summary: [
+                    '{{summary.criticalIssuesCount}}', '{{summary.warningIssuesCount}}', '{{summary.foldersAnalyzed}}',
+                    '{{summary.writableSharesCount}}', '{{summary.leastPrivilegeViolationsCount}}'
+                ],
+                folder: [
+                    '{{folder.path}}', '{{folder.relativePath}}', '{{folder.name}}', '{{folder.fileCount}}',
+                    '{{folder.totalSize}}', '{{folder.permissions}}', '{{folder.criticalIssues}}', '{{folder.warningIssues}}'
+                ],
+                permission: [
+                    '{{permission.identityReference}}', '{{permission.fileSystemRights}}', '{{permission.accessControlType}}',
+                    '{{permission.isInherited}}', '{{permission.riskLevel}}'
+                ],
+                issue: [
+                    '{{issue.level}}', '{{issue.message}}', '{{issue.folder}}', '{{issue.type}}'
+                ]
+            },
             system: ['{{report.date}}', '{{report.time}}', '{{report.author}}', '{{company.name}}', '{{company.logo}}']
         };
         
@@ -105,6 +122,7 @@ export class ReportTemplatesPage {
                 htmlTemplate: 'HTML Template',
                 pdfTemplate: 'PDF Template',
                 hyperv: 'Hyper-V',
+                fileshare: 'File Share',
                 activeDirectory: 'Active Directory',
                 mixed: 'Mixed Sources',
                 save: 'Save Template',
@@ -147,6 +165,7 @@ export class ReportTemplatesPage {
                 htmlTemplate: 'Modèle HTML',
                 pdfTemplate: 'Modèle PDF',
                 hyperv: 'Hyper-V',
+                fileshare: 'Partage de Fichiers',
                 activeDirectory: 'Active Directory',
                 mixed: 'Sources Mixtes',
                 save: 'Enregistrer le Modèle',
@@ -339,6 +358,7 @@ export class ReportTemplatesPage {
                     <select class="filter-select" onchange="reportTemplatesInstance.handleFilterDataSource(event)">
                         <option value="all" ${this.filterDataSource === 'all' ? 'selected' : ''}>All Sources</option>
                         <option value="hyperv" ${this.filterDataSource === 'hyperv' ? 'selected' : ''}>Hyper-V</option>
+                        <option value="fileshare" ${this.filterDataSource === 'fileshare' ? 'selected' : ''}>File Share</option>
                         <option value="ad" ${this.filterDataSource === 'ad' ? 'selected' : ''}>Active Directory</option>
                         <option value="mixed" ${this.filterDataSource === 'mixed' ? 'selected' : ''}>Mixed</option>
                     </select>
@@ -407,6 +427,7 @@ export class ReportTemplatesPage {
     renderTemplateCard(template) {
         const typeIcon = template.type === 'html' ? 'fa-code' : template.type === 'docx' ? 'fa-file-word' : 'fa-file-pdf';
         const sourceIcon = template.dataSource === 'hyperv' ? 'fa-server' : 
+                          template.dataSource === 'fileshare' ? 'fa-folder-open' :
                           template.dataSource === 'ad' ? 'fa-users' : 'fa-layer-group';
         
         const typeColor = template.type === 'html' ? 'var(--success)' : 
@@ -1103,6 +1124,7 @@ export class ReportTemplatesPage {
                         </label>
                         <select class="settings-input" id="template-source" onchange="reportTemplatesInstance.onSourceChange()" required>
                             <option value="hyperv" ${safeTemplate.dataSource === 'hyperv' ? 'selected' : ''}>Hyper-V</option>
+                            <option value="fileshare" ${safeTemplate.dataSource === 'fileshare' ? 'selected' : ''}>File Share</option>
                             <option value="ad" ${safeTemplate.dataSource === 'ad' ? 'selected' : ''}>Active Directory</option>
                             <option value="mixed" ${safeTemplate.dataSource === 'mixed' ? 'selected' : ''}>Mixed</option>
                         </select>
@@ -1758,6 +1780,632 @@ export class ReportTemplatesPage {
     }
 
     getDefaultTemplate(type, dataSource) {
+        if (type === 'html' && dataSource === 'fileshare') {
+            return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{reportName}} - File Share Audit Report</title>
+    <style>
+        :root {
+            --primary-color: #0078D4; /* Microsoft Blue */
+            --secondary-color: #2b579a;
+            --accent-color: #00bcf2;
+            --text-color: #333333;
+            --light-bg: #f4f6f8;
+            --border-color: #e1e1e1;
+            --success-color: #107c10;
+            --warning-color: #ffb900;
+            --danger-color: #d13438;
+        }
+        
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.5;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            background-color: #525659; /* Reader background */
+            -webkit-print-color-adjust: exact;
+        }
+        
+        .container {
+            width: 210mm; /* A4 width */
+            margin: 0 auto;
+        }
+        
+        /* Page Layout */
+        .page {
+            position: relative;
+            width: 210mm;
+            min-height: 297mm; /* A4 height */
+            height: auto;
+            padding: 20mm;
+            margin: 10mm auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            overflow: visible;
+            page-break-after: always;
+        }
+        
+        .page-break-before {
+            page-break-before: always;
+            margin-top: 2rem;
+        }
+        
+        @media print {
+            body { background: none; }
+            .container { width: 100%; margin: 0; }
+            .page { 
+                width: 100%; 
+                height: auto; 
+                min-height: 0;
+                margin: 0; 
+                padding: 15mm; 
+                box-shadow: none; 
+                page-break-after: always; 
+                overflow: visible;
+            }
+            .page-break-before {
+                page-break-before: always;
+            }
+        }
+
+        /* Typography */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--secondary-color);
+            margin-top: 0;
+        }
+        
+        h1 { font-size: 2.5rem; font-weight: 300; }
+        h2 { font-size: 1.8rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.2rem; color: var(--primary-color); margin-top: 1.5rem; margin-bottom: 0.8rem; }
+
+        /* Cover Page */
+        .cover-page {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .cover-content {
+            padding: 2rem;
+        }
+        
+        .cover-logo { font-size: 4rem; margin-bottom: 2rem; }
+        .cover-title { color: white; font-size: 3.5rem; line-height: 1.1; margin-bottom: 1rem; }
+        .cover-subtitle { font-size: 1.5rem; opacity: 0.9; font-weight: 300; margin-bottom: 4rem; }
+        
+        .cover-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: auto;
+            border-top: 1px solid rgba(255,255,255,0.3);
+            padding-top: 2rem;
+        }
+        
+        .cover-info h3 { color: rgba(255,255,255,0.7); font-size: 0.9rem; text-transform: uppercase; margin: 0 0 0.5rem 0; }
+        .cover-info p { margin: 0; font-size: 1.2rem; font-weight: 500; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+        }
+        
+        th {
+            background-color: var(--light-bg);
+            color: var(--secondary-color);
+            font-weight: 600;
+            text-align: left;
+            padding: 8px 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: top;
+        }
+        
+        tr:nth-child(even) { background-color: #fafafa; }
+
+        .label-cell { width: 25%; font-weight: 600; color: #555; background-color: #f8f9fa; }
+        .value-cell { color: #333; }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-Ok, .status-True, .status-Up, .status-Healthy, .status-Running, .status-Enabled, .status-Yes { background-color: #dff6dd; color: var(--success-color); }
+        .status-Warning, .status-Degraded { background-color: #fff4ce; color: var(--warning-color); }
+        .status-Critical, .status-Error, .status-Down, .status-Failed, .status-False, .status-Disabled, .status-No, .status-Stopped { background-color: #fde7e9; color: var(--danger-color); }
+
+        /* Footer */
+        .page-footer {
+            position: absolute;
+            bottom: 15mm;
+            left: 20mm;
+            right: 20mm;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        
+        .page-number:after { content: counter(page); }
+    </style>
+    
+</head>
+<body>
+    <div class="container">
+        <!-- COVER PAGE -->
+        <div class="page cover-page">
+            <div class="cover-content">
+                <div class="cover-logo">📁</div>
+                <h1 class="cover-title">File Share<br>Audit Report</h1>
+                <div class="cover-subtitle">Security and Permissions Analysis for {{serverName}}</div>
+                
+                <div class="cover-info">
+                    <div>
+                        <h3>Organization</h3>
+                        <p>{{company.name}}</p>
+                    </div>
+                    <div>
+                        <h3>Date</h3>
+                        <p>{{report.date}}</p>
+                    </div>
+                    <div>
+                        <h3>Auditor</h3>
+                        <p>{{report.author}}</p>
+                    </div>
+                    <div>
+                        <h3>Reference</h3>
+                        <p>AUDIT-{{serverName}}-FS</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EXECUTIVE SUMMARY -->
+        <div class="page">
+            <h2>📊 Executive Summary</h2>
+            <p>This comprehensive audit report provides a detailed analysis of the file share infrastructure, focusing on security permissions, access control, and potential vulnerabilities.</p>
+            
+            <h3>Report Overview</h3>
+            <table>
+                <tr>
+                    <td class="label-cell">Report Name</td>
+                    <td><strong>{{reportName}}</strong></td>
+                    <td class="label-cell">Server</td>
+                    <td>{{serverName}}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Folder Path</td>
+                    <td>{{folderPath}}</td>
+                    <td class="label-cell">Audit Date</td>
+                    <td>{{report.date}}</td>
+                </tr>
+            </table>
+
+            <h3>Summary Statistics</h3>
+            <table>
+                <thead>
+                    <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Folders Analyzed</strong></td>
+                        <td>{{summary.foldersAnalyzed}}</td>
+                        <td><span class="status-badge status-Healthy">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Critical Issues</strong></td>
+                        <td>{{summary.criticalIssuesCount}}</td>
+                        <td><span class="status-badge status-{{#if summary.criticalIssuesCount}}Critical{{else}}Healthy{{/if}}">{{#if summary.criticalIssuesCount}}Critical{{else}}None{{/if}}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Warning Issues</strong></td>
+                        <td>{{summary.warningIssuesCount}}</td>
+                        <td><span class="status-badge status-{{#if summary.warningIssuesCount}}Warning{{else}}Healthy{{/if}}">{{#if summary.warningIssuesCount}}Warnings{{else}}None{{/if}}</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="page-footer">
+                <span>{{company.name}} Confidential</span>
+                <span class="page-number">Page </span>
+            </div>
+        </div>
+
+        <!-- SHARE ENUMERATION -->
+        {{#if shareEnumerationCount}}
+        <div class="page">
+            <h2>📂 Share Enumeration</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">({{shareEnumerationCount}} {{#if shareEnumerationIsSingular}}share{{else}}shares{{/if}})</p>
+            
+            <table style="table-layout: fixed; width: 100%;">
+                <thead>
+                    <tr>
+                        <th style="width: 12%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Share Name</th>
+                        <th style="width: 10%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Share Risk</th>
+                        <th style="width: 15%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">UNC Path</th>
+                        <th style="width: 15%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Local Path</th>
+                        <th style="width: 10%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Hosting Server</th>
+                        <th style="width: 8%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Share Type</th>
+                        <th style="width: 8%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Offline Files</th>
+                        <th style="width: 10%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">SMB Version</th>
+                        <th style="width: 6%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Encryption</th>
+                        <th style="width: 6%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Continuous Availability</th>
+                        <th style="width: 10%; text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-color);">Red Flags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each shareEnumeration}}
+                    <tr style="{{#if share.isCriticalRisk}}background: rgba(239, 68, 68, 0.05);{{else if share.isHighRisk}}background: rgba(245, 158, 11, 0.03);{{/if}}">
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <strong style="color: {{#if share.isHiddenShare}}#f59e0b{{else if share.isAdminShare}}#6366f1{{else}}#333{{/if}};">
+                                {{share.shareName}}
+                            </strong>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            {{#if share.isCriticalRisk}}
+                            <span style="background: rgba(239, 68, 68, 0.2); color: #ef4444; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.4); display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span>🔴</span>
+                                <span>Critical</span>
+                            </span>
+                            {{else if share.isHighRisk}}
+                            <span style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.4); display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span>🟠</span>
+                                <span>High</span>
+                            </span>
+                            {{else if share.isMediumRisk}}
+                            <span style="background: rgba(234, 179, 8, 0.2); color: #eab308; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(234, 179, 8, 0.4); display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span>🟡</span>
+                                <span>Medium</span>
+                            </span>
+                            {{else}}
+                            <span style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.4); display: inline-flex; align-items: center; gap: 0.25rem;">
+                                <span>🟢</span>
+                                <span>Low</span>
+                            </span>
+                            {{/if}}
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8125rem; color: #666; word-break: break-all;">{{share.uncPath}}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8125rem; color: #666; word-break: break-all;">{{share.localPath}}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">{{share.hostingServer}}</td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <span style="color: {{#if share.isHiddenShare}}#f59e0b{{else if share.isAdminShare}}#6366f1{{else}}#666{{/if}};">
+                                {{share.shareType}}
+                            </span>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <span style="color: {{#if share.offlineFilesEnabled}}#10b981{{else}}#666{{/if}};">
+                                {{#if share.offlineFilesEnabled}}Yes{{else}}No{{/if}}
+                            </span>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <span style="color: {{#if share.hasSMB1}}#ef4444{{else if share.smbVersion}}#10b981{{else}}#666{{/if}};">
+                                {{share.smbVersion}}
+                            </span>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <span style="color: {{#if share.encryptData}}#10b981{{else}}#f59e0b{{/if}};">
+                                {{#if share.encryptData}}Yes{{else}}No{{/if}}
+                            </span>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            <span style="color: {{#if share.continuousAvailability}}#10b981{{else}}#666{{/if}};">
+                                {{#if share.continuousAvailability}}Yes{{else}}No{{/if}}
+                            </span>
+                        </td>
+                        <td style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); vertical-align: top;">
+                            {{#if share.hasRedFlags}}
+                            <span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(239, 68, 68, 0.3);">
+                                {{share.redFlags.length}}
+                            </span>
+                            {{else}}
+                            <span style="color: #10b981;">None</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            {{#each shareEnumeration}}
+            {{#if share.hasRedFlags}}
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(239, 68, 68, 0.05); border-left: 4px solid #ef4444; border-radius: 4px;">
+                <h4 style="margin: 0 0 0.75rem 0; color: #ef4444; font-size: 0.95rem; font-weight: 600;">
+                    Red Flags - {{share.shareName}}
+                </h4>
+                <ul style="margin: 0; padding-left: 1.5rem; color: #333; font-size: 0.85rem;">
+                    {{#each share.redFlags}}
+                    <li style="margin-bottom: 0.5rem;">{{redFlag}}</li>
+                    {{/each}}
+                </ul>
+            </div>
+            {{/if}}
+            {{/each}}
+
+            <div class="page-footer">
+                <span>{{company.name}} Confidential</span>
+                <span class="page-number">Page </span>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if groupsWithAccess}}
+        {{#if groupsWithAccess.length}}
+        <div class="page">
+            <h2>👥 Groups with Folder Access</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">({{groupsWithAccessCount}} {{#if groupsWithAccessIsSingular}}group{{else}}groups{{/if}})</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">Group Name</th>
+                        <th style="width: 10%;">Folders</th>
+                        <th style="width: 35%;">Rights</th>
+                        <th style="width: 25%;">Highest Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each groupsWithAccess}}
+                    <tr>
+                        <td><strong>{{group.name}}</strong></td>
+                        <td>{{group.totalFolders}}</td>
+                        <td>{{group.rightsDisplay}}</td>
+                        <td>
+                            {{#if group.isCriticalRisk}}
+                            <span style="color: #ef4444;">🔴 Critical</span>
+                            {{else if group.isHighRisk}}
+                            <span style="color: #f59e0b;">🟠 High</span>
+                            {{else if group.isMediumRisk}}
+                            <span style="color: #eab308;">🟡 Medium</span>
+                            {{else}}
+                            <span style="color: #10b981;">🟢 Low</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <div class="page-footer">
+                <span>{{company.name}} Confidential</span>
+                <span class="page-number">Page </span>
+            </div>
+        </div>
+        {{/if}}
+        {{/if}}
+
+        {{#if usersWithAccess}}
+        {{#if usersWithAccess.length}}
+        <div class="page">
+            <h2>👤 Users with Folder Access</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">({{usersWithAccessCount}} {{#if usersWithAccessIsSingular}}user{{else}}users{{/if}})</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 30%;">User Name</th>
+                        <th style="width: 10%;">Folders</th>
+                        <th style="width: 35%;">Rights</th>
+                        <th style="width: 25%;">Highest Risk</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each usersWithAccess}}
+                    <tr>
+                        <td><strong>{{user.name}}</strong></td>
+                        <td>{{user.totalFolders}}</td>
+                        <td>{{user.rightsDisplay}}</td>
+                        <td>
+                            {{#if user.isCriticalRisk}}
+                            <span style="color: #ef4444;">🔴 Critical</span>
+                            {{else if user.isHighRisk}}
+                            <span style="color: #f59e0b;">🟠 High</span>
+                            {{else if user.isMediumRisk}}
+                            <span style="color: #eab308;">🟡 Medium</span>
+                            {{else}}
+                            <span style="color: #10b981;">🟢 Low</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+
+            <div class="page-footer">
+                <span>{{company.name}} Confidential</span>
+                <span class="page-number">Page </span>
+            </div>
+        </div>
+        {{/if}}
+        {{/if}}
+
+        <!-- FOLDER DETAILS -->
+        {{#each folderTree}}
+        <div class="page">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 2px solid var(--primary-color); padding-bottom:10px; margin-bottom:20px;">
+                <h2 style="border:none; margin:0;">📁 {{folder.path}}</h2>
+                {{#if folder.criticalIssues}}
+                <span class="status-badge status-Critical" style="font-size:1rem; padding:5px 10px;">{{folder.criticalIssues.length}} Critical</span>
+                {{else if folder.warningIssues}}
+                <span class="status-badge status-Warning" style="font-size:1rem; padding:5px 10px;">{{folder.warningIssues.length}} Warnings</span>
+                {{else}}
+                <span class="status-badge status-Healthy" style="font-size:1rem; padding:5px 10px;">Healthy</span>
+                {{/if}}
+            </div>
+
+            <h3>📋 Folder Information</h3>
+            <table>
+                <tr>
+                    <td class="label-cell">Full Path</td>
+                    <td class="value-cell" colspan="3"><strong>{{folder.path}}</strong></td>
+                </tr>
+                <tr>
+                    <td class="label-cell">Relative Path</td>
+                    <td class="value-cell">{{folder.relativePath}}</td>
+                    <td class="label-cell">Folder Name</td>
+                    <td class="value-cell">{{folder.name}}</td>
+                </tr>
+                <tr>
+                    <td class="label-cell">File Count</td>
+                    <td class="value-cell">{{folder.fileCount}}</td>
+                    <td class="label-cell">Total Size</td>
+                    <td class="value-cell">{{folder.totalSize}}</td>
+                </tr>
+                {{#if folder.permissions}}
+                <tr>
+                    <td class="label-cell">Permissions Count</td>
+                    <td class="value-cell">{{folder.permissions.length}}</td>
+                    <td class="label-cell">Status</td>
+                    <td class="value-cell">
+                        {{#if folder.criticalIssues}}
+                        <span class="status-badge status-Critical">Has Critical Issues</span>
+                        {{else if folder.warningIssues}}
+                        <span class="status-badge status-Warning">Has Warnings</span>
+                        {{else}}
+                        <span class="status-badge status-Healthy">Secure</span>
+                        {{/if}}
+                    </td>
+                </tr>
+                {{/if}}
+            </table>
+
+            {{#if folder.permissions}}
+            <h3>🔐 Permissions</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Identity</th>
+                        <th style="width: 30%;">Rights</th>
+                        <th style="width: 12%;">Access Type</th>
+                        <th style="width: 10%;">Inherited</th>
+                        <th style="width: 13%;">Risk Level</th>
+                        <th style="width: 10%;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each folder.permissions}}
+                    <tr>
+                        <td><strong>{{permission.identityReference}}</strong></td>
+                        <td>{{permission.fileSystemRights}}</td>
+                        <td>{{permission.accessControlType}}</td>
+                        <td><span class="status-badge status-{{permission.isInherited}}">{{#if permission.isInherited}}Yes{{else}}No{{/if}}</span></td>
+                        <td><span class="status-badge status-{{permission.riskLevel}}">{{permission.riskLevel}}</span></td>
+                        <td>
+                            {{#if permission.misconfigurations}}
+                            {{#if permission.misconfigurations.length}}
+                            <span class="status-badge status-Critical">{{permission.misconfigurations.length}} Issues</span>
+                            {{else}}
+                            <span class="status-badge status-Healthy">OK</span>
+                            {{/if}}
+                            {{else}}
+                            <span class="status-badge status-Healthy">OK</span>
+                            {{/if}}
+                        </td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            {{/if}}
+
+            {{#if folder.criticalIssues}}
+            <h3>⚠️ Critical Issues</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Type</th>
+                        <th style="width: 80%;">Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each folder.criticalIssues}}
+                    <tr>
+                        <td><span class="status-badge status-Critical">{{issue.type}}</span></td>
+                        <td>{{issue.message}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            {{/if}}
+
+            {{#if folder.warningIssues}}
+            <h3>⚠️ Warning Issues</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Type</th>
+                        <th style="width: 80%;">Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each folder.warningIssues}}
+                    <tr>
+                        <td><span class="status-badge status-Warning">{{issue.type}}</span></td>
+                        <td>{{issue.message}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+            {{/if}}
+
+            <div class="page-footer">
+                <span>{{folder.path}} Audit Details</span>
+                <span class="page-number">Page </span>
+            </div>
+        </div>
+        {{/each}}
+
+        <!-- CLOSING PAGE -->
+        <div class="page" style="display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+            <div style="font-size: 5rem; margin-bottom: 2rem;">✅</div>
+            <h1 style="color: var(--primary-color);">Audit Complete</h1>
+            <p style="font-size: 1.2rem; color: #666; max-width: 600px;">
+                The file share audit for <strong>{{serverName}}</strong> has been successfully generated.
+            </p>
+            
+            <div style="margin-top: 4rem; width: 100%; border-top: 1px solid #eee; padding-top: 2rem;">
+                <p><strong>{{company.name}}</strong></p>
+                <p style="color: #888; font-size: 0.9rem;">Generated by Dhia Control Tower</p>
+            </div>
+            
+            <div class="page-footer">
+                <span>End of Report</span>
+                <span>{{report.date}}</span>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>`;
+        }
+        
         if (type === 'html' && dataSource === 'hyperv') {
             return `<!DOCTYPE html>
 <html lang="en">
@@ -2686,7 +3334,7 @@ export class ReportTemplatesPage {
             type: 'html',
             dataSource: 'hyperv',
             description: '',
-            content: '',
+            content: this.getDefaultTemplate('html', 'hyperv'),
             author: '',
             version: '1.0'
         };
@@ -2775,7 +3423,8 @@ export class ReportTemplatesPage {
         };
 
         const typeIcon = template.type === 'html' ? 'fa-code' : template.type === 'docx' ? 'fa-file-word' : 'fa-file-pdf';
-        const sourceIcon = template.dataSource === 'hyperv' ? 'fa-server' : 
+        const sourceIcon = template.dataSource === 'hyperv' ? 'fa-server' :
+                          template.dataSource === 'fileshare' ? 'fa-folder-open' :
                           template.dataSource === 'ad' ? 'fa-users' : 'fa-layer-group';
         const typeColor = template.type === 'html' ? 'var(--success)' : 
                          template.type === 'docx' ? 'var(--secondary)' : 'var(--danger)';
@@ -2937,14 +3586,37 @@ export class ReportTemplatesPage {
             this.selectedTemplate.type = type;
         }
         
-        // For HTML templates, set default content if empty
-        if (type === 'html' && contentTextarea && (!contentTextarea.value || contentTextarea.value.trim() === '')) {
-            contentTextarea.value = this.getDefaultTemplate(type, source);
+        // Get default template for the current type and source
+        const defaultContent = this.getDefaultTemplate(type, source);
+        
+        // For HTML templates, update content if empty or if it matches a default template
+        if (type === 'html' && contentTextarea) {
+            const currentContent = contentTextarea.value.trim();
+            if (!currentContent || currentContent === this.getDefaultTemplate('html', source)) {
+                contentTextarea.value = defaultContent;
+                if (this.selectedTemplate) {
+                    this.selectedTemplate.content = defaultContent;
+                }
+            } else {
+                // Ask user if they want to replace content
+                const shouldReplace = confirm(`Do you want to replace the current template content with the default template for "${type}" type and "${source}" data source?\n\nClick OK to replace, Cancel to keep current content.`);
+                if (shouldReplace) {
+                    contentTextarea.value = defaultContent;
+                    if (this.selectedTemplate) {
+                        this.selectedTemplate.content = defaultContent;
+                    }
+                }
+            }
         } else if (type === 'docx') {
             // For DOCX, clear textarea content if it exists
             if (contentTextarea) {
                 contentTextarea.value = '';
             }
+        }
+        
+        // Update preview if preview tab is active
+        if (this.activeTab === 'preview') {
+            this.updatePreview();
         }
         
         // Refresh the editor to show file upload for DOCX or code editor for HTML
@@ -3039,6 +3711,46 @@ export class ReportTemplatesPage {
 
     onSourceChange() {
         const source = document.getElementById('template-source').value;
+        const typeEl = document.getElementById('template-type');
+        const type = typeEl ? typeEl.value : 'html';
+        const contentTextarea = document.getElementById('template-content');
+        
+        // Update the selected template's dataSource
+        if (this.selectedTemplate) {
+            this.selectedTemplate.dataSource = source;
+        }
+        
+        // Only update template content if it's empty or if user confirms
+        if (contentTextarea) {
+            const currentContent = contentTextarea.value.trim();
+            const defaultContent = this.getDefaultTemplate(type, source);
+            
+            // If content is empty or matches a default template, replace it
+            if (!currentContent || currentContent === this.getDefaultTemplate(type, this.selectedTemplate?.dataSource || 'hyperv')) {
+                contentTextarea.value = defaultContent;
+                // Update the selected template's content
+                if (this.selectedTemplate) {
+                    this.selectedTemplate.content = defaultContent;
+                }
+                // Update preview if preview tab is active
+                if (this.activeTab === 'preview') {
+                    this.updatePreview();
+                }
+            } else {
+                // Ask user if they want to replace content
+                const shouldReplace = confirm(`Do you want to replace the current template content with the default template for "${source}"?\n\nClick OK to replace, Cancel to keep current content.`);
+                if (shouldReplace) {
+                    contentTextarea.value = defaultContent;
+                    if (this.selectedTemplate) {
+                        this.selectedTemplate.content = defaultContent;
+                    }
+                    if (this.activeTab === 'preview') {
+                        this.updatePreview();
+                    }
+                }
+            }
+        }
+        
         this.updateDisplay(); // Refresh to update variables panel
     }
 
@@ -3557,40 +4269,54 @@ export class ReportTemplatesPage {
         if (!template) return;
 
         try {
-            // Get available HyperV reports to choose from
-            const response = await fetch('/api/hyperv-reports');
+            // Determine which API endpoint to use based on data source
+            let apiEndpoint = '/api/hyperv-reports';
+            let reportType = 'HyperV';
+            let reportTypeLabel = 'Hyper-V';
+            
+            if (template.dataSource === 'fileshare') {
+                apiEndpoint = '/api/file-share-reports';
+                reportType = 'FileShare';
+                reportTypeLabel = 'File Share';
+            }
+
+            // Get available reports to choose from
+            const response = await fetch(apiEndpoint);
             if (!response.ok) {
-                throw new Error('Failed to fetch HyperV reports');
+                throw new Error(`Failed to fetch ${reportTypeLabel} reports`);
             }
 
             const reports = await response.json();
             if (!reports || reports.length === 0) {
-                alert('No HyperV reports available. Please create a HyperV report first.');
+                alert(`No ${reportTypeLabel} reports available. Please create a ${reportTypeLabel} report first.`);
                 return;
             }
 
             // Show modal to select which report to use
-            this.showReportSelectionModal(template, reports);
+            this.showReportSelectionModal(template, reports, reportType);
 
         } catch (error) {
-            console.error('Error fetching HyperV reports:', error);
-            alert('Error fetching HyperV reports. Please try again.');
+            console.error(`Error fetching ${template.dataSource} reports:`, error);
+            alert(`Error fetching ${template.dataSource} reports. Please try again.`);
         }
     }
 
-    showReportSelectionModal(template, reports) {
+    showReportSelectionModal(template, reports, reportType = 'HyperV') {
+        const reportTypeLabel = reportType === 'FileShare' ? 'File Share' : 'Hyper-V';
+        const reportIcon = reportType === 'FileShare' ? 'fa-folder-open' : 'fa-server';
+        
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
         modal.innerHTML = `
             <div class="modal-content report-selection-modal" onclick="event.stopPropagation()">
                 <div class="modal-header">
-                    <h3><i class="fas fa-file-alt"></i> Select HyperV Report Data</h3>
+                    <h3><i class="fas ${reportIcon}"></i> Select ${reportTypeLabel} Report Data</h3>
                     <button class="btn-close" onclick="this.closest('.modal-overlay').remove()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p>Select which HyperV report data to use for generating "${template.name}":</p>
+                    <p>Select which ${reportTypeLabel} report data to use for generating "${template.name}":</p>
                     ${reports.length > 0 ? `
                         <div class="report-list">
                             ${reports.map(report => `
@@ -3599,10 +4325,11 @@ export class ReportTemplatesPage {
                                         <h4>${report.name}</h4>
                                         <p class="report-meta">
                                             <span><i class="fas fa-calendar"></i> ${new Date(report.createdAt).toLocaleDateString()}</span>
-                                            <span><i class="fas fa-server"></i> ${report.cluster || 'Standalone'}</span>
+                                            ${reportType === 'HyperV' ? `<span><i class="fas fa-server"></i> ${report.clusterName || report.cluster || 'Standalone'}</span>` : ''}
+                                            ${reportType === 'FileShare' ? `<span><i class="fas fa-server"></i> ${report.serverName || 'N/A'}</span>` : ''}
                                         </p>
                                     </div>
-                                    <button class="btn btn-primary btn-sm" onclick="reportTemplatesInstance.generateWithReport('${template.id}', '${report.id}')">
+                                    <button class="btn btn-primary btn-sm" onclick="reportTemplatesInstance.generateWithReport('${template.id}', '${report.id}', '${reportType}')">
                                         <i class="fas fa-play"></i> Generate
                                     </button>
                                 </div>
@@ -3611,7 +4338,7 @@ export class ReportTemplatesPage {
                     ` : `
                         <div class="report-list-empty">
                             <i class="fas fa-inbox" style="font-size: 3rem; color: #cbd5e1; margin-bottom: 1rem;"></i>
-                            <p style="color: #94a3b8; margin: 0;">No HyperV reports available</p>
+                            <p style="color: #94a3b8; margin: 0;">No ${reportTypeLabel} reports available</p>
                         </div>
                     `}
                 </div>
@@ -3628,23 +4355,34 @@ export class ReportTemplatesPage {
         document.body.appendChild(modal);
     }
 
-    async generateWithReport(templateId, reportId) {
+    async generateWithReport(templateId, reportId, reportType = 'HyperV') {
         try {
             // Close the modal
             document.querySelector('.modal-overlay')?.remove();
 
-            // Fetch the specific HyperV report data
-            const response = await fetch(`/api/hyperv-reports/${reportId}`);
+            // Determine which API endpoint to use based on report type
+            let apiEndpoint = `/api/hyperv-reports/${reportId}`;
+            if (reportType === 'FileShare') {
+                apiEndpoint = `/api/file-share-reports/${reportId}`;
+            }
+
+            // Fetch the specific report data
+            const response = await fetch(apiEndpoint);
             if (!response.ok) {
                 const errorText = await response.text();
                 console.error('Failed to fetch report data:', response.status, errorText);
                 throw new Error(`Failed to fetch report data: ${response.status} ${errorText}`);
             }
 
-            const reportData = await response.json();
+            let reportData = await response.json();
             
             if (!reportData || typeof reportData !== 'object') {
                 throw new Error('Invalid report data format');
+            }
+
+            // Extract reportData if it's nested (for Hyper-V)
+            if (reportData.reportData && typeof reportData.reportData === 'object') {
+                reportData = reportData.reportData;
             }
 
             const template = this.templates.find(t => t.id === templateId);
@@ -3792,6 +4530,173 @@ export class ReportTemplatesPage {
 
         // Extract data first to have cluster.csvCount available for conditionals
         const data = this.extractHyperVData(reportData);
+        
+        // Enhance reportData with File Share data if available
+        if (reportData.folderAnalysis) {
+            // Flatten folderAnalysis structure for easier access in templates
+            if (reportData.folderAnalysis.folderTree) {
+                reportData.folderTree = reportData.folderAnalysis.folderTree;
+            }
+            if (reportData.folderAnalysis.summary) {
+                reportData.summary = reportData.folderAnalysis.summary;
+                if (reportData.folderAnalysis.summary.criticalIssues) {
+                    reportData.criticalIssues = reportData.folderAnalysis.summary.criticalIssues;
+                }
+                if (reportData.folderAnalysis.summary.warningIssues) {
+                    reportData.warningIssues = reportData.folderAnalysis.summary.warningIssues;
+                }
+            }
+            // Extract share enumeration
+            if (reportData.folderAnalysis.shareEnumeration && Array.isArray(reportData.folderAnalysis.shareEnumeration)) {
+                reportData.shareEnumeration = reportData.folderAnalysis.shareEnumeration;
+                // Add pluralization helpers
+                reportData.shareEnumerationCount = reportData.shareEnumeration.length;
+                reportData.shareEnumerationIsSingular = reportData.shareEnumeration.length === 1;
+            } else {
+                reportData.shareEnumeration = [];
+                reportData.shareEnumerationCount = 0;
+                reportData.shareEnumerationIsSingular = false;
+            }
+        }
+
+        // Extract groups and users with folder access for Share Enumeration
+        if (reportData.folderTree && Array.isArray(reportData.folderTree)) {
+            const groupsMap = new Map(); // groupName -> { folders: [], rights: Set, totalFolders: 0 }
+            const usersMap = new Map(); // userName -> { folders: [], rights: Set, totalFolders: 0 }
+
+            reportData.folderTree.forEach(folder => {
+                const perms = folder.permissions || [];
+                
+                perms.forEach(perm => {
+                    const identity = perm.identityReference || '';
+                    if (!identity || identity.trim() === '') return;
+                    
+                    // Detect groups: BUILTIN\, NT AUTHORITY\, Domain\Group patterns, or well-known groups
+                    const isGroup = identity.includes('BUILTIN\\') || 
+                                   identity.includes('NT AUTHORITY\\') ||
+                                   identity.includes('Everyone') ||
+                                   identity.includes('Authenticated Users') ||
+                                   identity.includes('Domain Users') ||
+                                   identity.includes('Users') ||
+                                   identity.includes('Administrators') ||
+                                   identity.includes('Guests') ||
+                                   identity.includes('Backup Operators') ||
+                                   identity.includes('Power Users') ||
+                                   (identity.includes('\\') && !identity.match(/^[A-Z]+\\[A-Za-z0-9_]+$/i)); // Domain\User pattern (not a group)
+                    
+                    // Skip system accounts (SYSTEM, CREATOR OWNER, etc.)
+                    if (identity.includes('SYSTEM') || identity.includes('CREATOR OWNER') || identity.includes('SELF')) {
+                        return;
+                    }
+                    
+                    if (isGroup) {
+                        if (!groupsMap.has(identity)) {
+                            groupsMap.set(identity, { folders: [], rights: new Set(), totalFolders: 0 });
+                        }
+                        const groupData = groupsMap.get(identity);
+                        // Avoid duplicate folders
+                        const folderExists = groupData.folders.some(f => f.path === folder.path);
+                        if (!folderExists) {
+                            groupData.folders.push({
+                                path: folder.path || '',
+                                relativePath: folder.relativePath || folder.name || '',
+                                rights: perm.fileSystemRights || '',
+                                accessType: perm.accessControlType || '',
+                                isInherited: perm.isInherited || false,
+                                riskLevel: perm.riskLevel || 'Low'
+                            });
+                            groupData.totalFolders = groupData.folders.length;
+                        }
+                        groupData.rights.add(perm.fileSystemRights || '');
+                    } else {
+                        // Assume it's a user
+                        if (!usersMap.has(identity)) {
+                            usersMap.set(identity, { folders: [], rights: new Set(), totalFolders: 0 });
+                        }
+                        const userData = usersMap.get(identity);
+                        // Avoid duplicate folders
+                        const folderExists = userData.folders.some(f => f.path === folder.path);
+                        if (!folderExists) {
+                            userData.folders.push({
+                                path: folder.path || '',
+                                relativePath: folder.relativePath || folder.name || '',
+                                rights: perm.fileSystemRights || '',
+                                accessType: perm.accessControlType || '',
+                                isInherited: perm.isInherited || false,
+                                riskLevel: perm.riskLevel || 'Low'
+                            });
+                            userData.totalFolders = userData.folders.length;
+                        }
+                        userData.rights.add(perm.fileSystemRights || '');
+                    }
+                });
+            });
+
+            // Convert maps to sorted arrays
+            reportData.groupsWithAccess = Array.from(groupsMap.entries())
+                .map(([name, data]) => {
+                    // Calculate highest risk level from folders
+                    let highestRisk = 'Low';
+                    data.folders.forEach(folder => {
+                        const risk = folder.riskLevel || 'Low';
+                        if (risk === 'Critical' && highestRisk !== 'Critical') {
+                            highestRisk = 'Critical';
+                        } else if (risk === 'High' && highestRisk !== 'Critical' && highestRisk !== 'High') {
+                            highestRisk = 'High';
+                        } else if (risk === 'Medium' && highestRisk === 'Low') {
+                            highestRisk = 'Medium';
+                        }
+                    });
+                    // Create rights display string
+                    const rightsArray = Array.from(data.rights);
+                    const rightsDisplay = rightsArray.join(', ');
+                    return {
+                        name,
+                        totalFolders: data.totalFolders,
+                        rights: rightsArray,
+                        rightsCount: data.rights.size,
+                        rightsDisplay,
+                        folders: data.folders,
+                        highestRisk
+                    };
+                })
+                .sort((a, b) => b.totalFolders - a.totalFolders);
+
+            reportData.usersWithAccess = Array.from(usersMap.entries())
+                .map(([name, data]) => {
+                    // Calculate highest risk level from folders
+                    let highestRisk = 'Low';
+                    data.folders.forEach(folder => {
+                        const risk = folder.riskLevel || 'Low';
+                        if (risk === 'Critical' && highestRisk !== 'Critical') {
+                            highestRisk = 'Critical';
+                        } else if (risk === 'High' && highestRisk !== 'Critical' && highestRisk !== 'High') {
+                            highestRisk = 'High';
+                        } else if (risk === 'Medium' && highestRisk === 'Low') {
+                            highestRisk = 'Medium';
+                        }
+                    });
+                    // Create rights display string
+                    const rightsArray = Array.from(data.rights);
+                    const rightsDisplay = rightsArray.join(', ');
+                    return {
+                        name,
+                        totalFolders: data.totalFolders,
+                        rights: rightsArray,
+                        rightsCount: data.rights.size,
+                        rightsDisplay,
+                        folders: data.folders,
+                        highestRisk
+                    };
+                })
+                .sort((a, b) => b.totalFolders - a.totalFolders);
+            
+            // Add pluralization helpers
+            reportData.groupsWithAccessCount = reportData.groupsWithAccess.length;
+            reportData.groupsWithAccessIsSingular = reportData.groupsWithAccess.length === 1;
+            reportData.usersWithAccessCount = reportData.usersWithAccess.length;
+            reportData.usersWithAccessIsSingular = reportData.usersWithAccess.length === 1;
+        }
         
         // Enhance reportData with cluster info for conditionals
         const enhancedReportData = {
@@ -4399,6 +5304,80 @@ export class ReportTemplatesPage {
                     }
                     array = Array.isArray(obj) ? obj : [];
                 }
+            } else if (arrayName === 'folderTree') {
+                // File Share folder tree - check multiple possible locations
+                if (reportData.folderAnalysis && reportData.folderAnalysis.folderTree) {
+                    array = Array.isArray(reportData.folderAnalysis.folderTree) ? reportData.folderAnalysis.folderTree : [];
+                } else if (reportData.folderTree) {
+                    array = Array.isArray(reportData.folderTree) ? reportData.folderTree : [];
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'criticalIssues') {
+                // File Share critical issues
+                if (reportData.folderAnalysis && reportData.folderAnalysis.summary && reportData.folderAnalysis.summary.criticalIssues) {
+                    array = Array.isArray(reportData.folderAnalysis.summary.criticalIssues) ? reportData.folderAnalysis.summary.criticalIssues : [];
+                } else if (reportData.criticalIssues) {
+                    array = Array.isArray(reportData.criticalIssues) ? reportData.criticalIssues : [];
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'warningIssues') {
+                // File Share warning issues
+                if (reportData.folderAnalysis && reportData.folderAnalysis.summary && reportData.folderAnalysis.summary.warningIssues) {
+                    array = Array.isArray(reportData.folderAnalysis.summary.warningIssues) ? reportData.folderAnalysis.summary.warningIssues : [];
+                } else if (reportData.warningIssues) {
+                    array = Array.isArray(reportData.warningIssues) ? reportData.warningIssues : [];
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'shareEnumeration') {
+                // File Share SMB shares enumeration
+                if (reportData.shareEnumeration && Array.isArray(reportData.shareEnumeration)) {
+                    array = reportData.shareEnumeration;
+                } else if (reportData.folderAnalysis && reportData.folderAnalysis.shareEnumeration && Array.isArray(reportData.folderAnalysis.shareEnumeration)) {
+                    array = reportData.folderAnalysis.shareEnumeration;
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'groupsWithAccess') {
+                // File Share groups with folder access
+                array = Array.isArray(reportData.groupsWithAccess) ? reportData.groupsWithAccess : [];
+            } else if (arrayName === 'usersWithAccess') {
+                // File Share users with folder access
+                array = Array.isArray(reportData.usersWithAccess) ? reportData.usersWithAccess : [];
+            } else if (arrayName === 'group.rights' || arrayName === 'user.rights') {
+                // Nested rights loop within groups/users
+                const parentItem = reportData.group || reportData.user;
+                if (parentItem && Array.isArray(parentItem.rights)) {
+                    // Convert strings to objects with 'right' property for template access
+                    array = parentItem.rights.map(right => typeof right === 'string' ? { right } : right);
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'group.folders' || arrayName === 'user.folders') {
+                // Nested folders loop within groups/users
+                const parentItem = reportData.group || reportData.user;
+                if (parentItem && Array.isArray(parentItem.folders)) {
+                    array = parentItem.folders;
+                } else {
+                    array = [];
+                }
+            } else if (arrayName === 'share.redFlags') {
+                // Nested red flags loop within shares
+                const parentItem = reportData.share;
+                if (parentItem && Array.isArray(parentItem.redFlags)) {
+                    array = parentItem.redFlags.map(flag => {
+                        if (typeof flag === 'string') {
+                            return { redFlag: flag };
+                        } else if (flag && typeof flag === 'object') {
+                            return { redFlag: flag.redFlag || flag.message || flag.text || flag.description || JSON.stringify(flag) };
+                        }
+                        return { redFlag: String(flag) };
+                    });
+                } else {
+                    array = [];
+                }
             } else if (arrayName === 'hosts' && reportData.hosts) {
                 array = reportData.hosts;
             } else if (arrayName === 'vms') {
@@ -4764,7 +5743,20 @@ export class ReportTemplatesPage {
             }
 
             // Process each item in the array
-            array.forEach((item, index) => {
+            array.forEach((originalItem, index) => {
+                // Handle case where item might be a string (for issues)
+                // Convert string to object BEFORE any property access
+                let item = originalItem;
+                if ((arrayName === 'criticalIssues' || arrayName === 'warningIssues') && typeof originalItem === 'string') {
+                    // Convert string to object for issues
+                    item = {
+                        level: arrayName === 'criticalIssues' ? 'Critical' : 'Warning',
+                        message: originalItem,
+                        folder: 'N/A',
+                        type: 'N/A'
+                    };
+                }
+                
                 let itemContent = loopTemplate;
                 
                 // Replace item properties (e.g., {{host.name}} or {{vm.name}})
@@ -4790,6 +5782,14 @@ export class ReportTemplatesPage {
                     else prefix = propName;
                 } else if (arrayName === 'vswitch.extensions') {
                     prefix = 'extension';
+                } else if (arrayName === 'group.rights' || arrayName === 'user.rights') {
+                    prefix = 'right';
+                } else if (arrayName === 'group.folders' || arrayName === 'user.folders') {
+                    prefix = 'folder';
+                } else if (arrayName === 'groupsWithAccess') {
+                    prefix = 'group';
+                } else if (arrayName === 'usersWithAccess') {
+                    prefix = 'user';
                 }
                 
                 // Store current item context for nested loops
@@ -5244,6 +6244,102 @@ export class ReportTemplatesPage {
                      else if (item.state === 2 || item.state === '2') item.state = 'Online';
                      else if (item.state === 3 || item.state === '3') item.state = 'Failed';
                      
+                } else if (arrayName === 'folderTree') {
+                    itemContext.folder = item;
+                    // Ensure folder properties are available
+                    item.name = item.name || item.path || 'N/A';
+                    item.path = item.path || 'N/A';
+                    item.relativePath = item.relativePath || '';
+                    item.fileCount = item.fileCount || 0;
+                    item.totalSize = item.totalSize || '0 B';
+                    item.criticalIssues = item.criticalIssues || [];
+                    item.warningIssues = item.warningIssues || [];
+                } else if (arrayName === 'criticalIssues' || arrayName === 'warningIssues') {
+                    // Item should already be converted to object at the start of the loop
+                    // But ensure issue properties are available as a safety check
+                    if (typeof item === 'object' && item !== null) {
+                        // Ensure issue properties are available
+                        item.level = item.level || (arrayName === 'criticalIssues' ? 'Critical' : 'Warning');
+                        item.message = item.message || 'N/A';
+                        item.folder = item.folder || item.path || 'N/A';
+                        item.type = item.type || 'N/A';
+                    }
+                    itemContext.issue = item;
+                } else if (arrayName === 'shareEnumeration') {
+                    itemContext.share = item;
+                    // Ensure share properties are available
+                    item.shareName = item.shareName || 'N/A';
+                    // Get risk level from multiple possible sources
+                    const shareRisk = item.shareRisk || item.shareRiskLevel || item.highestNTFSRisk || item.riskLevel || 'Low';
+                    item.shareRisk = shareRisk;
+                    // Normalize risk level (case-insensitive)
+                    const normalizedRisk = typeof shareRisk === 'string' ? shareRisk.toLowerCase() : 'low';
+                    item.isCriticalRisk = normalizedRisk === 'critical';
+                    item.isHighRisk = normalizedRisk === 'high';
+                    item.isMediumRisk = normalizedRisk === 'medium';
+                    item.isLowRisk = normalizedRisk === 'low' || !shareRisk;
+                    item.uncPath = item.uncPath || item.unc || 'N/A';
+                    item.localPath = item.localPath || item.path || 'N/A';
+                    item.hostingServer = item.hostingServer || item.server || reportData.serverName || 'N/A';
+                    item.shareType = item.shareType || item.type || 'Normal';
+                    item.isHiddenShare = item.shareType === 'Hidden' || item.type === 'Hidden';
+                    item.isAdminShare = item.shareType === 'Admin' || item.type === 'Admin';
+                    item.offlineFilesEnabled = item.offlineFilesEnabled === 'Yes' || item.offlineFilesEnabled === true || item.offlineFiles === true;
+                    item.smbVersion = item.smbVersion || item.smb || 'N/A';
+                    item.hasSMB1 = item.smbVersion && (item.smbVersion.includes('SMB1') || item.smbVersion.indexOf('SMB1') !== -1);
+                    item.encryptData = item.encryptData === 'Yes' || item.encryptData === true || item.encryptionRequired === 'Yes' || item.encryption === true;
+                    item.continuousAvailability = item.continuousAvailability === 'Yes' || item.continuousAvailability === true || item.continuousAvail === true;
+                    // Handle red flags - can be array of strings or array of objects
+                    item.redFlags = item.redFlags || [];
+                    if (Array.isArray(item.redFlags)) {
+                        item.redFlags = item.redFlags.map(flag => {
+                            if (typeof flag === 'string') {
+                                return { redFlag: flag };
+                            } else if (flag && typeof flag === 'object') {
+                                return { redFlag: flag.message || flag.text || flag.description || JSON.stringify(flag) };
+                            }
+                            return { redFlag: String(flag) };
+                        });
+                    }
+                    item.hasRedFlags = item.redFlags && item.redFlags.length > 0;
+                } else if (arrayName === 'share.redFlags') {
+                    itemContext.redFlag = item;
+                    // Ensure redFlag properties are available
+                    if (typeof item === 'string') {
+                        itemContext.redFlag = { redFlag: item };
+                    } else if (item && typeof item === 'object') {
+                        item.redFlag = item.redFlag || item.message || item.text || item.description || JSON.stringify(item);
+                    }
+                } else if (arrayName === 'groupsWithAccess') {
+                    itemContext.group = item;
+                    // Ensure group properties are available
+                    item.name = item.name || 'N/A';
+                    item.totalFolders = item.totalFolders || 0;
+                    item.rights = item.rights || [];
+                    item.rightsCount = item.rightsCount || 0;
+                    item.folders = item.folders || [];
+                    const highestRisk = item.highestRisk || 'Low';
+                    item.highestRisk = highestRisk;
+                    item.isCriticalRisk = highestRisk === 'Critical';
+                    item.isHighRisk = highestRisk === 'High';
+                    item.isMediumRisk = highestRisk === 'Medium';
+                    item.isLowRisk = highestRisk === 'Low' || !highestRisk;
+                    item.rightsDisplay = item.rightsDisplay || (item.rights && Array.isArray(item.rights) ? item.rights.join(', ') : '');
+                } else if (arrayName === 'usersWithAccess') {
+                    itemContext.user = item;
+                    // Ensure user properties are available
+                    item.name = item.name || 'N/A';
+                    item.totalFolders = item.totalFolders || 0;
+                    item.rights = item.rights || [];
+                    item.rightsCount = item.rightsCount || 0;
+                    item.folders = item.folders || [];
+                    const highestRisk = item.highestRisk || 'Low';
+                    item.highestRisk = highestRisk;
+                    item.isCriticalRisk = highestRisk === 'Critical';
+                    item.isHighRisk = highestRisk === 'High';
+                    item.isMediumRisk = highestRisk === 'Medium';
+                    item.isLowRisk = highestRisk === 'Low' || !highestRisk;
+                    item.rightsDisplay = item.rightsDisplay || (item.rights && Array.isArray(item.rights) ? item.rights.join(', ') : '');
                 } else if (arrayName === 'quorumDisks') {
                     itemContext.quorumDisk = item;
                      // Ensure quorumDisk properties are formatted (already handled in previous block but good to double check)
@@ -5294,6 +6390,18 @@ export class ReportTemplatesPage {
                     itemContext.mpioDisk = item;
                 } else if (arrayName === 'migrationNetworks') {
                     itemContext.migrationNetwork = item;
+                } else if (arrayName === 'group.rights' || (arrayName === 'groupsWithAccess' && prefix === 'group')) {
+                    // Handle nested rights loop within groups
+                    itemContext.right = item;
+                } else if (arrayName === 'group.folders' || (arrayName === 'groupsWithAccess' && prefix === 'group')) {
+                    // Handle nested folders loop within groups
+                    itemContext.folder = item;
+                } else if (arrayName === 'user.rights' || (arrayName === 'usersWithAccess' && prefix === 'user')) {
+                    // Handle nested rights loop within users
+                    itemContext.right = item;
+                } else if (arrayName === 'user.folders' || (arrayName === 'usersWithAccess' && prefix === 'user')) {
+                    // Handle nested folders loop within users
+                    itemContext.folder = item;
                 }
                 
                 // Create context for processing nested loops and conditionals
@@ -5441,7 +6549,30 @@ export class ReportTemplatesPage {
                 itemContent = this.processConditionals(itemContent, loopContext);
                 
                 // Also replace using quorumDisk prefix for easier access
-                if (arrayName === 'quorumDisks') {
+                if (arrayName === 'folderTree') {
+                    itemContent = replaceNested(item, 'folder', itemContent);
+                } else if (arrayName === 'criticalIssues' || arrayName === 'warningIssues') {
+                    itemContent = replaceNested(item, 'issue', itemContent);
+                } else if (arrayName === 'shareEnumeration') {
+                    itemContent = replaceNested(item, 'share', itemContent);
+                } else if (arrayName === 'share.redFlags') {
+                    // For red flags loops, item is a string or object with 'redFlag' property
+                    const redFlagValue = typeof item === 'string' ? item : (item.redFlag || item.message || item.text || item.description || JSON.stringify(item));
+                    itemContent = itemContent.replace(/\{\{redFlag\}\}/g, redFlagValue);
+                    itemContent = itemContent.replace(/\{\{redFlag\.redFlag\}\}/g, redFlagValue);
+                } else if (arrayName === 'groupsWithAccess') {
+                    itemContent = replaceNested(item, 'group', itemContent);
+                } else if (arrayName === 'usersWithAccess') {
+                    itemContent = replaceNested(item, 'user', itemContent);
+                } else if (arrayName === 'group.rights' || arrayName === 'user.rights') {
+                    // For rights loops, item is a string or object with 'right' property
+                    const rightValue = typeof item === 'string' ? item : (item.right || item);
+                    itemContent = itemContent.replace(/\{\{right\}\}/g, rightValue);
+                    itemContent = itemContent.replace(/\{\{right\.right\}\}/g, rightValue);
+                } else if (arrayName === 'group.folders' || arrayName === 'user.folders') {
+                    // For folders loops, item is already a folder object
+                    itemContent = replaceNested(item, 'folder', itemContent);
+                } else if (arrayName === 'quorumDisks') {
                     itemContent = replaceNested(item, 'quorumDisk', itemContent);
                 } else if (arrayName === 'csvs') {
                     itemContent = replaceNested(item, 'csv', itemContent);

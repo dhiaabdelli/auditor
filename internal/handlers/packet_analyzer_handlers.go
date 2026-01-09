@@ -928,8 +928,13 @@ func parsePacket(packet gopacket.Packet, packetNum int) *models.PacketInfo {
 		arp := arpLayer.(*layers.ARP)
 		info.Protocol = "ARP"
 
-		srcIP := getARPIP(arp.SourceProtAddress)
-		dstIP := getARPIP(arp.DstProtAddress)
+		srcIP := getARPIP(arp.SourceProtAddress) // Sender IP
+		dstIP := getARPIP(arp.DstProtAddress)    // Target IP
+
+		// Set source and destination for ARP packets to show in table
+		// Source column = Sender IP, Destination column = Target IP
+		info.Source = srcIP      // Sender IP in Source column
+		info.Destination = dstIP // Target IP in Destination column
 
 		if arp.Operation == 1 {
 			info.Info = fmt.Sprintf("Who has %s? Tell %s", dstIP, srcIP)

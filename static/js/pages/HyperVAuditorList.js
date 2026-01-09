@@ -99,79 +99,50 @@ export class HyperVAuditorListPage {
     async render() {
         return `
             <div class="page-container-full">
-                <div class="page-header">
-                    <div class="page-header-content">
-                        <div>
-                            <h1 class="page-title">📊 ${this.t('title')}</h1>
-                            <p class="page-subtitle">${this.t('subtitle')}</p>
-                        </div>
-                        <div class="page-header-actions">
-                            <button class="btn btn-secondary btn-sm" onclick="hyperVAuditorListInstance.showCreateReportModal()">
-                                <i class="fas fa-plus"></i> ${this.t('newReport')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
                 ${!this.reports || this.reports.length === 0 ? `
                     <div class="reports-empty-state">
-                        <i class="fas fa-file-alt"></i>
+                        <i class="fas fa-file-alt fa-3x"></i>
                         <p>${this.t('noReports')}</p>
                         <p>${this.t('createFirst')}</p>
                     </div>
                 ` : `
-                    <div class="reports-table-wrapper">
-                        <table class="reports-table-compact">
-                            <thead>
-                                <tr>
-                                    <th>${this.t('name')}</th>
-                                    <th>${this.t('type')}</th>
-                                    <th>${this.t('target')}</th>
-                                    <th>${this.t('status')}</th>
-                                    <th>${this.t('created')}</th>
-                                    <th>${this.t('actions')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${(this.reports || []).map(report => `
-                                    <tr class="reports-table-row" 
-                                        onclick="hyperVAuditorListInstance.viewReport(${report.id})">
-                                        <td>
-                                            <div class="reports-table-name">
-                                                <i class="fas fa-file-alt"></i>
-                                                <strong>${report.name}</strong>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="reports-table-type">${report.targetType === 'cluster' ? this.t('cluster') : this.t('host')}</span>
-                                        </td>
-                                        <td>
-                                            ${report.targetType === 'cluster' && report.clusterName ? `
-                                                <span>${report.clusterName}</span>
-                                            ` : report.hostNames ? `
-                                                <span>${report.hostNames}</span>
-                                            ` : '<span class="reports-table-na">N/A</span>'}
-                                        </td>
-                                        <td>
-                                            ${report.hasData ? '<span class="reports-table-status reports-table-status-success"><i class="fas fa-check-circle"></i> Loaded</span>' : '<span class="reports-table-status reports-table-status-empty"><i class="fas fa-circle"></i> Empty</span>'}
-                                        </td>
-                                        <td>
-                                            <span class="reports-table-date">${new Date(report.createdAt).toLocaleDateString()}</span>
-                                        </td>
-                                        <td>
-                                            <div class="reports-table-actions" onclick="event.stopPropagation()">
-                                                <button class="reports-table-action-btn reports-table-action-view" onclick="hyperVAuditorListInstance.viewReport(${report.id})" title="${this.t('view')}">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button class="reports-table-action-btn reports-table-action-delete" onclick="hyperVAuditorListInstance.deleteReport(${report.id})" title="${this.t('delete')}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                    <div class="reports-grid-modern">
+                        ${(this.reports || []).map(report => `
+                            <div class="report-card-modern" onclick="hyperVAuditorListInstance.viewReport(${report.id})">
+                                <div class="report-card-header-modern">
+                                    <div class="report-card-icon-modern" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);">
+                                        <i class="fas fa-file-alt" style="color: #3b82f6;"></i>
+                                    </div>
+                                    <div class="report-card-title-section">
+                                        <h3 class="report-card-title-modern">${report.name}</h3>
+                                        <div class="report-card-meta">
+                                            <span class="report-card-server">
+                                                <i class="fas fa-server" style="font-size: 0.6875rem; margin-right: 0.25rem;"></i>
+                                                <span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem;">
+                                                    ${report.targetType === 'cluster' && report.clusterName ? report.clusterName : report.hostNames || 'N/A'}
+                                                </span>
+                                            </span>
+                                            <span style="display: inline-flex; align-items: center; gap: 0.25rem; margin-left: 0.5rem; padding: 0.125rem 0.375rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 0.25rem; font-size: 0.6875rem; font-weight: 500; color: #60a5fa;">
+                                                <i class="fas fa-${report.targetType === 'cluster' ? 'sitemap' : 'server'}" style="font-size: 0.5625rem;"></i>
+                                                ${report.targetType === 'cluster' ? this.t('cluster') : this.t('host')}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="report-card-body-modern">
+                                    <div class="report-card-info-row">
+                                        <div class="report-card-info-item">
+                                            <span class="report-card-info-label">Status</span>
+                                            ${report.hasData ? '<span class="report-card-status report-card-status-success"><i class="fas fa-check-circle"></i> Loaded</span>' : '<span class="report-card-status report-card-status-empty"><i class="fas fa-circle"></i> Empty</span>'}
+                                        </div>
+                                        <div class="report-card-info-item">
+                                            <span class="report-card-info-label">Created</span>
+                                            <span class="report-card-date">${new Date(report.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
                 `}
 

@@ -4,6 +4,8 @@ export class WindowsServerAuditorPage {
         this.reportId = null;
         this.loading = false;
         this.currentLanguage = localStorage.getItem('language') || 'en';
+        this.activeView = 'overview'; // 'overview', 'drivers', 'applications', 'users', 'groups', 'services', 'scheduled-tasks', 'windows-updates', 'process', 'network-adapters', 'routing-table', 'persistent-routes', 'arp-table', 'certificates', 'minifilters', 'firewall-rules', 'listening-ports'
+        this.currentCertificateTab = 'all'; // 'all', 'user', 'trusted-root', 'intermediate', 'expired'
         this.showServicesModalFlag = false;
         this.selectedServicesModal = null; // { page }
         this.showSoftwareModalFlag = false;
@@ -36,6 +38,14 @@ export class WindowsServerAuditorPage {
         this.selectedEventDetails = null; // { event, type }
         this.showProcessTreeModalFlag = false;
         this.selectedProcessTreeModal = null; // { page }
+        this.showProcessDetailsModalFlag = false;
+        this.selectedProcessDetails = null; // { process }
+        this.showMinifilterDetailsModalFlag = false;
+        this.selectedMinifilterDetails = null; // { filterName, altitude, instances, attachedVolumes, driverPath, vendor, frame }
+        this.showFirewallRuleDetailsModalFlag = false;
+        this.selectedFirewallRuleDetails = null; // { rule }
+        this.showListeningPortDetailsModalFlag = false;
+        this.selectedListeningPortDetails = null; // { listener }
         this.translations = {
             en: {
                 title: 'Windows Server Audit',
@@ -228,6 +238,24 @@ export class WindowsServerAuditorPage {
         return this.translations[this.currentLanguage][key] || key;
     }
 
+    toggleSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('sidebar-open');
+            overlay.classList.toggle('show');
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('auditor-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        if (sidebar && overlay) {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+        }
+    }
+
     async render() {
         const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
         this.reportId = urlParams.get('id');
@@ -235,16 +263,9 @@ export class WindowsServerAuditorPage {
         if (this.loading) {
             return `
                 <div class="page-container-full">
-                    <div class="page-header">
-                        <div class="page-header-content">
-                            <div>
-                                <h1 class="page-title">🖥️ ${this.t('title')}</h1>
-                                <p class="page-subtitle">${this.t('loading')}</p>
-                            </div>
-                        </div>
-                    </div>
                     <div class="loading-container">
                         <div class="spinner"></div>
+                        <p>${this.t('loading') || 'Loading...'}</p>
                     </div>
                 </div>
             `;
@@ -253,33 +274,9 @@ export class WindowsServerAuditorPage {
         if (!this.reportData) {
             return `
                 <div class="page-container-full">
-                    <div class="page-header">
-                        <div class="page-header-content">
-                            <div style="display: flex; align-items: center; gap: 1rem;">
-                                <button class="btn btn-icon" onclick="windowsServerAuditorInstance.goBack()">
-                                    <i class="fas fa-arrow-left"></i>
-                                </button>
-                                <div>
-                                    <h1 class="page-title">🖥️ ${this.t('title')}</h1>
-                                    <p class="page-subtitle">${this.t('subtitle')}</p>
-                                </div>
-                            </div>
-                            <div class="page-header-actions">
-                                <button type="button" class="btn btn-sm btn-primary" onclick="windowsServerAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                    <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="windowsServerAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                    <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-success" onclick="windowsServerAuditorInstance.importReport()" title="Import">
-                                    <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                                </button>
-                                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="windowsServerAuditorInstance.handleFileSelect(event)">
-                            </div>
-                        </div>
-                    </div>
+                    <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="windowsServerAuditorInstance.handleFileSelect(event)">
                     <div class="reports-empty-state">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-exclamation-triangle fa-3x"></i>
                         <p>${this.t('noData')}</p>
                         <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
                             Click "Script" to download the PowerShell script, run it on your server, then click "Import" to upload the JSON output.
@@ -323,34 +320,245 @@ export class WindowsServerAuditorPage {
         const raidControllers = data.raidControllers || [];
 
         return `
-            <div class="page-container-full">
-                <div class="page-header">
-                    <div class="page-header-content">
-                        <div style="display: flex; align-items: center; gap: 1rem;">
-                            <button class="btn btn-icon" onclick="windowsServerAuditorInstance.goBack()">
-                                <i class="fas fa-arrow-left"></i>
-                            </button>
-                            <div>
-                                <h1 class="page-title">🖥️ ${this.t('title')}</h1>
-                                <p class="page-subtitle">${systemInfo.computerName || data.serverName || 'Windows Server'}</p>
-                            </div>
+            <div class="page-container-full file-share-auditor-layout">
+                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="windowsServerAuditorInstance.handleFileSelect(event)">
+                <!-- Sidebar Overlay (Mobile) -->
+                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="windowsServerAuditorInstance.closeSidebar()"></div>
+                <!-- Sidebar Navigation -->
+                <div class="file-share-auditor-sidebar" id="auditor-sidebar">
+                    <div class="file-share-auditor-sidebar-nav">
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('overview')">
+                            <i class="fas fa-chart-line"></i>
+                            <span>Overview</span>
                         </div>
-                        <div class="page-header-actions">
-                            <button type="button" class="btn btn-sm btn-primary" onclick="windowsServerAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" title="Script">
-                                <i class="fas fa-code"></i> <span class="btn-text">Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-secondary" onclick="windowsServerAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" title="Plain Script">
-                                <i class="fas fa-file-alt"></i> <span class="btn-text">Plain Script</span>
-                            </button>
-                            <button type="button" class="btn btn-sm btn-success" onclick="windowsServerAuditorInstance.importReport()" title="Import">
-                                <i class="fas fa-upload"></i> <span class="btn-text">Import</span>
-                            </button>
-                            <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="windowsServerAuditorInstance.handleFileSelect(event)">
+                        <!-- Security & Access -->
+                        ${localUsersSummary.localUsersCount !== undefined ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'users' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('users')">
+                            <i class="fas fa-users"></i>
+                            <span>Users</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${localUsersSummary.localUsersCount || 0})</span>
                         </div>
+                        ` : ''}
+                        ${localGroups && localGroups.length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'groups' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('groups')">
+                            <i class="fas fa-users-cog"></i>
+                            <span>Groups</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(localGroups || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(data?.certificates?.allCertificates || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'certificates' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('certificates')">
+                            <i class="fas fa-certificate"></i>
+                            <span>Certificates</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.certificates.allCertificates || []).length})</span>
+                        </div>
+                        ` : ''}
+                        <!-- System Configuration -->
+                        ${(rolesAndFeatures.installedRoles || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'roles' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('roles')">
+                            <i class="fas fa-server"></i>
+                            <span>Roles</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(rolesAndFeatures.installedRoles || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(rolesAndFeatures.installedFeatures || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'features' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('features')">
+                            <i class="fas fa-puzzle-piece"></i>
+                            <span>Features</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(rolesAndFeatures.installedFeatures || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(services.services || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'services' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('services')">
+                            <i class="fas fa-cogs"></i>
+                            <span>Services</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(services.services || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${scheduledTasks.totalTasks !== undefined ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'scheduled-tasks' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('scheduled-tasks')">
+                            <i class="fas fa-clock"></i>
+                            <span>Scheduled Tasks</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${scheduledTasks.totalTasks || 0})</span>
+                        </div>
+                        ` : ''}
+                        <!-- Software & Hardware -->
+                        ${(software.applications || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'applications' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('applications')">
+                            <i class="fas fa-box"></i>
+                            <span>Applications</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(software.applications || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(drivers || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'drivers' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('drivers')">
+                            <i class="fas fa-microchip"></i>
+                            <span>Drivers</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(drivers || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${data.devices && data.devices.totalDevices > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'devices' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('devices')">
+                            <i class="fas fa-usb"></i>
+                            <span>Devices</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${data.devices.totalDevices || 0})</span>
+                        </div>
+                        ` : ''}
+                        ${(data.minifilters || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'minifilters' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('minifilters')">
+                            <i class="fas fa-filter"></i>
+                            <span>Minifilter Drivers</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.minifilters || []).length})</span>
+                        </div>
+                        ` : ''}
+                        <!-- Updates & Maintenance -->
+                        ${windowsUpdatesSummary.installedKBCount !== undefined ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'installed-updates' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('installed-updates')">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Installed Updates</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${windowsUpdatesSummary.installedKBCount || 0})</span>
+                        </div>
+                        ` : ''}
+                        ${windowsUpdatesSummary.missingCumulativeCount !== undefined ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'missing-updates' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('missing-updates')">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Missing Updates</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${windowsUpdatesSummary.missingCumulativeCount || 0})</span>
+                        </div>
+                        ` : ''}
+                        <!-- Network -->
+                        ${(network?.adapters || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'network-adapters' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('network-adapters')">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Network Adapters</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.adapters || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(network?.routingTable || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'routing-table' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('routing-table')">
+                            <i class="fas fa-route"></i>
+                            <span>Routing Table</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.routingTable || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(network?.persistentRoutes || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'persistent-routes' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('persistent-routes')">
+                            <i class="fas fa-route"></i>
+                            <span>Persistent Routes</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.persistentRoutes || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(network?.arpTable || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'arp-table' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('arp-table')">
+                            <i class="fas fa-network-wired"></i>
+                            <span>ARP Table</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.arpTable || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(data.firewallRules || []).length > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'firewall-rules' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('firewall-rules')">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Firewall Rules</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.firewallRules || []).length})</span>
+                        </div>
+                        ` : ''}
+                        ${(data.listeningPorts?.total || 0) > 0 ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'listening-ports' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('listening-ports')">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Listening Ports</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${data.listeningPorts?.total || 0})</span>
+                        </div>
+                        ` : ''}
+                        <!-- Monitoring & Diagnostics -->
+                        ${eventLogOverview.systemErrors24h !== undefined || eventLogOverview.appErrors24h !== undefined ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'event-log' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('event-log')">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Event Log</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${((eventLogOverview.systemErrors || []).length || 0) + ((eventLogOverview.appErrors || []).length || 0) + ((eventLogOverview.criticalEvents || []).length || 0)})</span>
+                        </div>
+                        ` : ''}
+                        ${processTree.summary ? `
+                        <div class="file-share-auditor-nav-item ${this.activeView === 'process' ? 'active' : ''}" 
+                             onclick="windowsServerAuditorInstance.switchView('process')">
+                            <i class="fas fa-microchip"></i>
+                            <span>Process</span>
+                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(processTree.processes || []).length || 0})</span>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
+                <!-- Main Content -->
+                <div class="file-share-auditor-main">
+                    ${this.activeView === 'drivers' ? this.renderDriversView(drivers) : 
+                      this.activeView === 'devices' ? this.renderDevicesView(data.devices) :
+                      this.activeView === 'minifilters' ? this.renderMinifiltersView(data.minifilters || []) :
+                      this.activeView === 'applications' ? this.renderApplicationsView(software) : 
+                      this.activeView === 'users' ? this.renderUsersView(localUsersSummary) : 
+                      this.activeView === 'groups' ? this.renderGroupsView(localGroups) : 
+                      this.activeView === 'services' ? this.renderServicesView(services) : 
+                      this.activeView === 'scheduled-tasks' ? this.renderScheduledTasksView(scheduledTasks) : 
+                      this.activeView === 'installed-updates' ? this.renderInstalledUpdatesView(windowsUpdates, windowsUpdatesSummary) : 
+                      this.activeView === 'missing-updates' ? this.renderMissingUpdatesView(missingUpdates, windowsUpdatesSummary) : 
+                      this.activeView === 'roles' ? this.renderRolesView(rolesAndFeatures) : 
+                      this.activeView === 'features' ? this.renderFeaturesView(rolesAndFeatures) : 
+                      this.activeView === 'event-log' ? this.renderEventLogView(eventLogOverview) : 
+                      this.activeView === 'process' ? this.renderProcessView(processTree) : 
+                      this.activeView === 'network-adapters' ? this.renderNetworkAdaptersView(network?.adapters || []) : 
+                      this.activeView === 'routing-table' ? this.renderRoutingTableView(network?.routingTable || []) : 
+                      this.activeView === 'persistent-routes' ? this.renderPersistentRoutesView(network?.persistentRoutes || []) : 
+                      this.activeView === 'arp-table' ? this.renderARPTableView(network?.arpTable || []) : 
+                      this.activeView === 'firewall-rules' ? this.renderFirewallRulesView(data.firewallRules || []) :
+                      this.activeView === 'listening-ports' ? this.renderListeningPortsView(data.listeningPorts || {}) :
+                      this.activeView === 'certificates' ? this.renderCertificatesView(data?.certificates) : 
+                      this.renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers)}
+                </div>
+            </div>
+            ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
+            ${this.showWindowsUpdatesModalFlag ? this.renderWindowsUpdatesModal() : ''}
+            ${this.showMissingUpdatesModalFlag ? this.renderMissingUpdatesModal() : ''}
+            ${this.showRolesModalFlag ? this.renderRolesModal() : ''}
+            ${this.showFeaturesModalFlag ? this.renderFeaturesModal() : ''}
+            ${this.showAllTasksModalFlag ? this.renderAllTasksModal() : ''}
+            ${this.showFailedTasksModalFlag ? this.renderFailedTasksModal() : ''}
+            ${this.showTempEnvironmentModalFlag ? this.renderTempEnvironmentModal() : ''}
+            ${this.showDirectoryHealthModalFlag ? this.renderDirectoryHealthModal() : ''}
+            ${this.showPathOrderAnalysisModalFlag ? this.renderPathOrderAnalysisModal() : ''}
+            ${this.showPathHygieneChecksModalFlag ? this.renderPathHygieneChecksModal() : ''}
+            ${this.showGroupMembersModalFlag ? this.renderGroupMembersModal() : ''}
+            ${this.showEventLogModalFlag ? this.renderEventLogModal() : ''}
+            ${this.showEventDetailsModalFlag ? this.renderEventDetailsModal() : ''}
+            ${this.showProcessTreeModalFlag ? this.renderProcessTreeModal() : ''}
+            ${this.showProcessDetailsModalFlag ? this.renderProcessDetailsModal() : ''}
+            ${this.showMinifilterDetailsModalFlag ? this.renderMinifilterDetailsModal() : ''}
+            ${this.showFirewallRuleDetailsModalFlag ? this.renderFirewallRuleDetailsModal() : ''}
+            ${this.showListeningPortDetailsModalFlag ? this.renderListeningPortDetailsModal() : ''}
+        `;
+    }
 
-                <div class="audit-content">
+    renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers) {
+        return `
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
                     <!-- Dashboard Header: Host Overview -->
                     <div class="audit-dashboard-header">
                         <div class="dashboard-hero-icon">
@@ -395,7 +603,7 @@ export class WindowsServerAuditorPage {
                     </div>
 
                     <!-- Dashboard Grid: Hardware & OS -->
-                    <div class="audit-dashboard-grid">
+                    <div class="audit-dashboard-grid" data-section="overview">
                         <!-- Hardware Panel -->
                         <div class="dashboard-panel">
                             <div class="dashboard-panel-header">
@@ -673,6 +881,348 @@ export class WindowsServerAuditorPage {
                         </div>
                     </div>
 
+                    <!-- Volumes -->
+                    ${volumes.length > 0 ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-database"></i> Volumes
+                            <span class="update-count-pill">${volumes.length}</span>
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Drive letter</th>
+                                        <th>File system</th>
+                                        <th>Size</th>
+                                        <th>Used</th>
+                                        <th>Free</th>
+                                        <th>Free space %</th>
+                                        <th>BitLocker status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${volumes.map(volume => {
+                                        const size = volume.size || 0;
+                                        const sizeRemaining = volume.sizeRemaining || 0;
+                                        const used = size - sizeRemaining;
+                                        const freeSpacePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : '0.0';
+                                        const isLowSpace = parseFloat(freeSpacePercent) < 15;
+                                        let bitLockerStatus = 'N/A';
+                                        if (volume.bitLockerStatus && volume.bitLockerStatus !== 'N/A') {
+                                            bitLockerStatus = volume.bitLockerStatus;
+                                        } else if (volume.driveLetter) {
+                                            // If drive letter exists but BitLocker status is N/A, it might not be encrypted or BitLocker not available
+                                            bitLockerStatus = 'Not Encrypted';
+                                        }
+                                        return `
+                                        <tr class="${isLowSpace ? 'low-space-row' : ''}">
+                                            <td>
+                                                ${volume.driveLetter ? `${volume.driveLetter}:` : (volume.fileSystemLabel || 'N/A')}
+                                                ${isLowSpace ? `
+                                                <span class="low-space-flag" data-tooltip="Free space is less than 15%" title="Free space is less than 15%">
+                                                    <i class="fas fa-exclamation-triangle"></i>
+                                                </span>
+                                                ` : ''}
+                                            </td>
+                                            <td>${volume.fileSystem || 'N/A'}</td>
+                                            <td>${size > 0 ? `${size.toFixed(2)} GB` : 'N/A'}</td>
+                                            <td>${used > 0 ? `${used.toFixed(2)} GB` : (used === 0 && size > 0 ? '0.00 GB' : 'N/A')}</td>
+                                            <td>${sizeRemaining > 0 ? `${sizeRemaining.toFixed(2)} GB` : (sizeRemaining === 0 && size > 0 ? '0.00 GB' : 'N/A')}</td>
+                                            <td>
+                                                <span style="color: ${isLowSpace ? '#ef4444' : parseFloat(freeSpacePercent) < 25 ? '#f59e0b' : '#10b981'}; font-weight: ${isLowSpace ? '600' : 'normal'};">
+                                                    ${freeSpacePercent}%
+                                                </span>
+                                            </td>
+                                            <td>${bitLockerStatus}</td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- RAID Controller Health -->
+                    ${raidControllers.length > 0 ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-server"></i> RAID Controller Health
+                            <span class="update-count-pill">${raidControllers.length}</span>
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Description</th>
+                                        <th>Manufacturer</th>
+                                        <th>Status</th>
+                                        <th>Operational Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${raidControllers.map(controller => {
+                                        const isHealthy = controller.status === 'OK' || controller.operationalStatus === 'OK' || controller.status === 'Degraded' || controller.operationalStatus === 'Degraded';
+                                        const status = controller.operationalStatus || controller.status || 'N/A';
+                                        return `
+                                        <tr>
+                                            <td>${controller.name || 'N/A'}</td>
+                                            <td style="color: #94a3b8;">${controller.description || 'N/A'}</td>
+                                            <td style="color: #94a3b8;">${controller.manufacturer || 'N/A'}</td>
+                                            <td>
+                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
+                                                    ${controller.status || 'N/A'}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
+                                                    ${status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Disks -->
+                    ${physicalDisks.length > 0 ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-hdd"></i> Disks
+                            <span class="update-count-pill">${physicalDisks.length}</span>
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Disk name</th>
+                                        <th>Disk ID</th>
+                                        <th>Size</th>
+                                        <th>Allocated</th>
+                                        <th>Unallocated</th>
+                                        <th>Partition style</th>
+                                        <th>SMART Status</th>
+                                        <th>Temperature</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${physicalDisks.map(disk => {
+                                        const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
+                                        // Handle allocatedSize - it might be missing in older imports
+                                        let allocatedGB = 0;
+                                        if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
+                                            allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
+                                        }
+                                        const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
+                                        const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
+                                        const diskId = disk.uniqueId || disk.serialNumber || 'N/A';
+                                        const smartStatus = disk.smartStatus || disk.healthStatus || 'N/A';
+                                        const isHealthy = smartStatus === 'Healthy' || smartStatus === 'OK';
+                                        const temperature = disk.temperature || 'N/A';
+                                        const tempValue = typeof temperature === 'number' ? temperature : (typeof temperature === 'string' && temperature !== 'N/A' ? parseFloat(temperature) : null);
+                                        const tempColor = tempValue !== null && tempValue > 0 ? (tempValue > 70 ? '#ef4444' : tempValue > 50 ? '#f59e0b' : '#10b981') : '#94a3b8';
+                                        return `
+                                        <tr>
+                                            <td>${diskName}</td>
+                                            <td>${diskId}</td>
+                                            <td>${totalSizeGB > 0 ? `${totalSizeGB.toFixed(2)} GB` : 'N/A'}</td>
+                                            <td>${allocatedGB > 0 ? `${allocatedGB.toFixed(2)} GB` : (allocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
+                                            <td>${unallocatedGB > 0 ? `${unallocatedGB.toFixed(2)} GB` : (unallocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
+                                            <td>${disk.partitionStyle || 'N/A'}</td>
+                                            <td>
+                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
+                                                    ${smartStatus}
+                                                </span>
+                                            </td>
+                                            <td style="color: ${tempColor};">
+                                                ${tempValue !== null && tempValue > 0 ? `${tempValue}°C` : temperature}
+                                            </td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Antivirus -->
+                    ${(security.antivirus || []).length > 0 ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-shield-virus"></i> ${this.t('antivirus')}
+                            <span class="update-count-pill">${(security.antivirus || []).length}</span>
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>${this.t('productName')}</th>
+                                        <th>${this.t('provider')}</th>
+                                        <th>${this.t('productState')}</th>
+                                        <th>${this.t('enabled')}</th>
+                                        <th>${this.t('version')}</th>
+                                        <th>Engine Version</th>
+                                        <th>${this.t('lastUpdate')}</th>
+                                        <th>${this.t('realTimeProtection')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${security.antivirus.map(av => `
+                                    <tr>
+                                        <td><strong>${av.displayName || av.name || 'N/A'}</strong></td>
+                                        <td>${av.provider || 'N/A'}</td>
+                                        <td><span class="status-badge status-${av.productState === 'On' || av.productState === 'Enabled' ? 'online' : (av.productState === 'Off' || av.productState === 'Disabled' ? 'offline' : 'warning')}">${av.productState || 'N/A'}</span></td>
+                                        <td><span class="status-badge status-${av.enabled === true || av.enabled === 'true' ? 'online' : 'offline'}">${av.enabled === true || av.enabled === 'true' ? 'Yes' : (av.enabled === false || av.enabled === 'false' ? 'No' : 'Unknown')}</span></td>
+                                        <td>${av.version || 'N/A'}</td>
+                                        <td>${av.engineVersion || 'N/A'}</td>
+                                        <td>${av.lastUpdate || 'N/A'}</td>
+                                        <td>${av.isUpToDate === true || av.isUpToDate === 'true' ? '<span class="status-badge status-online">Yes</span>' : (av.isUpToDate === false || av.isUpToDate === 'false' ? '<span class="status-badge status-offline">No</span>' : 'N/A')}</td>
+                                    </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Firewall -->
+                    ${(security.firewallProfiles || []).length > 0 ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-shield-alt"></i> Firewall (High Level Only)
+                            <span class="update-count-pill">${(security.firewallProfiles || []).length}</span>
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Profile</th>
+                                        <th>Enabled</th>
+                                        <th>Default inbound action</th>
+                                        <th>Default outbound action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${security.firewallProfiles.map(profile => `
+                                    <tr>
+                                        <td>${profile.name || 'N/A'}</td>
+                                        <td><span class="status-badge status-${profile.enabled ? 'online' : 'offline'}">${profile.enabled ? 'Enabled' : 'Disabled'}</span></td>
+                                        <td>${profile.defaultInboundAction || 'N/A'}</td>
+                                        <td>${profile.defaultOutboundAction || 'N/A'}</td>
+                                    </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+                    <!-- Network Time Protocol (NTP) -->
+                    ${data.ntp ? `
+                    <div class="hardware-section-modern">
+                        <h4 class="section-subtitle-modern">
+                            <i class="fas fa-clock"></i> Network Time Protocol (NTP)
+                        </h4>
+                        <div class="table-container-modern">
+                            <table class="table-compact">
+                                <thead>
+                                    <tr>
+                                        <th>Setting</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${data.ntp.serviceStatus ? `
+                                    <tr>
+                                        <td><strong>Windows Time Service Status</strong></td>
+                                        <td>
+                                            <span class="status-badge status-${data.ntp.serviceStatus === 'Running' ? 'online' : 'offline'}">
+                                                ${data.ntp.serviceStatus}
+                                            </span>
+                                            ${data.ntp.serviceStartType && data.ntp.serviceStartType !== 'N/A' ? ` (${data.ntp.serviceStartType})` : ''}
+                                        </td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.timeSourceType ? `
+                                    <tr>
+                                        <td><strong>Time Source Type</strong></td>
+                                        <td>${data.ntp.timeSourceType}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.ntpServer && data.ntp.ntpServer !== 'N/A' ? `
+                                    <tr>
+                                        <td><strong>NTP Server</strong></td>
+                                        <td>${data.ntp.ntpServer}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.syncStatus && data.ntp.syncStatus !== 'Unknown' ? `
+                                    <tr>
+                                        <td><strong>Synchronization Status</strong></td>
+                                        <td>
+                                            <span class="status-badge status-${data.ntp.syncStatus === 'Synchronized' ? 'online' : 'offline'}">
+                                                ${data.ntp.syncStatus}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.timeSource && data.ntp.timeSource !== 'N/A' ? `
+                                    <tr>
+                                        <td><strong>Time Source</strong></td>
+                                        <td>${data.ntp.timeSource}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.lastSyncTime && data.ntp.lastSyncTime !== 'N/A' ? `
+                                    <tr>
+                                        <td><strong>Last Successful Sync Time</strong></td>
+                                        <td>${data.ntp.lastSyncTime}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.stratum && data.ntp.stratum !== 'N/A' ? `
+                                    <tr>
+                                        <td><strong>Stratum</strong></td>
+                                        <td>${data.ntp.stratum}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.pollInterval && data.ntp.pollInterval !== 'N/A' ? `
+                                    <tr>
+                                        <td><strong>Poll Interval</strong></td>
+                                        <td>${data.ntp.pollInterval}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.peers && Array.isArray(data.ntp.peers) && data.ntp.peers.length > 0 ? `
+                                    <tr>
+                                        <td><strong>NTP Peers</strong></td>
+                                        <td>
+                                            ${data.ntp.peers.map(peer => `
+                                                <div style="margin-bottom: 0.5rem;">
+                                                    <strong>${peer.peer || 'Unknown'}</strong>
+                                                    ${peer.stratum ? ` - Stratum: ${peer.stratum}` : ''}
+                                                    ${peer.timeSource ? ` - Source: ${peer.timeSource}` : ''}
+                                                </div>
+                                            `).join('')}
+                                        </td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.ntp.error ? `
+                                    <tr>
+                                        <td><strong>Error</strong></td>
+                                        <td style="color: #ef4444;">${data.ntp.error}</td>
+                                    </tr>
+                                    ` : ''}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+
+
                     <!-- BugCheck / BSOD Details -->
                     ${systemInfo.bugChecks && systemInfo.bugChecks.length > 0 ? `
                     <div class="hardware-section-modern">
@@ -749,467 +1299,7 @@ export class WindowsServerAuditorPage {
                     </div>
                     ` : ''}
 
-                    <!-- Windows Updates -->
-                    ${windowsUpdatesSummary.installedKBCount !== undefined || windowsUpdatesSummary.missingCumulativeCount !== undefined ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-download"></i> 4. Windows Updates
-                            ${windowsUpdatesSummary.rebootPending ? `
-                            <span class="reboot-required-badge">
-                                <i class="fas fa-exclamation-triangle"></i> Reboot Required
-                            </span>
-                            ` : ''}
-                        </h4>
-                        <div class="hardware-grid-modern">
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-blue">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Installed KBs</div>
-                                    <div class="hardware-value-modern">${windowsUpdatesSummary.installedKBCount || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-purple">
-                                    <i class="fas fa-calendar"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Last Installed Update Date</div>
-                                    <div class="hardware-value-modern">${windowsUpdatesSummary.lastInstalledUpdateDate || 'N/A'}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-orange">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Missing Updates (Cumulative only)</div>
-                                    <div class="hardware-value-modern" style="color: ${(windowsUpdatesSummary.missingCumulativeCount || 0) > 0 ? '#f59e0b' : '#34d399'}">
-                                        ${windowsUpdatesSummary.missingCumulativeCount || 0}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${windowsUpdatesSummary.rebootPending ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${windowsUpdatesSummary.rebootPending ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${windowsUpdatesSummary.rebootPending ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${windowsUpdatesSummary.rebootPending ? '#ef4444' : '#10b981'};">
-                                    <i class="fas ${windowsUpdatesSummary.rebootPending ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Reboot Pending</div>
-                                    <div class="hardware-value-modern" style="color: ${windowsUpdatesSummary.rebootPending ? '#ef4444' : '#10b981'}">
-                                        ${windowsUpdatesSummary.rebootPending ? 'Yes' : 'No'}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        ${(windowsUpdates || []).length > 0 ? `
-                        <div style="margin-top: 1rem;">
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>KB Number</th>
-                                            <th>Description</th>
-                                            <th>Installed On</th>
-                                            <th>Installed By</th>
-                                            <th>Update Source</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${windowsUpdates.slice(0, 20).map(update => {
-                                            const updateSource = update.updateSource || 'Microsoft';
-                                            const isWSUS = updateSource === 'WSUS';
-                                            return `
-                                            <tr>
-                                                <td><strong>${update.hotFixID || update.kbNumber || 'N/A'}</strong></td>
-                                                <td>${update.description || 'N/A'}</td>
-                                                <td>${update.installedOn || 'N/A'}</td>
-                                                <td>${update.installedBy || 'N/A'}</td>
-                                                <td>
-                                                    <span style="color: ${isWSUS ? '#3b82f6' : '#10b981'}; font-weight: 600;">
-                                                        ${isWSUS ? '<i class="fas fa-server"></i> ' : '<i class="fas fa-cloud"></i> '}
-                                                        ${updateSource}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                            ${windowsUpdates.length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showWindowsUpdatesModal()" style="margin-top: 0.5rem;">
-                                View all installed KBs (${windowsUpdates.length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </div>
-                        ` : ''}
-                        ${(missingUpdates || []).length > 0 ? `
-                        <div style="margin-top: 1rem;">
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>KB Number</th>
-                                            <th>Title</th>
-                                            <th>Size</th>
-                                            <th>Date</th>
-                                            <th>Update Source</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${missingUpdates.slice(0, 20).map(update => {
-                                            const updateSource = update.updateSource || 'Microsoft';
-                                            const isWSUS = updateSource === 'WSUS';
-                                            return `
-                                            <tr>
-                                                <td><strong>${update.kbNumber || 'N/A'}</strong></td>
-                                                <td>${update.title || 'N/A'}</td>
-                                                <td>${update.size || 'N/A'}</td>
-                                                <td>${update.date || 'N/A'}</td>
-                                                <td>
-                                                    <span style="color: ${isWSUS ? '#3b82f6' : '#10b981'}; font-weight: 600;">
-                                                        ${isWSUS ? '<i class="fas fa-server"></i> ' : '<i class="fas fa-cloud"></i> '}
-                                                        ${updateSource}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                            ${missingUpdates.length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showMissingUpdatesModal()" style="margin-top: 0.5rem;">
-                                View all missing updates (${missingUpdates.length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </div>
-                        ` : ''}
-                    </div>
-                    ` : ''}
 
-                    <!-- Local Users & Groups -->
-                    ${localUsersSummary.localUsersCount !== undefined ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-users"></i> Local Users & Groups
-                        </h4>
-                        <div class="hardware-grid-modern">
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-blue">
-                                    <i class="fas fa-user"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Local Users Count</div>
-                                    <div class="hardware-value-modern">${localUsersSummary.localUsersCount || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-orange">
-                                    <i class="fas fa-user-slash"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Disabled Local Accounts</div>
-                                    <div class="hardware-value-modern" style="color: ${(localUsersSummary.disabledLocalAccountsCount || 0) > 0 ? '#f59e0b' : '#34d399'}">
-                                        ${localUsersSummary.disabledLocalAccountsCount || 0}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        ${(localUsersSummary.localUsers || []).length > 0 ? `
-                        <div style="margin-top: 1rem;">
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>User Name</th>
-                                            <th>Full Name</th>
-                                            <th>Description</th>
-                                            <th>Status</th>
-                                            <th>Last Logon</th>
-                                            <th>Password Expires</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${(localUsersSummary.localUsers || []).map(user => `
-                                            <tr>
-                                                <td><strong>${user.name || 'N/A'}</strong></td>
-                                                <td>${user.fullName || 'N/A'}</td>
-                                                <td>${user.description || 'N/A'}</td>
-                                                <td>
-                                                    <span style="color: ${user.enabled ? '#34d399' : '#ef4444'};">
-                                                        <i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 0.25rem;"></i>
-                                                        ${user.enabled ? 'Enabled' : 'Disabled'}
-                                                    </span>
-                                                </td>
-                                                <td>${user.lastLogon && user.lastLogon !== 'Never' ? user.lastLogon : 'Never'}</td>
-                                                <td>${(() => {
-                                                    try {
-                                                        const dateStr = user.passwordExpires;
-                                                        if (!dateStr || dateStr === 'N/A' || dateStr === 'Never') {
-                                                            return dateStr || 'Never';
-                                                        }
-                                                        // Handle .NET JSON date format: /Date(timestamp)/
-                                                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                            const date = new Date(timestamp);
-                                                            return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                                        }
-                                                        // Try parsing as regular date
-                                                        const date = new Date(dateStr);
-                                                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                                    } catch (e) {
-                                                        return user.passwordExpires || 'Never';
-                                                    }
-                                                })()}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                    ` : ''}
-
-                    <!-- Local Groups -->
-                    ${localGroups && localGroups.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-users-cog"></i> Local Groups
-                            <span class="role-count-badge-modern">${localGroups.length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Group Name</th>
-                                        <th>Description</th>
-                                        <th>Members</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${localGroups.map((group, groupIndex) => {
-                                        const members = Array.isArray(group.members) ? group.members : [];
-                                        return `
-                                        <tr style="cursor: pointer;" onclick="windowsServerAuditorInstance.showGroupMembersModal('${(group.name || '').replace(/'/g, "\\'")}', ${JSON.stringify(members).replace(/"/g, '&quot;')}, '${(group.description || '').replace(/'/g, "\\'")}')">
-                                            <td><strong>${group.name || 'N/A'}</strong></td>
-                                            <td>${group.description && group.description !== '-' ? group.description : '-'}</td>
-                                            <td>
-                                                <span style="color: ${members.length > 0 ? '#34d399' : '#94a3b8'};">
-                                                    <i class="fas fa-${members.length > 0 ? 'user' : 'users-slash'}"></i>
-                                                    ${members.length} ${members.length === 1 ? 'Member' : 'Members'}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Event Log Overview -->
-                    ${eventLogOverview.systemErrors24h !== undefined || eventLogOverview.appErrors24h !== undefined ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-clipboard-list"></i> Event Log Overview
-                            ${eventLogOverview.oldestLogDays !== undefined && eventLogOverview.oldestLogDays !== 'N/A' ? `
-                            <span style="font-size: 0.75rem; font-weight: normal; color: #94a3b8; margin-left: 0.5rem;">
-                                (Retention: ${eventLogOverview.oldestLogDays} days)
-                            </span>
-                            ` : ''}
-                        </h4>
-                        
-                        <!-- Summary Stats -->
-                        <div class="hardware-grid-modern">
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.systemErrors24h || 0) > 0 ? '#ef4444' : '#10b981'};">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">System Errors</div>
-                                    <div class="hardware-value-modern" style="font-size: 0.8125rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                                        <span>24h: <strong style="color: ${(eventLogOverview.systemErrors24h || 0) > 0 ? '#ef4444' : '#34d399'}">${eventLogOverview.systemErrors24h || 0}</strong></span>
-                                        <span>7d: <strong style="color: ${(eventLogOverview.systemErrors7d || 0) > 0 ? '#f59e0b' : '#34d399'}">${eventLogOverview.systemErrors7d || 0}</strong></span>
-                                        <span>30d: <strong style="color: ${(eventLogOverview.systemErrors30d || 0) > 0 ? '#f59e0b' : '#94a3b8'}">${eventLogOverview.systemErrors30d || 0}</strong></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.appErrors24h || 0) > 0 ? '#f59e0b' : '#10b981'};">
-                                    <i class="fas fa-bug"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Application Errors</div>
-                                    <div class="hardware-value-modern" style="font-size: 0.8125rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
-                                        <span>24h: <strong style="color: ${(eventLogOverview.appErrors24h || 0) > 0 ? '#ef4444' : '#34d399'}">${eventLogOverview.appErrors24h || 0}</strong></span>
-                                        <span>7d: <strong style="color: ${(eventLogOverview.appErrors7d || 0) > 0 ? '#f59e0b' : '#34d399'}">${eventLogOverview.appErrors7d || 0}</strong></span>
-                                        <span>30d: <strong style="color: ${(eventLogOverview.appErrors30d || 0) > 0 ? '#f59e0b' : '#94a3b8'}">${eventLogOverview.appErrors30d || 0}</strong></span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.criticalEventsCount || 0) > 0 ? '#ef4444' : '#10b981'};">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Critical Events</div>
-                                    <div class="hardware-value-modern" style="color: ${(eventLogOverview.criticalEventsCount || 0) > 0 ? '#ef4444' : '#34d399'}">
-                                        ${eventLogOverview.criticalEventsCount || 0}
-                                    </div>
-                                </div>
-                            </div>
-                            ${eventLogOverview.oldestLogDays !== undefined && eventLogOverview.oldestLogDays !== 'N/A' ? `
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-blue">
-                                    <i class="fas fa-clock"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Log Retention</div>
-                                    <div class="hardware-value-modern">${eventLogOverview.oldestLogDays} days</div>
-                                </div>
-                            </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- System Errors Table -->
-                        ${(eventLogOverview.systemErrors || []).length > 0 ? `
-                        <div style="margin-top: 1.5rem; margin-bottom: 1.5rem;">
-                            <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-                                <span style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> System Errors
-                                </span>
-                                <button onclick="windowsServerAuditorInstance.openEventLogModal('system')" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
-                                    <i class="fas fa-external-link-alt"></i> View All (${(eventLogOverview.systemErrors || []).length})
-                                </button>
-                            </h5>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Source</th>
-                                            <th>Level</th>
-                                            <th>ID</th>
-                                            <th>Message</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${(eventLogOverview.systemErrors || []).slice(0, 20).map((error, index) => {
-                                            const errorData = {
-                                                time: error.time || 'N/A',
-                                                source: error.source || 'N/A',
-                                                level: error.level || 'Error',
-                                                id: error.id || 'N/A',
-                                                message: error.message || 'N/A'
-                                            };
-                                            const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                            return `
-                                            <tr onclick="windowsServerAuditorInstance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'system')" style="cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-                                                <td>${error.time || 'N/A'}</td>
-                                                <td>${error.source || 'N/A'}</td>
-                                                <td><span style="color: #ef4444;">${error.level || 'Error'}</span></td>
-                                                <td>${error.id || 'N/A'}</td>
-                                                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
-                                            </tr>
-                                        `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- Application Errors Table -->
-                        ${(eventLogOverview.appErrors || []).length > 0 ? `
-                        <div style="margin-bottom: 1.5rem;">
-                            <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;">
-                                <span style="display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-bug" style="color: #f59e0b;"></i> Application Errors
-                                </span>
-                                <button onclick="windowsServerAuditorInstance.openEventLogModal('application')" style="background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; padding: 0.25rem 0.75rem; border-radius: 0.375rem; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;">
-                                    <i class="fas fa-external-link-alt"></i> View All (${(eventLogOverview.appErrors || []).length})
-                                </button>
-                            </h5>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Source</th>
-                                            <th>Level</th>
-                                            <th>ID</th>
-                                            <th>Message</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${(eventLogOverview.appErrors || []).slice(0, 20).map((error, index) => {
-                                            const errorData = {
-                                                time: error.time || 'N/A',
-                                                source: error.source || 'N/A',
-                                                level: error.level || 'Error',
-                                                id: error.id || 'N/A',
-                                                message: error.message || 'N/A'
-                                            };
-                                            const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                            return `
-                                            <tr onclick="windowsServerAuditorInstance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'application')" style="cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
-                                                <td>${error.time || 'N/A'}</td>
-                                                <td>${error.source || 'N/A'}</td>
-                                                <td><span style="color: #f59e0b;">${error.level || 'Error'}</span></td>
-                                                <td>${error.id || 'N/A'}</td>
-                                                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
-                                            </tr>
-                                        `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- Critical Events Table -->
-                        ${(eventLogOverview.criticalEvents || []).length > 0 ? `
-                        <div style="margin-bottom: 1.5rem;">
-                            <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                                <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Critical Events (Showing ${(eventLogOverview.criticalEvents || []).length} of ${eventLogOverview.criticalEventsCount || 0})
-                            </h5>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Time</th>
-                                            <th>Source</th>
-                                            <th>Level</th>
-                                            <th>ID</th>
-                                            <th>Message</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${(eventLogOverview.criticalEvents || []).slice(0, 20).map(error => `
-                                            <tr>
-                                                <td>${error.time || 'N/A'}</td>
-                                                <td>${error.source || 'N/A'}</td>
-                                                <td><span style="color: #ef4444; font-weight: 600;">${error.level || 'Critical'}</span></td>
-                                                <td>${error.id || 'N/A'}</td>
-                                                <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                            ${(eventLogOverview.criticalEvents || []).length > 20 ? `
-                            <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #94a3b8;">
-                                Showing first 20 of ${(eventLogOverview.criticalEvents || []).length} critical events
-                            </div>
-                            ` : ''}
-                        </div>
-                        ` : ''}
-                    </div>
-                    ` : ''}
 
                     <!-- Crash & BSOD Analysis -->
                     ${crashAnalysis && (crashAnalysis.crashes || []).length > 0 ? `
@@ -1547,111 +1637,6 @@ export class WindowsServerAuditorPage {
                     </div>
                     ` : ''}
 
-                    <!-- Process Tree -->
-                    ${processTree && processTree.processes ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-sitemap" style="color: #8b5cf6;"></i> Process Tree
-                            ${processTree.summary ? `
-                            <span class="update-count-pill" style="background: rgba(139, 92, 246, 0.2); color: #8b5cf6; border: 1px solid rgba(139, 92, 246, 0.3);">${processTree.summary.totalProcesses || 0} processes</span>
-                            ` : ''}
-                        </h4>
-                        
-                        ${processTree.summary ? `
-                        <!-- Summary Cards -->
-                        <div class="hardware-grid-modern" style="margin-bottom: 1.5rem;">
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.2) 100%); border: 1px solid rgba(139, 92, 246, 0.3); color: #8b5cf6;">
-                                    <i class="fas fa-cogs"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total Processes</div>
-                                    <div class="hardware-value-modern">${processTree.summary.totalProcesses || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6;">
-                                    <i class="fas fa-code-branch"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total Threads</div>
-                                    <div class="hardware-value-modern">${processTree.summary.totalThreads || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.2) 100%); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
-                                    <i class="fas fa-hand-pointer"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total Handles</div>
-                                    <div class="hardware-value-modern">${processTree.summary.totalHandles || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
-                                    <i class="fas fa-memory"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total Memory</div>
-                                    <div class="hardware-value-modern">${(processTree.summary.totalMemoryMB || 0).toFixed(2)} MB</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;">
-                                    <i class="fas fa-microchip"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total CPU</div>
-                                    <div class="hardware-value-modern">${(processTree.summary.totalCpuPercent || 0).toFixed(2)}%</div>
-                                </div>
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- Process Tree View -->
-                        ${(processTree.processes || []).length > 15 ? `
-                        <div style="display: flex; justify-content: flex-end; margin-bottom: 0.75rem;">
-                            <button onclick="windowsServerAuditorInstance.openProcessTreeModal()" class="btn btn-sm btn-secondary">
-                                <i class="fas fa-external-link-alt" style="margin-right: 0.25rem;"></i>View All (${(processTree.processes || []).length})
-                            </button>
-                        </div>
-                        ` : ''}
-                        <div style="background: rgba(15, 23, 42, 0.5); border-radius: 0.5rem; border: 1px solid #334155; padding: 0; width: 100%;">
-                            <div class="process-tree-header" style="display: grid; grid-template-columns: 30px minmax(150px, 1fr) minmax(200px, 2fr) 80px 80px minmax(120px, 1fr) 80px 100px 120px 100px 100px minmax(100px, 1fr) 120px; gap: 0.5rem; padding: 0.75rem; background: rgba(30, 41, 59, 0.8); border-bottom: 1px solid #334155; font-size: 0.75rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; width: 100%;">
-                                <div></div>
-                                <div>Process Name</div>
-                                <div>Path</div>
-                                <div>PID</div>
-                                <div>PPID</div>
-                                <div>Username</div>
-                                <div>Elevated</div>
-                                <div>CPU %</div>
-                                <div>Memory</div>
-                                <div>Threads</div>
-                                <div>Handles</div>
-                                <div>Status</div>
-                                <div>Priority</div>
-                            </div>
-                            <div id="process-tree-container" style="max-height: 800px; overflow-y: auto; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8125rem; width: 100%;">
-                                ${this.renderProcessTree((processTree.processes || []).slice(0, 15), 0)}
-                                ${(processTree.processes || []).length > 15 ? `
-                                <div style="padding: 1rem; text-align: center; color: #94a3b8; font-style: italic;">
-                                    Showing first 15 of ${(processTree.processes || []).length} processes
-                                </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    ` : processTree.error ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-sitemap" style="color: #8b5cf6;"></i> Process Tree
-                        </h4>
-                        <div style="padding: 2rem; text-align: center; color: #ef4444;">
-                            <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>Error loading process tree: ${processTree.error}
-                        </div>
-                    </div>
-                    ` : ''}
 
                     <!-- Environment Variables & Paths -->
                     ${environmentPaths && environmentPaths.summary ? `
@@ -2210,754 +2195,6 @@ export class WindowsServerAuditorPage {
                         ` : ''}
                     ` : ''}
 
-                    <!-- Scheduled Tasks -->
-                    ${scheduledTasks.totalTasks !== undefined ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-clock"></i> Scheduled Tasks (Inventory)
-                            <span style="color: #94a3b8; font-size: 0.75rem; font-weight: normal; margin-left: 0.5rem;">Often forgotten, very useful.</span>
-                        </h4>
-                        
-                        <!-- Summary Cards -->
-                        <div class="hardware-grid-modern" style="margin-bottom: 1.5rem;">
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-blue">
-                                    <i class="fas fa-list"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Total Scheduled Tasks</div>
-                                    <div class="hardware-value-modern">${scheduledTasks.totalTasks || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-green">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Enabled Tasks</div>
-                                    <div class="hardware-value-modern">${scheduledTasks.enabledTasks || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-gray">
-                                    <i class="fas fa-ban"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Disabled Tasks</div>
-                                    <div class="hardware-value-modern">${scheduledTasks.disabledTasks || 0}</div>
-                                </div>
-                            </div>
-                            <div class="hardware-item-modern">
-                                <div class="hardware-icon-modern icon-red">
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                </div>
-                                <div class="hardware-info-modern">
-                                    <div class="hardware-label-modern">Failed Tasks</div>
-                                    <div class="hardware-value-modern">${scheduledTasks.failedTasksCount || 0}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- All Tasks Table -->
-                        ${(scheduledTasks.allTasks || []).length > 0 ? `
-                        <div style="margin-bottom: 1.5rem;">
-                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
-                                <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
-                                    <i class="fas fa-list" style="color: #3b82f6;"></i> All Scheduled Tasks
-                                </h5>
-                                ${(scheduledTasks.allTasks || []).length > 20 ? `
-                                <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showAllTasksModal()">
-                                    View all (${(scheduledTasks.allTasks || []).length}) <i class="fas fa-chevron-right"></i>
-                                </button>
-                                ` : ''}
-                            </div>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
-                                            <th>Task Name</th>
-                                            <th style="width: 120px;">State</th>
-                                            <th style="width: 180px;">Last Run Time</th>
-                                            <th style="width: 120px;">Last Result</th>
-                                            <th style="width: 180px;">Next Run Time</th>
-                                            <th style="width: 100px;">Missed Runs</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${(scheduledTasks.allTasks || []).slice(0, 20).map(task => {
-                                            const flags = [];
-                                            if (task.runsAsSystem) {
-                                                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
-                                            }
-                                            if (task.runsPowerShellOrCmd) {
-                                                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
-                                            }
-                                            if (task.hasStoredCredentials) {
-                                                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
-                                            }
-                                            return `
-                                            <tr>
-                                                <td>
-                                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
-                                                        <div style="font-weight: 600; color: #e2e8f0;">${task.taskName || 'N/A'}</div>
-                                                        ${flags.length > 0 ? flags.map(flag => `
-                                                            <span class="task-flag" data-tooltip="${flag.tooltip}" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.375rem; background: rgba(${flag.color === '#3b82f6' ? '59, 130, 246' : flag.color === '#f59e0b' ? '245, 158, 11' : '239, 68, 68'}, 0.15); border: 1px solid rgba(${flag.color === '#3b82f6' ? '59, 130, 246' : flag.color === '#f59e0b' ? '245, 158, 11' : '239, 68, 68'}, 0.3); border-radius: 4px; color: ${flag.color}; font-size: 0.6875rem; cursor: help;">
-                                                                <i class="fas ${flag.icon}"></i>
-                                                            </span>
-                                                        `).join('') : ''}
-                                                    </div>
-                                                    ${task.taskPath && task.taskPath !== '\\' ? `
-                                                    <div style="font-size: 0.75rem; color: #64748b; font-family: 'Consolas', 'Monaco', monospace;">${task.taskPath}</div>
-                                                    ` : ''}
-                                                    ${task.actionCommand ? `
-                                                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">
-                                                        <i class="fas fa-code" style="margin-right: 0.25rem;"></i>${task.actionCommand}
-                                                    </div>
-                                                    ` : ''}
-                                                    ${task.hasStoredCredentials && task.storedUserName ? `
-                                                    <div style="font-size: 0.75rem; color: #f87171; margin-top: 0.25rem;">
-                                                        <i class="fas fa-user" style="margin-right: 0.25rem;"></i>User: ${task.storedUserName}
-                                                    </div>
-                                                    ` : ''}
-                                                </td>
-                                                <td>
-                                                    <span class="status-badge status-${task.state === 'Running' || task.state === 'Ready' ? 'online' : 'offline'}">
-                                                        ${task.state || 'Unknown'}
-                                                    </span>
-                                                </td>
-                                                <td style="color: #94a3b8;">${task.lastRunTime || 'Never'}</td>
-                                                <td>
-                                                    ${task.lastTaskResult !== undefined && task.lastTaskResult !== 0 ? `
-                                                    <span style="color: #ef4444; font-weight: 600;">
-                                                        <i class="fas fa-times-circle"></i> 0x${task.lastTaskResult.toString(16).toUpperCase()}
-                                                    </span>
-                                                    ` : task.lastTaskResult === 0 ? `
-                                                    <span style="color: #10b981;">
-                                                        <i class="fas fa-check-circle"></i> Success
-                                                    </span>
-                                                    ` : '<span style="color: #64748b;">N/A</span>'}
-                                                </td>
-                                                <td style="color: #94a3b8;">${task.nextRunTime || 'N/A'}</td>
-                                                <td>
-                                                    ${task.numberOfMissedRuns > 0 ? `
-                                                    <span style="color: #f59e0b; font-weight: 600;">
-                                                        <i class="fas fa-exclamation-triangle"></i> ${task.numberOfMissedRuns}
-                                                    </span>
-                                                    ` : '<span style="color: #64748b;">0</span>'}
-                                                </td>
-                                            </tr>
-                                            `;
-                                        }).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        ` : ''}
-                    </div>
-                    ` : ''}
-
-                    <!-- Drivers -->
-                    ${drivers.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-microchip"></i> 5. Drivers
-                            <span class="update-count-pill">${drivers.length}</span>
-                            ${drivers.length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showDriversModal()">
-                                View all (${drivers.length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Device class</th>
-                                        <th>Provider</th>
-                                        <th>Version</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${drivers.slice(0, 20).map(driver => {
-                                        // Check if driver is older than 3 years
-                                        let isOldDriver = false;
-                                        let dateDisplay = 'N/A';
-                                        if (driver.versionDate && driver.versionDate !== 'N/A') {
-                                            try {
-                                                // Handle different date formats
-                                                let driverDate;
-                                                if (typeof driver.versionDate === 'string') {
-                                                    // Try parsing as ISO date or other formats
-                                                    driverDate = new Date(driver.versionDate);
-                                                } else if (driver.versionDate instanceof Date) {
-                                                    driverDate = driver.versionDate;
-                                                } else {
-                                                    driverDate = new Date(driver.versionDate);
-                                                }
-                                                
-                                                if (!isNaN(driverDate.getTime())) {
-                                                    const threeYearsAgo = new Date();
-                                                    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-                                                    isOldDriver = driverDate < threeYearsAgo;
-                                                    dateDisplay = driverDate.toLocaleDateString();
-                                                }
-                                            } catch (e) {
-                                                dateDisplay = driver.versionDate;
-                                            }
-                                        }
-                                        
-                                        return `
-                                        <tr class="${isOldDriver ? 'old-driver-row' : ''}">
-                                            <td>
-                                                ${driver.classDescription || driver.name || 'N/A'}
-                                                ${isOldDriver ? '<span class="old-driver-flag" title="Driver is older than 3 years"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
-                                            </td>
-                                            <td>${driver.providerName || 'N/A'}</td>
-                                            <td>${driver.driverVersion || 'N/A'}</td>
-                                            <td>${dateDisplay}</td>
-                                            <td><span class="status-badge status-${driver.status === 'OK' || driver.status === 'Running' ? 'online' : 'warning'}">${driver.status || 'Unknown'}</span></td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Installed Applications -->
-                    ${(software.applications || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-box"></i> 6. Installed Applications
-                            <span class="update-count-pill">${(software.applications || []).length}</span>
-                            ${(software.applications || []).length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showSoftwareModal()">
-                                View all (${(software.applications || []).length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Publisher</th>
-                                        <th>Version</th>
-                                        <th>Install date</th>
-                                        <th>32-bit vs 64-bit</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${software.applications.slice(0, 20).map(app => `
-                                    <tr>
-                                        <td>${app.name || 'N/A'}</td>
-                                        <td>${app.vendor || app.publisher || 'N/A'}</td>
-                                        <td>${app.version || 'N/A'}</td>
-                                        <td>${(() => {
-                                            if (!app.installDate) return 'N/A';
-                                            try {
-                                                let dateStr = app.installDate;
-                                                // Handle .NET JSON date format: /Date(timestamp)/
-                                                if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                    const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                    const date = new Date(timestamp);
-                                                    return date.toLocaleDateString();
-                                                }
-                                                const date = new Date(dateStr);
-                                                return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                            } catch (e) {
-                                                return app.installDate;
-                                            }
-                                        })()}</td>
-                                        <td>
-                                            ${app.architecture && app.architecture !== 'N/A' ? `
-                                            <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
-                                                ${app.architecture}
-                                            </span>
-                                            ` : '<span style="color: #64748b;">N/A</span>'}
-                                        </td>
-                                    </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Services -->
-                    ${(services.services || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-cogs"></i> 7. Services
-                            <span class="update-count-pill">${(services.services || []).length}</span>
-                            ${(services.services || []).length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showServicesModal()">
-                                View all (${(services.services || []).length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Service name</th>
-                                        <th>Startup type</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${(() => {
-                                        // Sort services: flagged first, then others
-                                        const sortedServices = [...(services.services || [])].sort((a, b) => {
-                                            const aIsRunning = a.status === 'Running' || a.status === 'running';
-                                            const aIsStopped = a.status === 'Stopped' || a.status === 'stopped';
-                                            const aIsAutomatic = a.startType === 'Automatic' || a.startType === 'automatic';
-                                            const aIsDisabled = a.startType === 'Disabled' || a.startType === 'disabled';
-                                            const aShouldFlag = (aIsAutomatic && aIsStopped) || (aIsDisabled && aIsRunning);
-                                            
-                                            const bIsRunning = b.status === 'Running' || b.status === 'running';
-                                            const bIsStopped = b.status === 'Stopped' || b.status === 'stopped';
-                                            const bIsAutomatic = b.startType === 'Automatic' || b.startType === 'automatic';
-                                            const bIsDisabled = b.startType === 'Disabled' || b.startType === 'disabled';
-                                            const bShouldFlag = (bIsAutomatic && bIsStopped) || (bIsDisabled && bIsRunning);
-                                            
-                                            // Flagged services come first
-                                            if (aShouldFlag && !bShouldFlag) return -1;
-                                            if (!aShouldFlag && bShouldFlag) return 1;
-                                            return 0;
-                                        });
-                                        
-                                        return sortedServices.slice(0, 20).map(service => {
-                                            const isRunning = service.status === 'Running' || service.status === 'running';
-                                            const isStopped = service.status === 'Stopped' || service.status === 'stopped';
-                                            const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
-                                            const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
-                                            
-                                            // Flag only: Automatic + Stopped OR Disabled + Running
-                                            const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
-                                            
-                                            return `
-                                            <tr class="${shouldFlag ? 'flagged-service-row' : ''}">
-                                                <td>
-                                                    ${service.displayName || service.name || 'N/A'}
-                                                    ${shouldFlag ? `
-                                                    <span class="service-flag" data-tooltip="${isAutomatic && isStopped ? 'Service is set to Automatic but is Stopped' : 'Service is Disabled but is Running'}" title="${isAutomatic && isStopped ? 'Service is set to Automatic but is Stopped' : 'Service is Disabled but is Running'}">
-                                                        <i class="fas fa-exclamation-triangle"></i>
-                                                    </span>
-                                                    ` : ''}
-                                                </td>
-                                                <td>${service.startType || 'N/A'}</td>
-                                                <td><span class="status-badge status-${isRunning ? 'online' : isStopped ? 'offline' : 'warning'}">${service.status || 'Unknown'}</span></td>
-                                            </tr>
-                                            `;
-                                        }).join('');
-                                    })()}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Network Configuration -->
-                    ${(network.adapters || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-network-wired"></i> 8. Network Configuration
-                            <span class="update-count-pill">${(network.adapters || []).length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Network adapter</th>
-                                        <th>Physical ID</th>
-                                        <th>Status</th>
-                                        <th>MAC address</th>
-                                        <th>Speed</th>
-                                        <th>MTU</th>
-                                        <th>IP addresses</th>
-                                        <th>Gateway</th>
-                                        <th>DNS servers</th>
-                                        <th>DNS suffix</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${network.adapters.map(adapter => {
-                                        const ipAddresses = adapter.ipAddresses && Array.isArray(adapter.ipAddresses) ? adapter.ipAddresses : (adapter.ipAddresses ? [adapter.ipAddresses] : []);
-                                        const dnsServers = adapter.dnsServers && Array.isArray(adapter.dnsServers) ? adapter.dnsServers : (adapter.dnsServers ? [adapter.dnsServers] : []);
-                                        const isUp = adapter.status === 'Up' || adapter.status === 'Connected' || adapter.status === 'Enabled';
-                                        const statusText = adapter.status || 'Unknown';
-                                        const adapterName = adapter.name || adapter.interfaceDescription || 'N/A';
-                                        const adapterDescription = adapter.interfaceDescription && adapter.name && adapter.interfaceDescription !== adapter.name ? adapter.interfaceDescription : null;
-                                        return `
-                                        <tr>
-                                            <td>
-                                                <div style="display: flex; flex-direction: column;">
-                                                    <span>${adapterName}</span>
-                                                    ${adapterDescription ? `<span style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">${adapterDescription}</span>` : ''}
-                                                </div>
-                                            </td>
-                                            <td>${adapter.interfaceIndex !== null && adapter.interfaceIndex !== undefined ? adapter.interfaceIndex : 'N/A'}</td>
-                                            <td><span class="status-badge status-${isUp ? 'online' : 'offline'}">${statusText}</span></td>
-                                            <td>${adapter.macAddress || 'N/A'}</td>
-                                            <td>${adapter.linkSpeed || 'N/A'}</td>
-                                            <td>${adapter.mtu || 'N/A'}</td>
-                                            <td>${ipAddresses.length > 0 ? ipAddresses.join(', ') : 'N/A'}</td>
-                                            <td>${adapter.gateway || 'N/A'}</td>
-                                            <td>${dnsServers.length > 0 ? dnsServers.join(', ') : 'N/A'}</td>
-                                            <td>${adapter.dnsSuffix || 'N/A'}</td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Network Time Protocol (NTP) -->
-                    ${data.ntp ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-clock"></i> 9. Network Time Protocol (NTP)
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Setting</th>
-                                        <th>Value</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${data.ntp.serviceStatus ? `
-                                    <tr>
-                                        <td><strong>Windows Time Service Status</strong></td>
-                                        <td>
-                                            <span class="status-badge status-${data.ntp.serviceStatus === 'Running' ? 'online' : 'offline'}">
-                                                ${data.ntp.serviceStatus}
-                                            </span>
-                                            ${data.ntp.serviceStartType && data.ntp.serviceStartType !== 'N/A' ? ` (${data.ntp.serviceStartType})` : ''}
-                                        </td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.timeSourceType ? `
-                                    <tr>
-                                        <td><strong>Time Source Type</strong></td>
-                                        <td>${data.ntp.timeSourceType}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.ntpServer && data.ntp.ntpServer !== 'N/A' ? `
-                                    <tr>
-                                        <td><strong>NTP Server</strong></td>
-                                        <td>${data.ntp.ntpServer}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.syncStatus && data.ntp.syncStatus !== 'Unknown' ? `
-                                    <tr>
-                                        <td><strong>Synchronization Status</strong></td>
-                                        <td>
-                                            <span class="status-badge status-${data.ntp.syncStatus === 'Synchronized' ? 'online' : 'offline'}">
-                                                ${data.ntp.syncStatus}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.timeSource && data.ntp.timeSource !== 'N/A' ? `
-                                    <tr>
-                                        <td><strong>Time Source</strong></td>
-                                        <td>${data.ntp.timeSource}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.lastSyncTime && data.ntp.lastSyncTime !== 'N/A' ? `
-                                    <tr>
-                                        <td><strong>Last Successful Sync Time</strong></td>
-                                        <td>${data.ntp.lastSyncTime}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.stratum && data.ntp.stratum !== 'N/A' ? `
-                                    <tr>
-                                        <td><strong>Stratum</strong></td>
-                                        <td>${data.ntp.stratum}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.pollInterval && data.ntp.pollInterval !== 'N/A' ? `
-                                    <tr>
-                                        <td><strong>Poll Interval</strong></td>
-                                        <td>${data.ntp.pollInterval}</td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.peers && Array.isArray(data.ntp.peers) && data.ntp.peers.length > 0 ? `
-                                    <tr>
-                                        <td><strong>NTP Peers</strong></td>
-                                        <td>
-                                            ${data.ntp.peers.map(peer => `
-                                                <div style="margin-bottom: 0.5rem;">
-                                                    <strong>${peer.peer || 'Unknown'}</strong>
-                                                    ${peer.stratum ? ` - Stratum: ${peer.stratum}` : ''}
-                                                    ${peer.timeSource ? ` - Source: ${peer.timeSource}` : ''}
-                                                </div>
-                                            `).join('')}
-                                        </td>
-                                    </tr>
-                                    ` : ''}
-                                    ${data.ntp.error ? `
-                                    <tr>
-                                        <td><strong>Error</strong></td>
-                                        <td style="color: #ef4444;">${data.ntp.error}</td>
-                                    </tr>
-                                    ` : ''}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Firewall -->
-                    ${(security.firewallProfiles || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-shield-alt"></i> 10. Firewall (High Level Only)
-                            <span class="update-count-pill">${(security.firewallProfiles || []).length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Profile</th>
-                                        <th>Enabled</th>
-                                        <th>Default inbound action</th>
-                                        <th>Default outbound action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${security.firewallProfiles.map(profile => `
-                                    <tr>
-                                        <td>${profile.name || 'N/A'}</td>
-                                        <td><span class="status-badge status-${profile.enabled ? 'online' : 'offline'}">${profile.enabled ? 'Enabled' : 'Disabled'}</span></td>
-                                        <td>${profile.defaultInboundAction || 'N/A'}</td>
-                                        <td>${profile.defaultOutboundAction || 'N/A'}</td>
-                                    </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Antivirus -->
-                    ${(security.antivirus || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-shield-virus"></i> ${this.t('antivirus')}
-                            <span class="update-count-pill">${(security.antivirus || []).length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>${this.t('productName')}</th>
-                                        <th>${this.t('provider')}</th>
-                                        <th>${this.t('productState')}</th>
-                                        <th>${this.t('enabled')}</th>
-                                        <th>${this.t('version')}</th>
-                                        <th>Engine Version</th>
-                                        <th>${this.t('lastUpdate')}</th>
-                                        <th>${this.t('realTimeProtection')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${security.antivirus.map(av => `
-                                    <tr>
-                                        <td><strong>${av.displayName || av.name || 'N/A'}</strong></td>
-                                        <td>${av.provider || 'N/A'}</td>
-                                        <td><span class="status-badge status-${av.productState === 'On' || av.productState === 'Enabled' ? 'online' : (av.productState === 'Off' || av.productState === 'Disabled' ? 'offline' : 'warning')}">${av.productState || 'N/A'}</span></td>
-                                        <td><span class="status-badge status-${av.enabled === true || av.enabled === 'true' ? 'online' : 'offline'}">${av.enabled === true || av.enabled === 'true' ? 'Yes' : (av.enabled === false || av.enabled === 'false' ? 'No' : 'Unknown')}</span></td>
-                                        <td>${av.version || 'N/A'}</td>
-                                        <td>${av.engineVersion || 'N/A'}</td>
-                                        <td>${av.lastUpdate || 'N/A'}</td>
-                                        <td>${av.isUpToDate === true || av.isUpToDate === 'true' ? '<span class="status-badge status-online">Yes</span>' : (av.isUpToDate === false || av.isUpToDate === 'false' ? '<span class="status-badge status-offline">No</span>' : 'N/A')}</td>
-                                    </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Disks -->
-                    ${physicalDisks.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-hdd"></i> 11. Disks
-                            <span class="update-count-pill">${physicalDisks.length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Disk name</th>
-                                        <th>Disk ID</th>
-                                        <th>Size</th>
-                                        <th>Allocated</th>
-                                        <th>Unallocated</th>
-                                        <th>Partition style</th>
-                                        <th>SMART Status</th>
-                                        <th>Temperature</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${physicalDisks.map(disk => {
-                                        const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
-                                        // Handle allocatedSize - it might be missing in older imports
-                                        let allocatedGB = 0;
-                                        if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
-                                            allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
-                                        }
-                                        const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
-                                        const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
-                                        const diskId = disk.uniqueId || disk.serialNumber || 'N/A';
-                                        const smartStatus = disk.smartStatus || disk.healthStatus || 'N/A';
-                                        const isHealthy = smartStatus === 'Healthy' || smartStatus === 'OK';
-                                        const temperature = disk.temperature || 'N/A';
-                                        const tempValue = typeof temperature === 'number' ? temperature : (typeof temperature === 'string' && temperature !== 'N/A' ? parseFloat(temperature) : null);
-                                        const tempColor = tempValue !== null && tempValue > 0 ? (tempValue > 70 ? '#ef4444' : tempValue > 50 ? '#f59e0b' : '#10b981') : '#94a3b8';
-                                        return `
-                                        <tr>
-                                            <td>${diskName}</td>
-                                            <td>${diskId}</td>
-                                            <td>${totalSizeGB > 0 ? `${totalSizeGB.toFixed(2)} GB` : 'N/A'}</td>
-                                            <td>${allocatedGB > 0 ? `${allocatedGB.toFixed(2)} GB` : (allocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
-                                            <td>${unallocatedGB > 0 ? `${unallocatedGB.toFixed(2)} GB` : (unallocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
-                                            <td>${disk.partitionStyle || 'N/A'}</td>
-                                            <td>
-                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
-                                                    ${smartStatus}
-                                                </span>
-                                            </td>
-                                            <td style="color: ${tempColor};">
-                                                ${tempValue !== null && tempValue > 0 ? `${tempValue}°C` : temperature}
-                                            </td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- RAID Controller Health -->
-                    ${raidControllers.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-server"></i> RAID Controller Health
-                            <span class="update-count-pill">${raidControllers.length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Description</th>
-                                        <th>Manufacturer</th>
-                                        <th>Status</th>
-                                        <th>Operational Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${raidControllers.map(controller => {
-                                        const isHealthy = controller.status === 'OK' || controller.operationalStatus === 'OK' || controller.status === 'Degraded' || controller.operationalStatus === 'Degraded';
-                                        const status = controller.operationalStatus || controller.status || 'N/A';
-                                        return `
-                                        <tr>
-                                            <td>${controller.name || 'N/A'}</td>
-                                            <td style="color: #94a3b8;">${controller.description || 'N/A'}</td>
-                                            <td style="color: #94a3b8;">${controller.manufacturer || 'N/A'}</td>
-                                            <td>
-                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
-                                                    ${controller.status || 'N/A'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
-                                                    ${status}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Volumes -->
-                    ${volumes.length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-database"></i> 12. Volumes
-                            <span class="update-count-pill">${volumes.length}</span>
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Drive letter</th>
-                                        <th>File system</th>
-                                        <th>Size</th>
-                                        <th>Used</th>
-                                        <th>Free</th>
-                                        <th>Free space %</th>
-                                        <th>BitLocker status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${volumes.map(volume => {
-                                        const size = volume.size || 0;
-                                        const sizeRemaining = volume.sizeRemaining || 0;
-                                        const used = size - sizeRemaining;
-                                        const freeSpacePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : '0.0';
-                                        const isLowSpace = parseFloat(freeSpacePercent) < 15;
-                                        let bitLockerStatus = 'N/A';
-                                        if (volume.bitLockerStatus && volume.bitLockerStatus !== 'N/A') {
-                                            bitLockerStatus = volume.bitLockerStatus;
-                                        } else if (volume.driveLetter) {
-                                            // If drive letter exists but BitLocker status is N/A, it might not be encrypted or BitLocker not available
-                                            bitLockerStatus = 'Not Encrypted';
-                                        }
-                                        return `
-                                        <tr class="${isLowSpace ? 'low-space-row' : ''}">
-                                            <td>
-                                                ${volume.driveLetter ? `${volume.driveLetter}:` : (volume.fileSystemLabel || 'N/A')}
-                                                ${isLowSpace ? `
-                                                <span class="low-space-flag" data-tooltip="Free space is less than 15%" title="Free space is less than 15%">
-                                                    <i class="fas fa-exclamation-triangle"></i>
-                                                </span>
-                                                ` : ''}
-                                            </td>
-                                            <td>${volume.fileSystem || 'N/A'}</td>
-                                            <td>${size > 0 ? `${size.toFixed(2)} GB` : 'N/A'}</td>
-                                            <td>${used > 0 ? `${used.toFixed(2)} GB` : (used === 0 && size > 0 ? '0.00 GB' : 'N/A')}</td>
-                                            <td>${sizeRemaining > 0 ? `${sizeRemaining.toFixed(2)} GB` : (sizeRemaining === 0 && size > 0 ? '0.00 GB' : 'N/A')}</td>
-                                            <td>
-                                                <span style="color: ${isLowSpace ? '#ef4444' : parseFloat(freeSpacePercent) < 25 ? '#f59e0b' : '#10b981'}; font-weight: ${isLowSpace ? '600' : 'normal'};">
-                                                    ${freeSpacePercent}%
-                                                </span>
-                                            </td>
-                                            <td>${bitLockerStatus}</td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
 
                     <!-- iSCSI Connections and Disks -->
                     ${iscsi.totalSessions > 0 || iscsi.totalConnections > 0 || iscsi.totalDisks > 0 ? `
@@ -3098,79 +2335,6 @@ export class WindowsServerAuditorPage {
                     </div>
                     ` : ''}
 
-                    <!-- Roles -->
-                    ${(rolesAndFeatures.installedRoles || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-server"></i> 12. Roles
-                            <span class="update-count-pill">${(rolesAndFeatures.installedRoles || []).length}</span>
-                            ${(rolesAndFeatures.installedRoles || []).length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showRolesModal()">
-                                View all (${(rolesAndFeatures.installedRoles || []).length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Role name</th>
-                                        <th>Installed (Yes/No)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rolesAndFeatures.installedRoles.slice(0, 20).map(role => {
-                                        const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
-                                        const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
-                                        return `
-                                        <tr>
-                                            <td>${roleName}</td>
-                                            <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
-
-                    <!-- Features -->
-                    ${(rolesAndFeatures.installedFeatures || []).length > 0 ? `
-                    <div class="hardware-section-modern">
-                        <h4 class="section-subtitle-modern">
-                            <i class="fas fa-puzzle-piece"></i> 13. Features
-                            <span class="update-count-pill">${(rolesAndFeatures.installedFeatures || []).length}</span>
-                            ${(rolesAndFeatures.installedFeatures || []).length > 20 ? `
-                            <button class="view-all-btn-compact" onclick="windowsServerAuditorInstance.showFeaturesModal()">
-                                View all (${(rolesAndFeatures.installedFeatures || []).length}) <i class="fas fa-chevron-right"></i>
-                            </button>
-                            ` : ''}
-                        </h4>
-                        <div class="table-container-modern">
-                            <table class="table-compact">
-                                <thead>
-                                    <tr>
-                                        <th>Feature name</th>
-                                        <th>Installed (Yes/No)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${rolesAndFeatures.installedFeatures.slice(0, 20).map(feature => {
-                                        const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
-                                        const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
-                                        return `
-                                        <tr>
-                                            <td>${featureName}</td>
-                                            <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
-                                        </tr>
-                                        `;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    ` : ''}
 
                     <!-- IIS -->
                     ${iis.installed ? `
@@ -3230,57 +2394,1053 @@ export class WindowsServerAuditorPage {
                         </div>
                     ` : ''}
 
-                    <!-- Active Directory -->
-                    ${activeDirectory.isDomainController ? `
-                        <div class="audit-section">
-                            <h2 class="audit-section-title"><i class="fas fa-sitemap"></i> ${this.t('activeDirectory')}</h2>
-                            <div class="audit-grid">
-                                <div class="audit-item">
-                                    <span class="audit-label">${this.t('isDomainController')}:</span>
-                                    <span class="audit-value">Yes</span>
-                                </div>
-                                ${activeDirectory.domainName ? `
-                                    <div class="audit-item">
-                                        <span class="audit-label">${this.t('domainName')}:</span>
-                                        <span class="audit-value">${activeDirectory.domainName}</span>
-                                    </div>
-                                ` : ''}
-                                ${activeDirectory.domainNetBIOSName ? `
-                                    <div class="audit-item">
-                                        <span class="audit-label">${this.t('domainNetBIOSName')}:</span>
-                                        <span class="audit-value">${activeDirectory.domainNetBIOSName}</span>
-                                    </div>
-                                ` : ''}
-                                ${activeDirectory.forestName ? `
-                                    <div class="audit-item">
-                                        <span class="audit-label">${this.t('forestName')}:</span>
-                                        <span class="audit-value">${activeDirectory.forestName}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
+                </div>
+                    </div>
                 </div>
             </div>
-            ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
-            ${this.showSoftwareModalFlag ? this.renderSoftwareModal() : ''}
-            ${this.showDriversModalFlag ? this.renderDriversModal() : ''}
-            ${this.showWindowsUpdatesModalFlag ? this.renderWindowsUpdatesModal() : ''}
-            ${this.showMissingUpdatesModalFlag ? this.renderMissingUpdatesModal() : ''}
-            ${this.showRolesModalFlag ? this.renderRolesModal() : ''}
-            ${this.showFeaturesModalFlag ? this.renderFeaturesModal() : ''}
-            ${this.showAllTasksModalFlag ? this.renderAllTasksModal() : ''}
-            ${this.showFailedTasksModalFlag ? this.renderFailedTasksModal() : ''}
-            ${this.showTempEnvironmentModalFlag ? this.renderTempEnvironmentModal() : ''}
-            ${this.showDirectoryHealthModalFlag ? this.renderDirectoryHealthModal() : ''}
-            ${this.showPathOrderAnalysisModalFlag ? this.renderPathOrderAnalysisModal() : ''}
-            ${this.showPathHygieneChecksModalFlag ? this.renderPathHygieneChecksModal() : ''}
-            ${this.showGroupMembersModalFlag ? this.renderGroupMembersModal() : ''}
-            ${this.showEventLogModalFlag ? this.renderEventLogModal() : ''}
-            ${this.showEventDetailsModalFlag ? this.renderEventDetailsModal() : ''}
-            ${this.showProcessTreeModalFlag ? this.renderProcessTreeModal() : ''}
         `;
     }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
+        // Close sidebar on mobile when switching views
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
+    }
+
+    renderNetworkAdaptersView(adapters) {
+        if (!adapters || adapters.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No network adapters available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="network-adapters" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="network-adapters-search" 
+                            placeholder="Search adapters by name, MAC address, IP address, status..."
+                            oninput="windowsServerAuditorInstance.filterNetworkAdapters(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 20%;">Network adapter</th>
+                                    <th style="width: 8%;">Physical ID</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 12%;">MAC address</th>
+                                    <th style="width: 10%;">Speed</th>
+                                    <th style="width: 8%;">MTU</th>
+                                    <th style="width: 15%;">IP addresses</th>
+                                    <th style="width: 10%;">Gateway</th>
+                                    <th style="width: 12%;">DNS servers</th>
+                                    <th style="width: 5%;">DNS suffix</th>
+                                </tr>
+                            </thead>
+                            <tbody id="network-adapters-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderNetworkAdaptersRows(adapters)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderNetworkAdaptersRows(adapters) {
+        if (!adapters || adapters.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="10" style="text-align: center; padding: 2rem; color: #94a3b8;">No adapters found</td></tr>';
+        }
+
+        return adapters.map(adapter => {
+            const ipAddresses = adapter.ipAddresses && Array.isArray(adapter.ipAddresses) ? adapter.ipAddresses : (adapter.ipAddresses ? [adapter.ipAddresses] : []);
+            const dnsServers = adapter.dnsServers && Array.isArray(adapter.dnsServers) ? adapter.dnsServers : (adapter.dnsServers ? [adapter.dnsServers] : []);
+            const isUp = adapter.status === 'Up' || adapter.status === 'Connected' || adapter.status === 'Enabled';
+            const statusText = adapter.status || 'Unknown';
+            const adapterName = adapter.name || adapter.interfaceDescription || 'N/A';
+            const adapterDescription = adapter.interfaceDescription && adapter.name && adapter.interfaceDescription !== adapter.name ? adapter.interfaceDescription : null;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed;">
+                <td style="width: 20%;">
+                    <div style="display: flex; flex-direction: column;">
+                        <span>${adapterName}</span>
+                        ${adapterDescription ? `<span style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px;">${adapterDescription}</span>` : ''}
+                    </div>
+                </td>
+                <td style="width: 8%;">${adapter.interfaceIndex !== null && adapter.interfaceIndex !== undefined ? adapter.interfaceIndex : 'N/A'}</td>
+                <td style="width: 10%;"><span class="status-badge status-${isUp ? 'online' : 'offline'}">${statusText}</span></td>
+                <td style="width: 12%;">${adapter.macAddress || 'N/A'}</td>
+                <td style="width: 10%;">${adapter.linkSpeed || 'N/A'}</td>
+                <td style="width: 8%;">${adapter.mtu || 'N/A'}</td>
+                <td style="width: 15%;">${ipAddresses.length > 0 ? ipAddresses.join(', ') : 'N/A'}</td>
+                <td style="width: 10%;">${adapter.gateway || 'N/A'}</td>
+                <td style="width: 12%;">${dnsServers.length > 0 ? dnsServers.join(', ') : 'N/A'}</td>
+                <td style="width: 5%;">${adapter.dnsSuffix || 'N/A'}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterNetworkAdapters(searchTerm) {
+        const adapters = this.reportData?.network?.adapters || [];
+        const tbody = document.getElementById('network-adapters-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredAdapters = searchLower ? adapters.filter(adapter => {
+            const name = (adapter.name || '').toLowerCase();
+            const description = (adapter.interfaceDescription || '').toLowerCase();
+            const macAddress = (adapter.macAddress || '').toLowerCase();
+            const status = (adapter.status || '').toLowerCase();
+            const ipAddresses = adapter.ipAddresses && Array.isArray(adapter.ipAddresses) ? adapter.ipAddresses : (adapter.ipAddresses ? [adapter.ipAddresses] : []);
+            const ipString = ipAddresses.join(' ').toLowerCase();
+            const gateway = (adapter.gateway || '').toLowerCase();
+            const dnsServers = adapter.dnsServers && Array.isArray(adapter.dnsServers) ? adapter.dnsServers : (adapter.dnsServers ? [adapter.dnsServers] : []);
+            const dnsString = dnsServers.join(' ').toLowerCase();
+            return name.includes(searchLower) || 
+                   description.includes(searchLower) || 
+                   macAddress.includes(searchLower) || 
+                   status.includes(searchLower) ||
+                   ipString.includes(searchLower) ||
+                   gateway.includes(searchLower) ||
+                   dnsString.includes(searchLower);
+        }) : adapters;
+
+        tbody.innerHTML = this.renderNetworkAdaptersRows(filteredAdapters);
+    }
+
+    renderRoutingTableView(routes) {
+        if (!routes || routes.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No routing table entries available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="routing-table" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="routing-table-search" 
+                            placeholder="Search routes by destination, next hop, interface, protocol..."
+                            oninput="windowsServerAuditorInstance.filterRoutingTable(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 25%;">Destination Prefix</th>
+                                    <th style="width: 20%;">Next Hop</th>
+                                    <th style="width: 20%;">Interface</th>
+                                    <th style="width: 10%;">Interface Index</th>
+                                    <th style="width: 10%;">Route Metric</th>
+                                    <th style="width: 15%;">Protocol</th>
+                                </tr>
+                            </thead>
+                            <tbody id="routing-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderRoutingTableRows(routes)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderRoutingTableRows(routes) {
+        if (!routes || routes.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">No routes found</td></tr>';
+        }
+
+        return routes.map(route => `
+            <tr style="display: table; width: 100%; table-layout: fixed;">
+                <td style="width: 25%;">${route.destinationPrefix || 'N/A'}</td>
+                <td style="width: 20%;">${route.nextHop || 'N/A'}</td>
+                <td style="width: 20%;">${route.interfaceAlias || 'N/A'}</td>
+                <td style="width: 10%;">${route.interfaceIndex !== null && route.interfaceIndex !== undefined ? route.interfaceIndex : 'N/A'}</td>
+                <td style="width: 10%;">${route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric : 'N/A'}</td>
+                <td style="width: 15%;">${route.protocol || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    filterRoutingTable(searchTerm) {
+        const routes = this.reportData?.network?.routingTable || [];
+        const tbody = document.getElementById('routing-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredRoutes = searchLower ? routes.filter(route => {
+            const destination = (route.destinationPrefix || '').toLowerCase();
+            const nextHop = (route.nextHop || '').toLowerCase();
+            const interfaceAlias = (route.interfaceAlias || '').toLowerCase();
+            const protocol = (route.protocol || '').toLowerCase();
+            const metric = (route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric.toString() : '').toLowerCase();
+            return destination.includes(searchLower) || 
+                   nextHop.includes(searchLower) || 
+                   interfaceAlias.includes(searchLower) || 
+                   protocol.includes(searchLower) ||
+                   metric.includes(searchLower);
+        }) : routes;
+
+        tbody.innerHTML = this.renderRoutingTableRows(filteredRoutes);
+    }
+
+    renderPersistentRoutesView(routes) {
+        if (!routes || routes.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No persistent routes available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="persistent-routes" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="persistent-routes-search" 
+                            placeholder="Search routes by destination, next hop, interface, protocol..."
+                            oninput="windowsServerAuditorInstance.filterPersistentRoutes(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 25%;">Destination Prefix</th>
+                                    <th style="width: 20%;">Next Hop</th>
+                                    <th style="width: 20%;">Interface</th>
+                                    <th style="width: 10%;">Interface Index</th>
+                                    <th style="width: 10%;">Route Metric</th>
+                                    <th style="width: 15%;">Protocol</th>
+                                </tr>
+                            </thead>
+                            <tbody id="persistent-routes-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderPersistentRoutesRows(routes)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderPersistentRoutesRows(routes) {
+        if (!routes || routes.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">No routes found</td></tr>';
+        }
+
+        return routes.map(route => `
+            <tr style="display: table; width: 100%; table-layout: fixed;">
+                <td style="width: 25%;">${route.destinationPrefix || 'N/A'}</td>
+                <td style="width: 20%;">${route.nextHop || 'N/A'}</td>
+                <td style="width: 20%;">${route.interfaceAlias || 'N/A'}</td>
+                <td style="width: 10%;">${route.interfaceIndex !== null && route.interfaceIndex !== undefined ? route.interfaceIndex : 'N/A'}</td>
+                <td style="width: 10%;">${route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric : 'N/A'}</td>
+                <td style="width: 15%;">${route.protocol || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    filterPersistentRoutes(searchTerm) {
+        const routes = this.reportData?.network?.persistentRoutes || [];
+        const tbody = document.getElementById('persistent-routes-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredRoutes = searchLower ? routes.filter(route => {
+            const destination = (route.destinationPrefix || '').toLowerCase();
+            const nextHop = (route.nextHop || '').toLowerCase();
+            const interfaceAlias = (route.interfaceAlias || '').toLowerCase();
+            const protocol = (route.protocol || '').toLowerCase();
+            const metric = (route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric.toString() : '').toLowerCase();
+            return destination.includes(searchLower) || 
+                   nextHop.includes(searchLower) || 
+                   interfaceAlias.includes(searchLower) || 
+                   protocol.includes(searchLower) ||
+                   metric.includes(searchLower);
+        }) : routes;
+
+        tbody.innerHTML = this.renderPersistentRoutesRows(filteredRoutes);
+    }
+
+    renderARPTableView(arpEntries) {
+        if (!arpEntries || arpEntries.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No ARP table entries available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="arp-table" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="arp-table-search" 
+                            placeholder="Search ARP entries by IP address, MAC address, interface, state..."
+                            oninput="windowsServerAuditorInstance.filterARPTable(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 20%;">IP Address</th>
+                                    <th style="width: 20%;">MAC Address</th>
+                                    <th style="width: 20%;">Interface</th>
+                                    <th style="width: 10%;">Interface Index</th>
+                                    <th style="width: 15%;">State</th>
+                                    <th style="width: 15%;">Address Family</th>
+                                </tr>
+                            </thead>
+                            <tbody id="arp-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderARPTableRows(arpEntries)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderARPTableRows(arpEntries) {
+        if (!arpEntries || arpEntries.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="6" style="text-align: center; padding: 2rem; color: #94a3b8;">No ARP entries found</td></tr>';
+        }
+
+        return arpEntries.map(arp => `
+            <tr style="display: table; width: 100%; table-layout: fixed;">
+                <td style="width: 20%;">${arp.ipAddress || 'N/A'}</td>
+                <td style="width: 20%;">${arp.linkLayerAddress || 'N/A'}</td>
+                <td style="width: 20%;">${arp.interfaceAlias || 'N/A'}</td>
+                <td style="width: 10%;">${arp.interfaceIndex !== null && arp.interfaceIndex !== undefined ? arp.interfaceIndex : 'N/A'}</td>
+                <td style="width: 15%;"><span class="status-badge status-${arp.state === 'Reachable' || arp.state === 'Permanent' ? 'online' : 'warning'}">${arp.state || 'N/A'}</span></td>
+                <td style="width: 15%;">${arp.addressFamily || 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    filterARPTable(searchTerm) {
+        const arpEntries = this.reportData?.network?.arpTable || [];
+        const tbody = document.getElementById('arp-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredEntries = searchLower ? arpEntries.filter(arp => {
+            const ipAddress = (arp.ipAddress || '').toLowerCase();
+            const macAddress = (arp.linkLayerAddress || '').toLowerCase();
+            const interfaceAlias = (arp.interfaceAlias || '').toLowerCase();
+            const state = (arp.state || '').toLowerCase();
+            const addressFamily = (arp.addressFamily || '').toLowerCase();
+            return ipAddress.includes(searchLower) || 
+                   macAddress.includes(searchLower) || 
+                   interfaceAlias.includes(searchLower) || 
+                   state.includes(searchLower) ||
+                   addressFamily.includes(searchLower);
+        }) : arpEntries;
+
+        tbody.innerHTML = this.renderARPTableRows(filteredEntries);
+    }
+
+    renderCertificatesView(certificatesData) {
+        if (!certificatesData) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No certificates data available.
+                    </div>
+                </div>
+            `;
+        }
+
+        const allCertificates = certificatesData.allCertificates || [];
+        const userCertificates = certificatesData.userCertificates || [];
+        const trustedRootCertificates = certificatesData.trustedRootCertificates || [];
+        const intermediateCAs = certificatesData.intermediateCAs || [];
+        const expiredCertificates = certificatesData.expiredCertificates || [];
+
+        if (allCertificates.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No certificates available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="certificates" style="display: flex; flex-direction: column; height: 100%;">
+                    <!-- Tabs for switching between certificate categories -->
+                    <div style="display: flex; gap: 0.25rem; margin-bottom: 0.75rem; flex-shrink: 0; border-bottom: 1px solid #334155;">
+                        <button id="certificate-tab-all" onclick="windowsServerAuditorInstance.switchCertificateTab('all')" 
+                                style="padding: 0.25rem 0.625rem; background: ${this.currentCertificateTab === 'all' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${this.currentCertificateTab === 'all' ? 'rgba(59, 130, 246, 0.3)' : '#334155'}; color: ${this.currentCertificateTab === 'all' ? '#60a5fa' : '#94a3b8'}; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-certificate"></i> All Certificates (${allCertificates.length})
+                        </button>
+                        ${userCertificates.length > 0 ? `
+                        <button id="certificate-tab-user" onclick="windowsServerAuditorInstance.switchCertificateTab('user')" 
+                                style="padding: 0.25rem 0.625rem; background: ${this.currentCertificateTab === 'user' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${this.currentCertificateTab === 'user' ? 'rgba(59, 130, 246, 0.3)' : '#334155'}; color: ${this.currentCertificateTab === 'user' ? '#60a5fa' : '#94a3b8'}; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-user-shield"></i> User Certificates (${userCertificates.length})
+                        </button>
+                        ` : ''}
+                        ${trustedRootCertificates.length > 0 ? `
+                        <button id="certificate-tab-trusted-root" onclick="windowsServerAuditorInstance.switchCertificateTab('trusted-root')" 
+                                style="padding: 0.25rem 0.625rem; background: ${this.currentCertificateTab === 'trusted-root' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${this.currentCertificateTab === 'trusted-root' ? 'rgba(59, 130, 246, 0.3)' : '#334155'}; color: ${this.currentCertificateTab === 'trusted-root' ? '#60a5fa' : '#94a3b8'}; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-shield-alt"></i> Trusted Root (${trustedRootCertificates.length})
+                        </button>
+                        ` : ''}
+                        ${intermediateCAs.length > 0 ? `
+                        <button id="certificate-tab-intermediate" onclick="windowsServerAuditorInstance.switchCertificateTab('intermediate')" 
+                                style="padding: 0.25rem 0.625rem; background: ${this.currentCertificateTab === 'intermediate' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${this.currentCertificateTab === 'intermediate' ? 'rgba(59, 130, 246, 0.3)' : '#334155'}; color: ${this.currentCertificateTab === 'intermediate' ? '#60a5fa' : '#94a3b8'}; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-certificate"></i> Intermediate CAs (${intermediateCAs.length})
+                        </button>
+                        ` : ''}
+                        ${expiredCertificates.length > 0 ? `
+                        <button id="certificate-tab-expired" onclick="windowsServerAuditorInstance.switchCertificateTab('expired')" 
+                                style="padding: 0.25rem 0.625rem; background: ${this.currentCertificateTab === 'expired' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(15, 23, 42, 0.5)'}; border: 1px solid ${this.currentCertificateTab === 'expired' ? 'rgba(59, 130, 246, 0.3)' : '#334155'}; color: ${this.currentCertificateTab === 'expired' ? '#60a5fa' : '#94a3b8'}; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-exclamation-triangle"></i> Expired (${expiredCertificates.length})
+                        </button>
+                        ` : ''}
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        ${this.renderCertificateTabContent(certificatesData)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderCertificateTabContent(certificatesData) {
+        switch (this.currentCertificateTab) {
+            case 'all':
+                return this.renderCertificatesTable(certificatesData.allCertificates || [], 'certificates');
+            case 'user':
+                return this.renderCertificatesTable(certificatesData.userCertificates || [], 'user-certificates');
+            case 'trusted-root':
+                return this.renderCertificatesTable(certificatesData.trustedRootCertificates || [], 'trusted-root-certificates');
+            case 'intermediate':
+                return this.renderCertificatesTable(certificatesData.intermediateCAs || [], 'intermediate-cas');
+            case 'expired':
+                return this.renderCertificatesTable(certificatesData.expiredCertificates || [], 'expired-certificates');
+            default:
+                return this.renderCertificatesTable(certificatesData.allCertificates || [], 'certificates');
+        }
+    }
+
+    renderCertificatesTable(certificates, tableId) {
+        if (!certificates || certificates.length === 0) {
+            return '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No certificates found in this category.</div>';
+        }
+
+        const searchPlaceholder = tableId === 'expired-certificates' 
+            ? 'Search expired certificates by subject, issuer, thumbprint...'
+            : tableId === 'user-certificates'
+            ? 'Search user certificates by subject, issuer, thumbprint...'
+            : tableId === 'trusted-root-certificates'
+            ? 'Search trusted root certificates by subject, issuer, thumbprint...'
+            : tableId === 'intermediate-cas'
+            ? 'Search intermediate CAs by subject, issuer, thumbprint...'
+            : 'Search certificates by subject, issuer, thumbprint, serial number...';
+
+        return `
+            <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                <input 
+                    type="text" 
+                    id="${tableId}-search" 
+                    placeholder="${searchPlaceholder}"
+                    oninput="windowsServerAuditorInstance.filterCertificatesByTab('${tableId}', this.value)"
+                    style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                    onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                    onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                >
+            </div>
+            <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                    <thead style="flex-shrink: 0; display: block;">
+                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                            <th style="width: 20%;">Subject</th>
+                            <th style="width: 20%;">Issuer</th>
+                            <th style="width: 12%;">Thumbprint</th>
+                            <th style="width: 10%;">Store Location</th>
+                            <th style="width: 8%;">Store Name</th>
+                            <th style="width: 10%;">Valid From</th>
+                            <th style="width: 10%;">Valid To</th>
+                            <th style="width: 5%;">Expired</th>
+                            <th style="width: 5%;">Has Private Key</th>
+                        </tr>
+                    </thead>
+                    <tbody id="${tableId}-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                        ${this.renderCertificatesRows(certificates)}
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        `;
+    }
+
+    switchCertificateTab(tab) {
+        this.currentCertificateTab = tab;
+        
+        // Reset all tab buttons
+        const allTabs = document.querySelectorAll('[id^="certificate-tab-"]');
+        allTabs.forEach(tabBtn => {
+            tabBtn.style.background = 'rgba(15, 23, 42, 0.5)';
+            tabBtn.style.borderColor = '#334155';
+            tabBtn.style.color = '#94a3b8';
+        });
+        
+        // Highlight selected tab
+        const tabIdMap = {
+            'all': 'all',
+            'user': 'user',
+            'trusted-root': 'trusted-root',
+            'intermediate': 'intermediate',
+            'expired': 'expired'
+        };
+        const selectedTabId = tabIdMap[tab];
+        if (selectedTabId) {
+            const selectedTab = document.getElementById(`certificate-tab-${selectedTabId}`);
+            if (selectedTab) {
+                selectedTab.style.background = 'rgba(59, 130, 246, 0.1)';
+                selectedTab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                selectedTab.style.color = '#60a5fa';
+            }
+        }
+        
+        this.updateDisplay();
+        
+        // Re-apply styles after re-render (in case updateDisplay re-rendered)
+        setTimeout(() => {
+            allTabs.forEach(tabBtn => {
+                tabBtn.style.background = 'rgba(15, 23, 42, 0.5)';
+                tabBtn.style.borderColor = '#334155';
+                tabBtn.style.color = '#94a3b8';
+            });
+            if (selectedTabId) {
+                const selectedTab = document.getElementById(`certificate-tab-${selectedTabId}`);
+                if (selectedTab) {
+                    selectedTab.style.background = 'rgba(59, 130, 246, 0.1)';
+                    selectedTab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                    selectedTab.style.color = '#60a5fa';
+                }
+            }
+        }, 0);
+    }
+
+    filterCertificatesByTab(tableId, searchTerm) {
+        let certificates = [];
+        switch (tableId) {
+            case 'certificates':
+                certificates = this.reportData?.certificates?.allCertificates || [];
+                break;
+            case 'user-certificates':
+                certificates = this.reportData?.certificates?.userCertificates || [];
+                break;
+            case 'trusted-root-certificates':
+                certificates = this.reportData?.certificates?.trustedRootCertificates || [];
+                break;
+            case 'intermediate-cas':
+                certificates = this.reportData?.certificates?.intermediateCAs || [];
+                break;
+            case 'expired-certificates':
+                certificates = this.reportData?.certificates?.expiredCertificates || [];
+                break;
+        }
+
+        const tbody = document.getElementById(`${tableId}-table-body`);
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const storeLocation = (cert.storeLocation || '').toLowerCase();
+            const storeName = (cert.storeName || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   storeLocation.includes(searchLower) ||
+                   storeName.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderCertificatesRows(filteredCertificates);
+    }
+
+    renderCertificatesRows(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">No certificates found</td></tr>';
+        }
+
+        return certificates.map(cert => {
+            const isExpired = cert.isExpired || false;
+            const hasPrivateKey = cert.hasPrivateKey || false;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; ${isExpired ? 'background-color: rgba(239, 68, 68, 0.1);' : ''}">
+                <td style="width: 20%;">${cert.subject || 'N/A'}</td>
+                <td style="width: 20%;">${cert.issuer || 'N/A'}</td>
+                <td style="width: 12%; font-family: monospace; font-size: 0.75rem;">${cert.thumbprint || 'N/A'}</td>
+                <td style="width: 10%;">${cert.storeLocation || 'N/A'}</td>
+                <td style="width: 8%;">${cert.storeName || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notBefore || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notAfter || 'N/A'}</td>
+                <td style="width: 5%;"><span class="status-badge status-${isExpired ? 'offline' : 'online'}">${isExpired ? 'Yes' : 'No'}</span></td>
+                <td style="width: 5%;"><span class="status-badge status-${hasPrivateKey ? 'online' : 'warning'}">${hasPrivateKey ? 'Yes' : 'No'}</span></td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterCertificates(searchTerm) {
+        const certificates = this.reportData?.certificates?.allCertificates || [];
+        const tbody = document.getElementById('certificates-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const storeLocation = (cert.storeLocation || '').toLowerCase();
+            const storeName = (cert.storeName || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   storeLocation.includes(searchLower) ||
+                   storeName.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderCertificatesRows(filteredCertificates);
+    }
+
+    renderUserCertificatesView(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No user certificates available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="user-certificates" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="user-certificates-search" 
+                            placeholder="Search user certificates by subject, issuer, thumbprint..."
+                            oninput="windowsServerAuditorInstance.filterUserCertificates(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 20%;">Subject</th>
+                                    <th style="width: 20%;">Issuer</th>
+                                    <th style="width: 12%;">Thumbprint</th>
+                                    <th style="width: 8%;">Store Name</th>
+                                    <th style="width: 10%;">Valid From</th>
+                                    <th style="width: 10%;">Valid To</th>
+                                    <th style="width: 5%;">Expired</th>
+                                    <th style="width: 5%;">Has Private Key</th>
+                                    <th style="width: 10%;">Days Until Expiry</th>
+                                </tr>
+                            </thead>
+                            <tbody id="user-certificates-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderUserCertificatesRows(certificates)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderUserCertificatesRows(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">No user certificates found</td></tr>';
+        }
+
+        return certificates.map(cert => {
+            const isExpired = cert.isExpired || false;
+            const hasPrivateKey = cert.hasPrivateKey || false;
+            const daysUntilExpiry = cert.daysUntilExpiry !== undefined ? cert.daysUntilExpiry : 0;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; ${isExpired ? 'background-color: rgba(239, 68, 68, 0.1);' : ''}">
+                <td style="width: 20%;">${cert.subject || 'N/A'}</td>
+                <td style="width: 20%;">${cert.issuer || 'N/A'}</td>
+                <td style="width: 12%; font-family: monospace; font-size: 0.75rem;">${cert.thumbprint || 'N/A'}</td>
+                <td style="width: 8%;">${cert.storeName || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notBefore || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notAfter || 'N/A'}</td>
+                <td style="width: 5%;"><span class="status-badge status-${isExpired ? 'offline' : 'online'}">${isExpired ? 'Yes' : 'No'}</span></td>
+                <td style="width: 5%;"><span class="status-badge status-${hasPrivateKey ? 'online' : 'warning'}">${hasPrivateKey ? 'Yes' : 'No'}</span></td>
+                <td style="width: 10%;">${daysUntilExpiry > 0 ? daysUntilExpiry : (isExpired ? 'Expired' : 'N/A')}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterUserCertificates(searchTerm) {
+        const certificates = this.reportData?.certificates?.userCertificates || [];
+        const tbody = document.getElementById('user-certificates-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderUserCertificatesRows(filteredCertificates);
+    }
+
+    renderTrustedRootCertificatesView(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No trusted root certificates available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="trusted-root-certificates" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="trusted-root-certificates-search" 
+                            placeholder="Search trusted root certificates by subject, issuer, thumbprint..."
+                            oninput="windowsServerAuditorInstance.filterTrustedRootCertificates(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 25%;">Subject</th>
+                                    <th style="width: 25%;">Issuer</th>
+                                    <th style="width: 15%;">Thumbprint</th>
+                                    <th style="width: 10%;">Store Location</th>
+                                    <th style="width: 10%;">Valid From</th>
+                                    <th style="width: 10%;">Valid To</th>
+                                    <th style="width: 5%;">Expired</th>
+                                </tr>
+                            </thead>
+                            <tbody id="trusted-root-certificates-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderTrustedRootCertificatesRows(certificates)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderTrustedRootCertificatesRows(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">No trusted root certificates found</td></tr>';
+        }
+
+        return certificates.map(cert => {
+            const isExpired = cert.isExpired || false;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; ${isExpired ? 'background-color: rgba(239, 68, 68, 0.1);' : ''}">
+                <td style="width: 25%;">${cert.subject || 'N/A'}</td>
+                <td style="width: 25%;">${cert.issuer || 'N/A'}</td>
+                <td style="width: 15%; font-family: monospace; font-size: 0.75rem;">${cert.thumbprint || 'N/A'}</td>
+                <td style="width: 10%;">${cert.storeLocation || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notBefore || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notAfter || 'N/A'}</td>
+                <td style="width: 5%;"><span class="status-badge status-${isExpired ? 'offline' : 'online'}">${isExpired ? 'Yes' : 'No'}</span></td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterTrustedRootCertificates(searchTerm) {
+        const certificates = this.reportData?.certificates?.trustedRootCertificates || [];
+        const tbody = document.getElementById('trusted-root-certificates-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderTrustedRootCertificatesRows(filteredCertificates);
+    }
+
+    renderIntermediateCAsView(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No intermediate CAs available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="intermediate-cas" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="intermediate-cas-search" 
+                            placeholder="Search intermediate CAs by subject, issuer, thumbprint..."
+                            oninput="windowsServerAuditorInstance.filterIntermediateCAs(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 25%;">Subject</th>
+                                    <th style="width: 25%;">Issuer</th>
+                                    <th style="width: 15%;">Thumbprint</th>
+                                    <th style="width: 10%;">Store Location</th>
+                                    <th style="width: 10%;">Valid From</th>
+                                    <th style="width: 10%;">Valid To</th>
+                                    <th style="width: 5%;">Expired</th>
+                                </tr>
+                            </thead>
+                            <tbody id="intermediate-cas-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderIntermediateCAsRows(certificates)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderIntermediateCAsRows(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="7" style="text-align: center; padding: 2rem; color: #94a3b8;">No intermediate CAs found</td></tr>';
+        }
+
+        return certificates.map(cert => {
+            const isExpired = cert.isExpired || false;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; ${isExpired ? 'background-color: rgba(239, 68, 68, 0.1);' : ''}">
+                <td style="width: 25%;">${cert.subject || 'N/A'}</td>
+                <td style="width: 25%;">${cert.issuer || 'N/A'}</td>
+                <td style="width: 15%; font-family: monospace; font-size: 0.75rem;">${cert.thumbprint || 'N/A'}</td>
+                <td style="width: 10%;">${cert.storeLocation || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notBefore || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notAfter || 'N/A'}</td>
+                <td style="width: 5%;"><span class="status-badge status-${isExpired ? 'offline' : 'online'}">${isExpired ? 'Yes' : 'No'}</span></td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterIntermediateCAs(searchTerm) {
+        const certificates = this.reportData?.certificates?.intermediateCAs || [];
+        const tbody = document.getElementById('intermediate-cas-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderIntermediateCAsRows(filteredCertificates);
+    }
+
+    renderExpiredCertificatesView(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No expired certificates available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="expired-certificates" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="expired-certificates-search" 
+                            placeholder="Search expired certificates by subject, issuer, thumbprint..."
+                            oninput="windowsServerAuditorInstance.filterExpiredCertificates(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th style="width: 20%;">Subject</th>
+                                    <th style="width: 20%;">Issuer</th>
+                                    <th style="width: 12%;">Thumbprint</th>
+                                    <th style="width: 10%;">Store Location</th>
+                                    <th style="width: 8%;">Store Name</th>
+                                    <th style="width: 10%;">Valid From</th>
+                                    <th style="width: 10%;">Valid To</th>
+                                    <th style="width: 5%;">Has Private Key</th>
+                                    <th style="width: 5%;">Days Since Expiry</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expired-certificates-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${this.renderExpiredCertificatesRows(certificates)}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderExpiredCertificatesRows(certificates) {
+        if (!certificates || certificates.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">No expired certificates found</td></tr>';
+        }
+
+        return certificates.map(cert => {
+            const hasPrivateKey = cert.hasPrivateKey || false;
+            const daysUntilExpiry = cert.daysUntilExpiry !== undefined ? Math.abs(cert.daysUntilExpiry) : 0;
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; background-color: rgba(239, 68, 68, 0.1);">
+                <td style="width: 20%;">${cert.subject || 'N/A'}</td>
+                <td style="width: 20%;">${cert.issuer || 'N/A'}</td>
+                <td style="width: 12%; font-family: monospace; font-size: 0.75rem;">${cert.thumbprint || 'N/A'}</td>
+                <td style="width: 10%;">${cert.storeLocation || 'N/A'}</td>
+                <td style="width: 8%;">${cert.storeName || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notBefore || 'N/A'}</td>
+                <td style="width: 10%;">${cert.notAfter || 'N/A'}</td>
+                <td style="width: 5%;"><span class="status-badge status-${hasPrivateKey ? 'online' : 'warning'}">${hasPrivateKey ? 'Yes' : 'No'}</span></td>
+                <td style="width: 5%;">${daysUntilExpiry}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    filterExpiredCertificates(searchTerm) {
+        const certificates = this.reportData?.certificates?.expiredCertificates || [];
+        const tbody = document.getElementById('expired-certificates-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredCertificates = searchLower ? certificates.filter(cert => {
+            const subject = (cert.subject || '').toLowerCase();
+            const issuer = (cert.issuer || '').toLowerCase();
+            const thumbprint = (cert.thumbprint || '').toLowerCase();
+            const serialNumber = (cert.serialNumber || '').toLowerCase();
+            const storeLocation = (cert.storeLocation || '').toLowerCase();
+            const storeName = (cert.storeName || '').toLowerCase();
+            const friendlyName = (cert.friendlyName || '').toLowerCase();
+            return subject.includes(searchLower) || 
+                   issuer.includes(searchLower) || 
+                   thumbprint.includes(searchLower) ||
+                   serialNumber.includes(searchLower) ||
+                   storeLocation.includes(searchLower) ||
+                   storeName.includes(searchLower) ||
+                   friendlyName.includes(searchLower);
+        }) : certificates;
+
+        tbody.innerHTML = this.renderExpiredCertificatesRows(filteredCertificates);
+    }
+
 
     renderServicesModal() {
         if (!this.showServicesModalFlag || !this.selectedServicesModal) return '';
@@ -3367,6 +3527,1751 @@ export class WindowsServerAuditorPage {
                 </div>
             </div>
         `;
+    }
+
+    renderDriversView(drivers) {
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Drivers -->
+                    ${drivers.length > 0 ? `
+                    <div class="hardware-section-modern" data-section="drivers" style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="drivers-search" 
+                                placeholder="Search drivers by name, provider, version..."
+                                oninput="windowsServerAuditorInstance.filterDrivers(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Device class</th>
+                                        <th>Provider</th>
+                                        <th>Version</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="drivers-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${drivers.map(driver => {
+                                        // Check if driver is older than 3 years
+                                        let isOldDriver = false;
+                                        let dateDisplay = 'N/A';
+                                        if (driver.versionDate && driver.versionDate !== 'N/A') {
+                                            try {
+                                                // Handle different date formats
+                                                let driverDate;
+                                                if (typeof driver.versionDate === 'string') {
+                                                    // Try parsing as ISO date or other formats
+                                                    driverDate = new Date(driver.versionDate);
+                                                } else if (driver.versionDate instanceof Date) {
+                                                    driverDate = driver.versionDate;
+                                                } else {
+                                                    driverDate = new Date(driver.versionDate);
+                                                }
+                                                
+                                                if (!isNaN(driverDate.getTime())) {
+                                                    const threeYearsAgo = new Date();
+                                                    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+                                                    isOldDriver = driverDate < threeYearsAgo;
+                                                    dateDisplay = driverDate.toLocaleDateString();
+                                                }
+                                            } catch (e) {
+                                                dateDisplay = driver.versionDate;
+                                            }
+                                        }
+                                        
+                                        return `
+                                        <tr class="${isOldDriver ? 'old-driver-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
+                                            <td>
+                                                ${driver.classDescription || driver.name || 'N/A'}
+                                                ${isOldDriver ? '<span class="old-driver-flag" title="Driver is older than 3 years"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
+                                            </td>
+                                            <td>${driver.providerName || 'N/A'}</td>
+                                            <td>${driver.driverVersion || 'N/A'}</td>
+                                            <td>${dateDisplay}</td>
+                                            <td><span class="status-badge status-${driver.status === 'OK' || driver.status === 'Running' ? 'online' : 'warning'}">${driver.status || 'Unknown'}</span></td>
+                                        </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No drivers data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    renderDevicesView(devices) {
+        if (!devices) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No devices data available.
+                    </div>
+                </div>
+            `;
+        }
+
+        const allDevices = devices.allDevices || [];
+        const connectedDevices = devices.connectedDevices || [];
+        const hiddenDevices = devices.hiddenDevices || [];
+        const disabledDevices = devices.disabledDevices || [];
+        const virtualDevices = devices.virtualDevices || [];
+        const devicesMissingDrivers = devices.devicesMissingDrivers || [];
+
+        // Group devices by class
+        const devicesByClass = {};
+        allDevices.forEach(device => {
+            const deviceClass = device.class || 'Unknown';
+            if (!devicesByClass[deviceClass]) {
+                devicesByClass[deviceClass] = [];
+            }
+            devicesByClass[deviceClass].push(device);
+        });
+
+        // Sort classes alphabetically
+        const sortedClasses = Object.keys(devicesByClass).sort();
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" data-section="devices" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 0.5rem; flex-shrink: 0; display: flex; gap: 0.375rem; flex-wrap: wrap;">
+                        <button class="device-tab-btn active" data-tab="all" onclick="windowsServerAuditorInstance.switchDeviceTab('all')">
+                            All Devices (${devices.totalDevices || 0})
+                        </button>
+                        <button class="device-tab-btn" data-tab="connected" onclick="windowsServerAuditorInstance.switchDeviceTab('connected')">
+                            Connected (${devices.totalConnected || 0})
+                        </button>
+                        <button class="device-tab-btn" data-tab="hidden" onclick="windowsServerAuditorInstance.switchDeviceTab('hidden')">
+                            Hidden (${devices.totalHidden || 0})
+                        </button>
+                        <button class="device-tab-btn" data-tab="disabled" onclick="windowsServerAuditorInstance.switchDeviceTab('disabled')">
+                            Disabled (${devices.totalDisabled || 0})
+                        </button>
+                        <button class="device-tab-btn" data-tab="virtual" onclick="windowsServerAuditorInstance.switchDeviceTab('virtual')">
+                            Virtual (${devices.totalVirtual || 0})
+                        </button>
+                        <button class="device-tab-btn ${devicesMissingDrivers.length > 0 ? 'device-tab-btn-warning' : ''}" data-tab="missing-drivers" onclick="windowsServerAuditorInstance.switchDeviceTab('missing-drivers')">
+                            Missing Drivers (${devices.totalMissingDrivers || 0})
+                        </button>
+                    </div>
+                    <div style="margin-bottom: 0.5rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="devices-search" 
+                            placeholder="Search devices by name, manufacturer, class..."
+                            oninput="windowsServerAuditorInstance.filterDevices(this.value)"
+                            style="width: 100%; padding: 0.375rem 0.5rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.25rem; color: #e2e8f0; font-size: 0.75rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div id="devices-container" style="flex: 1; overflow-y: auto; min-height: 0;">
+                        ${this.renderDevicesByClass(devicesByClass, sortedClasses, 'all')}
+                    </div>
+                </div>
+                <style>
+                    .device-tab-btn {
+                        padding: 0.35rem 0.75rem;
+                        background: #1e293b;
+                        border: 1px solid #334155;
+                        border-radius: 0.25rem;
+                        color: #94a3b8;
+                        font-size: 0.75rem;
+                        cursor: pointer;
+                        transition: all 0.2s;
+                    }
+                    .device-tab-btn:hover {
+                        background: #334155;
+                        border-color: #475569;
+                        color: #e2e8f0;
+                    }
+                    .device-tab-btn.active {
+                        background: #3b82f6;
+                        border-color: #3b82f6;
+                        color: #ffffff;
+                    }
+                    .device-tab-btn-warning {
+                        border-color: #f59e0b;
+                        color: #f59e0b;
+                    }
+                    .device-tab-btn-warning.active {
+                        background: #f59e0b;
+                        border-color: #f59e0b;
+                        color: #ffffff;
+                    }
+                    .device-class-header {
+                        background: #1e293b;
+                        border: 1px solid #334155;
+                        border-radius: 0.25rem;
+                        padding: 0.5rem 0.75rem;
+                        margin-bottom: 0.375rem;
+                        cursor: pointer;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        transition: all 0.2s;
+                    }
+                    .device-class-header:hover {
+                        background: #334155;
+                        border-color: #475569;
+                    }
+                    .device-class-header.expanded {
+                        border-bottom-left-radius: 0;
+                        border-bottom-right-radius: 0;
+                        border-bottom: none;
+                    }
+                    .device-class-content {
+                        display: none;
+                        background: #0f172a;
+                        border: 1px solid #334155;
+                        border-top: none;
+                        border-radius: 0 0 0.25rem 0.25rem;
+                        margin-bottom: 0.375rem;
+                        overflow: hidden;
+                    }
+                    .device-class-content.expanded {
+                        display: block;
+                    }
+                    .device-class-icon {
+                        margin-right: 0.375rem;
+                        color: #64748b;
+                        font-size: 0.7rem;
+                    }
+                    .device-class-count {
+                        color: #94a3b8;
+                        font-size: 0.7rem;
+                        margin-left: 0.375rem;
+                    }
+                </style>
+            </div>
+        `;
+    }
+
+    renderDevicesByClass(devicesByClass, sortedClasses, activeTab) {
+        // devicesByClass already contains the filtered devices, use it directly
+        const filteredByClass = devicesByClass;
+        const filteredSortedClasses = sortedClasses;
+
+        if (filteredSortedClasses.length === 0) {
+            return '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No devices found in this category.</div>';
+        }
+
+        return filteredSortedClasses.map(deviceClass => {
+            const classDevices = filteredByClass[deviceClass];
+            // Skip empty classes
+            if (!classDevices || classDevices.length === 0) {
+                return '';
+            }
+            
+            const classId = `device-class-${deviceClass.replace(/[^a-zA-Z0-9]/g, '-')}`;
+            
+            return `
+                <div class="device-class-group">
+                    <div class="device-class-header" onclick="windowsServerAuditorInstance.toggleDeviceClass('${classId}')" id="${classId}-header">
+                        <div style="display: flex; align-items: center;">
+                            <i class="fas fa-chevron-right device-class-icon" id="${classId}-icon" style="transition: transform 0.2s;"></i>
+                            <span style="font-weight: 600; color: #e2e8f0; font-size: 0.8125rem;">${deviceClass}</span>
+                            <span class="device-class-count">(${classDevices.length})</span>
+                        </div>
+                    </div>
+                    <div class="device-class-content" id="${classId}-content">
+                        <div class="table-container-modern" style="margin: 0;">
+                            <table class="table-compact" style="margin: 0; table-layout: fixed; width: 100%;">
+                                <thead style="display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 40%; padding: 0.375rem 0.5rem; text-align: left; font-size: 0.75rem; font-weight: 600;">Friendly Name</th>
+                                        <th style="width: 20%; padding: 0.375rem 0.5rem; text-align: left; font-size: 0.75rem; font-weight: 600;">Status</th>
+                                        <th style="width: 40%; padding: 0.375rem 0.5rem; text-align: left; font-size: 0.75rem; font-weight: 600;">Manufacturer</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="display: block; max-height: 300px; overflow-y: auto;">
+                                    ${this.renderDevicesTableRows(classDevices)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    toggleDeviceClass(classId) {
+        const header = document.getElementById(`${classId}-header`);
+        const content = document.getElementById(`${classId}-content`);
+        const icon = document.getElementById(`${classId}-icon`);
+        
+        if (!header || !content || !icon) return;
+
+        const isExpanded = content.classList.contains('expanded');
+        
+        if (isExpanded) {
+            content.classList.remove('expanded');
+            header.classList.remove('expanded');
+            icon.style.transform = 'rotate(0deg)';
+        } else {
+            content.classList.add('expanded');
+            header.classList.add('expanded');
+            icon.style.transform = 'rotate(90deg)';
+        }
+    }
+
+    renderDevicesTableRows(devices) {
+        if (!devices || devices.length === 0) {
+            return '<tr style="display: table; width: 100%; table-layout: fixed;"><td colspan="3" style="text-align: center; padding: 1rem; color: #94a3b8; font-size: 0.75rem;">No devices found</td></tr>';
+        }
+
+        return devices.map(device => {
+            const statusColor = device.status === 'OK' ? 'online' : 
+                               device.status === 'Error' || device.status === 'Disabled' ? 'offline' : 
+                               'warning';
+
+            return `
+                <tr style="display: table; width: 100%; table-layout: fixed;">
+                    <td style="width: 40%; padding: 0.375rem 0.5rem; font-size: 0.75rem;">${device.friendlyName || 'Unknown Device'}</td>
+                    <td style="width: 20%; padding: 0.375rem 0.5rem;"><span class="status-badge status-${statusColor}" style="padding: 0.15rem 0.35rem; font-size: 0.65rem;">${device.status || 'Unknown'}</span></td>
+                    <td style="width: 40%; padding: 0.375rem 0.5rem; font-size: 0.75rem;">${device.manufacturer || 'N/A'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    switchDeviceTab(tab) {
+        const devices = this.reportData?.devices;
+        if (!devices) return;
+
+        // Update active tab button
+        document.querySelectorAll('.device-tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`.device-tab-btn[data-tab="${tab}"]`)?.classList.add('active');
+
+        // Get devices for selected tab and re-group by class
+        const allDevices = devices.allDevices || [];
+        let devicesToShow = [];
+        switch(tab) {
+            case 'all':
+                devicesToShow = devices.allDevices || [];
+                break;
+            case 'connected':
+                devicesToShow = devices.connectedDevices || [];
+                break;
+            case 'hidden':
+                devicesToShow = devices.hiddenDevices || [];
+                break;
+            case 'disabled':
+                devicesToShow = devices.disabledDevices || [];
+                break;
+            case 'virtual':
+                devicesToShow = devices.virtualDevices || [];
+                break;
+            case 'missing-drivers':
+                devicesToShow = devices.devicesMissingDrivers || [];
+                break;
+        }
+
+        // Re-group by class
+        const devicesByClass = {};
+        devicesToShow.forEach(device => {
+            const deviceClass = device.class || 'Unknown';
+            if (!devicesByClass[deviceClass]) {
+                devicesByClass[deviceClass] = [];
+            }
+            devicesByClass[deviceClass].push(device);
+        });
+
+        const sortedClasses = Object.keys(devicesByClass).sort();
+
+        // Update container
+        const container = document.getElementById('devices-container');
+        if (container) {
+            container.innerHTML = this.renderDevicesByClass(devicesByClass, sortedClasses, tab);
+        }
+    }
+
+    filterDevices(searchTerm) {
+        const devices = this.reportData?.devices;
+        if (!devices) return;
+
+        // Get current active tab
+        const activeTab = document.querySelector('.device-tab-btn.active')?.getAttribute('data-tab') || 'all';
+        let devicesToFilter = [];
+        switch(activeTab) {
+            case 'all':
+                devicesToFilter = devices.allDevices || [];
+                break;
+            case 'connected':
+                devicesToFilter = devices.connectedDevices || [];
+                break;
+            case 'hidden':
+                devicesToFilter = devices.hiddenDevices || [];
+                break;
+            case 'disabled':
+                devicesToFilter = devices.disabledDevices || [];
+                break;
+            case 'virtual':
+                devicesToFilter = devices.virtualDevices || [];
+                break;
+            case 'missing-drivers':
+                devicesToFilter = devices.devicesMissingDrivers || [];
+                break;
+        }
+
+        const container = document.getElementById('devices-container');
+        if (!container) return;
+
+        const searchLower = (searchTerm || '').toLowerCase().trim();
+        
+        // Filter devices based on search term
+        let filteredDevices = devicesToFilter;
+        if (searchLower) {
+            filteredDevices = devicesToFilter.filter(device => {
+                const name = (device.friendlyName || '').toLowerCase();
+                const manufacturer = (device.manufacturer || '').toLowerCase();
+                const deviceClass = (device.class || '').toLowerCase();
+                const status = (device.status || '').toLowerCase();
+                return name.includes(searchLower) || 
+                       manufacturer.includes(searchLower) || 
+                       deviceClass.includes(searchLower) || 
+                       status.includes(searchLower);
+            });
+        }
+
+        // Re-group filtered devices by class (only classes with matching devices)
+        const devicesByClass = {};
+        filteredDevices.forEach(device => {
+            const deviceClass = device.class || 'Unknown';
+            if (!devicesByClass[deviceClass]) {
+                devicesByClass[deviceClass] = [];
+            }
+            devicesByClass[deviceClass].push(device);
+        });
+
+        // Only show classes that have devices after filtering
+        const sortedClasses = Object.keys(devicesByClass).sort();
+        container.innerHTML = this.renderDevicesByClass(devicesByClass, sortedClasses, activeTab);
+    }
+
+    filterDrivers(searchTerm) {
+        const drivers = this.reportData?.drivers || [];
+        const tbody = document.getElementById('drivers-table-body');
+        const countElement = document.getElementById('drivers-count');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredDrivers = searchLower ? drivers.filter(driver => {
+            const className = (driver.classDescription || driver.name || '').toLowerCase();
+            const provider = (driver.providerName || '').toLowerCase();
+            const version = (driver.driverVersion || '').toLowerCase();
+            const status = (driver.status || '').toLowerCase();
+            return className.includes(searchLower) || 
+                   provider.includes(searchLower) || 
+                   version.includes(searchLower) || 
+                   status.includes(searchLower);
+        }) : drivers;
+
+        if (countElement) {
+            countElement.textContent = filteredDrivers.length;
+        }
+
+        tbody.innerHTML = filteredDrivers.map(driver => {
+            // Check if driver is older than 3 years
+            let isOldDriver = false;
+            let dateDisplay = 'N/A';
+            if (driver.versionDate && driver.versionDate !== 'N/A') {
+                try {
+                    let driverDate;
+                    if (typeof driver.versionDate === 'string') {
+                        driverDate = new Date(driver.versionDate);
+                    } else if (driver.versionDate instanceof Date) {
+                        driverDate = driver.versionDate;
+                    } else {
+                        driverDate = new Date(driver.versionDate);
+                    }
+                    
+                    if (!isNaN(driverDate.getTime())) {
+                        const threeYearsAgo = new Date();
+                        threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+                        isOldDriver = driverDate < threeYearsAgo;
+                        dateDisplay = driverDate.toLocaleDateString();
+                    }
+                } catch (e) {
+                    dateDisplay = driver.versionDate;
+                }
+            }
+            
+            return `
+            <tr class="${isOldDriver ? 'old-driver-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
+                <td>
+                    ${driver.classDescription || driver.name || 'N/A'}
+                    ${isOldDriver ? '<span class="old-driver-flag" title="Driver is older than 3 years"><i class="fas fa-exclamation-triangle"></i></span>' : ''}
+                </td>
+                <td>${driver.providerName || 'N/A'}</td>
+                <td>${driver.driverVersion || 'N/A'}</td>
+                <td>${dateDisplay}</td>
+                <td><span class="status-badge status-${driver.status === 'OK' || driver.status === 'Running' ? 'online' : 'warning'}">${driver.status || 'Unknown'}</span></td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    renderApplicationsView(software) {
+        const applications = software.applications || [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Installed Applications -->
+                    ${applications.length > 0 ? `
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="applications-search" 
+                                placeholder="Search applications by name, publisher, version..."
+                                oninput="windowsServerAuditorInstance.filterApplications(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Name</th>
+                                        <th>Publisher</th>
+                                        <th>Version</th>
+                                        <th>Install date</th>
+                                        <th>32-bit vs 64-bit</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="applications-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0;">
+                                    ${applications.map(app => `
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <td>${app.name || 'N/A'}</td>
+                                        <td>${app.vendor || app.publisher || 'N/A'}</td>
+                                        <td>${app.version || 'N/A'}</td>
+                                        <td>${(() => {
+                                            if (!app.installDate) return 'N/A';
+                                            try {
+                                                let dateStr = app.installDate;
+                                                // Handle .NET JSON date format: /Date(timestamp)/
+                                                if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                                                    const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                                                    const date = new Date(timestamp);
+                                                    return date.toLocaleDateString();
+                                                }
+                                                const date = new Date(dateStr);
+                                                return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                                            } catch (e) {
+                                                return app.installDate;
+                                            }
+                                        })()}</td>
+                                        <td>
+                                            ${app.architecture && app.architecture !== 'N/A' ? `
+                                            <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
+                                                ${app.architecture}
+                                            </span>
+                                            ` : '<span style="color: #64748b;">N/A</span>'}
+                                        </td>
+                                    </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No applications data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    filterApplications(searchTerm) {
+        const applications = this.reportData?.software?.applications || [];
+        const tbody = document.getElementById('applications-table-body');
+        const countElement = document.getElementById('applications-count');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const filteredApplications = searchLower ? applications.filter(app => {
+            const name = (app.name || '').toLowerCase();
+            const publisher = ((app.vendor || app.publisher) || '').toLowerCase();
+            const version = (app.version || '').toLowerCase();
+            return name.includes(searchLower) || 
+                   publisher.includes(searchLower) || 
+                   version.includes(searchLower);
+        }) : applications;
+
+        if (countElement) {
+            countElement.textContent = filteredApplications.length;
+        }
+
+        tbody.innerHTML = filteredApplications.map(app => `
+            <tr style="display: table; width: 100%; table-layout: fixed;">
+                <td>${app.name || 'N/A'}</td>
+                <td>${app.vendor || app.publisher || 'N/A'}</td>
+                <td>${app.version || 'N/A'}</td>
+                <td>${(() => {
+                    if (!app.installDate) return 'N/A';
+                    try {
+                        let dateStr = app.installDate;
+                        // Handle .NET JSON date format: /Date(timestamp)/
+                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                            const date = new Date(timestamp);
+                            return date.toLocaleDateString();
+                        }
+                        const date = new Date(dateStr);
+                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                    } catch (e) {
+                        return app.installDate;
+                    }
+                })()}</td>
+                <td>
+                    ${app.architecture && app.architecture !== 'N/A' ? `
+                    <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
+                        ${app.architecture}
+                    </span>
+                    ` : '<span style="color: #64748b;">N/A</span>'}
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    renderUsersView(localUsersSummary) {
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Local Users -->
+                    ${localUsersSummary.localUsersCount !== undefined ? `
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="hardware-grid-modern" style="flex-shrink: 0; margin-bottom: 1rem;">
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-blue">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Local Users Count</div>
+                                    <div class="hardware-value-modern">${localUsersSummary.localUsersCount || 0}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-orange">
+                                    <i class="fas fa-user-slash"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Disabled Local Accounts</div>
+                                    <div class="hardware-value-modern" style="color: ${(localUsersSummary.disabledLocalAccountsCount || 0) > 0 ? '#f59e0b' : '#34d399'}">
+                                        ${localUsersSummary.disabledLocalAccountsCount || 0}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ${(localUsersSummary.localUsers || []).length > 0 ? `
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="users-search" 
+                                placeholder="Search users by name, full name, description, status..."
+                                oninput="windowsServerAuditorInstance.filterUsers(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <th>User Name</th>
+                                            <th>Full Name</th>
+                                            <th>Description</th>
+                                            <th>Status</th>
+                                            <th>Last Logon</th>
+                                            <th>Password Expires</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="users-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                        ${(localUsersSummary.localUsers || []).map(user => `
+                                            <tr style="display: table; width: 100%; table-layout: fixed;" data-user-name="${(user.name || '').toLowerCase()}" data-full-name="${(user.fullName || '').toLowerCase()}" data-description="${(user.description || '').toLowerCase()}" data-status="${(user.enabled ? 'enabled' : 'disabled')}">
+                                                <td><strong>${user.name || 'N/A'}</strong></td>
+                                                <td>${user.fullName || 'N/A'}</td>
+                                                <td>${user.description || 'N/A'}</td>
+                                                <td>
+                                                    <span style="color: ${user.enabled ? '#34d399' : '#ef4444'};">
+                                                        <i class="fas fa-circle" style="font-size: 0.5rem; margin-right: 0.25rem;"></i>
+                                                        ${user.enabled ? 'Enabled' : 'Disabled'}
+                                                    </span>
+                                                </td>
+                                                <td>${user.lastLogon && user.lastLogon !== 'Never' ? user.lastLogon : 'Never'}</td>
+                                                <td>${(() => {
+                                                    try {
+                                                        const dateStr = user.passwordExpires;
+                                                        if (!dateStr || dateStr === 'N/A' || dateStr === 'Never') {
+                                                            return dateStr || 'Never';
+                                                        }
+                                                        // Handle .NET JSON date format: /Date(timestamp)/
+                                                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                                                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                                                            const date = new Date(timestamp);
+                                                            return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                                                        }
+                                                        // Try parsing as regular date
+                                                        const date = new Date(dateStr);
+                                                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                                                    } catch (e) {
+                                                        return user.passwordExpires || 'Never';
+                                                    }
+                                                })()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No users data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    filterUsers(searchTerm) {
+        const users = this.reportData?.localUsersSummary?.localUsers || [];
+        const tbody = document.getElementById('users-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const userName = (row.getAttribute('data-user-name') || '').toLowerCase();
+            const fullName = (row.getAttribute('data-full-name') || '').toLowerCase();
+            const description = (row.getAttribute('data-description') || '').toLowerCase();
+            const status = (row.getAttribute('data-status') || '').toLowerCase();
+            
+            const matches = !searchLower || 
+                userName.includes(searchLower) || 
+                fullName.includes(searchLower) || 
+                description.includes(searchLower) || 
+                status.includes(searchLower);
+            
+            row.style.display = matches ? 'table' : 'none';
+        });
+    }
+
+    filterGroups(searchTerm) {
+        const groups = this.reportData?.localGroups || [];
+        const tbody = document.getElementById('groups-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const groupName = (row.querySelector('td:first-child strong')?.textContent || '').toLowerCase();
+            const description = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+            
+            const matches = !searchLower || 
+                groupName.includes(searchLower) || 
+                description.includes(searchLower);
+            
+            row.style.display = matches ? 'table' : 'none';
+        });
+    }
+
+    filterServices(searchTerm) {
+        const services = this.reportData?.services?.services || [];
+        const tbody = document.getElementById('services-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const serviceName = (row.querySelector('td:first-child')?.textContent || '').toLowerCase();
+            const startType = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+            const status = (row.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
+            
+            const matches = !searchLower || 
+                serviceName.includes(searchLower) || 
+                startType.includes(searchLower) || 
+                status.includes(searchLower);
+            
+            row.style.display = matches ? 'table' : 'none';
+        });
+    }
+
+    filterScheduledTasks(searchTerm) {
+        const tasks = this.reportData?.scheduledTasks?.allTasks || [];
+        const tbody = document.getElementById('scheduled-tasks-table-body');
+        if (!tbody) return;
+
+        const searchLower = (searchTerm || '').toLowerCase();
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const taskName = (row.querySelector('td:first-child div[style*="font-weight: 600"]')?.textContent || '').toLowerCase();
+            const state = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+            const lastResult = (row.querySelector('td:nth-child(4)')?.textContent || '').toLowerCase();
+            
+            const matches = !searchLower || 
+                taskName.includes(searchLower) || 
+                state.includes(searchLower) || 
+                lastResult.includes(searchLower);
+            
+            row.style.display = matches ? 'table' : 'none';
+        });
+    }
+
+    renderGroupsView(localGroups) {
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Local Groups -->
+                    ${localGroups && localGroups.length > 0 ? `
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="groups-search" 
+                                placeholder="Search groups by name, description..."
+                                oninput="windowsServerAuditorInstance.filterGroups(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <th style="width: 20%;">Group Name</th>
+                                            <th style="width: 55%;">Description</th>
+                                            <th style="width: 25%;">Members</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="groups-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                        ${localGroups.map((group, groupIndex) => {
+                                            const members = Array.isArray(group.members) ? group.members : [];
+                                            return `
+                                            <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" onclick="windowsServerAuditorInstance.showGroupMembersModal('${(group.name || '').replace(/'/g, "\\'")}', ${JSON.stringify(members).replace(/"/g, '&quot;')}, '${(group.description || '').replace(/'/g, "\\'")}')">
+                                                <td style="width: 20%;"><strong>${group.name || 'N/A'}</strong></td>
+                                                <td style="width: 55%;">${group.description && group.description !== '-' ? group.description : '-'}</td>
+                                                <td style="width: 25%;">
+                                                    <span style="color: ${members.length > 0 ? '#34d399' : '#94a3b8'};">
+                                                        <i class="fas fa-${members.length > 0 ? 'user' : 'users-slash'}"></i>
+                                                        ${members.length} ${members.length === 1 ? 'Member' : 'Members'}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No groups data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    renderServicesView(services) {
+        const servicesList = services.services || [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Services -->
+                    ${servicesList.length > 0 ? `
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="hardware-grid-modern" style="flex-shrink: 0; margin-bottom: 1rem;">
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-blue">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Total Services</div>
+                                    <div class="hardware-value-modern">${servicesList.length}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-green">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Running</div>
+                                    <div class="hardware-value-modern">${servicesList.filter(s => s.status === 'Running' || s.status === 'running').length}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-red">
+                                    <i class="fas fa-times-circle"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Stopped</div>
+                                    <div class="hardware-value-modern">${servicesList.filter(s => s.status === 'Stopped' || s.status === 'stopped').length}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="services-search" 
+                                placeholder="Search services by name, status, startup type..."
+                                oninput="windowsServerAuditorInstance.filterServices(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <th>Service name</th>
+                                            <th>Startup type</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="services-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                        ${(() => {
+                                            const sortedServices = [...servicesList].sort((a, b) => {
+                                                const aIsRunning = a.status === 'Running' || a.status === 'running';
+                                                const aIsStopped = a.status === 'Stopped' || a.status === 'stopped';
+                                                const aIsAutomatic = a.startType === 'Automatic' || a.startType === 'automatic';
+                                                const aIsDisabled = a.startType === 'Disabled' || a.startType === 'disabled';
+                                                const aShouldFlag = (aIsAutomatic && aIsStopped) || (aIsDisabled && aIsRunning);
+                                                
+                                                const bIsRunning = b.status === 'Running' || b.status === 'running';
+                                                const bIsStopped = b.status === 'Stopped' || b.status === 'stopped';
+                                                const bIsAutomatic = b.startType === 'Automatic' || b.startType === 'automatic';
+                                                const bIsDisabled = b.startType === 'Disabled' || b.startType === 'disabled';
+                                                const bShouldFlag = (bIsAutomatic && bIsStopped) || (bIsDisabled && bIsRunning);
+                                                
+                                                if (aShouldFlag && !bShouldFlag) return -1;
+                                                if (!aShouldFlag && bShouldFlag) return 1;
+                                                return 0;
+                                            });
+                                            
+                                            return sortedServices.map(service => {
+                                                const isRunning = service.status === 'Running' || service.status === 'running';
+                                                const isStopped = service.status === 'Stopped' || service.status === 'stopped';
+                                                const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
+                                                const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
+                                                const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
+                                                
+                                                return `
+                                                <tr class="${shouldFlag ? 'flagged-service-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
+                                                    <td>
+                                                        ${service.displayName || service.name || 'N/A'}
+                                                        ${shouldFlag ? `
+                                                        <span class="service-flag" data-tooltip="${isAutomatic && isStopped ? 'Service is set to Automatic but is Stopped' : 'Service is Disabled but is Running'}" title="${isAutomatic && isStopped ? 'Service is set to Automatic but is Stopped' : 'Service is Disabled but is Running'}">
+                                                            <i class="fas fa-exclamation-triangle"></i>
+                                                        </span>
+                                                        ` : ''}
+                                                    </td>
+                                                    <td>${service.startType || 'N/A'}</td>
+                                                    <td><span class="status-badge status-${isRunning ? 'online' : isStopped ? 'offline' : 'warning'}">${service.status || 'Unknown'}</span></td>
+                                                </tr>
+                                                `;
+                                            }).join('');
+                                        })()}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No services data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    renderScheduledTasksView(scheduledTasks) {
+        const allTasks = scheduledTasks.allTasks || [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                    <!-- Scheduled Tasks -->
+                    ${scheduledTasks.totalTasks !== undefined ? `
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="hardware-grid-modern" style="flex-shrink: 0; margin-bottom: 1rem;">
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-blue">
+                                    <i class="fas fa-list"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Total Scheduled Tasks</div>
+                                    <div class="hardware-value-modern">${scheduledTasks.totalTasks || 0}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-green">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Enabled Tasks</div>
+                                    <div class="hardware-value-modern">${scheduledTasks.enabledTasks || 0}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-gray">
+                                    <i class="fas fa-ban"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Disabled Tasks</div>
+                                    <div class="hardware-value-modern">${scheduledTasks.disabledTasks || 0}</div>
+                                </div>
+                            </div>
+                            <div class="hardware-item-modern">
+                                <div class="hardware-icon-modern icon-red">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="hardware-info-modern">
+                                    <div class="hardware-label-modern">Failed Tasks</div>
+                                    <div class="hardware-value-modern">${scheduledTasks.failedTasksCount || 0}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${allTasks.length > 0 ? `
+                        <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                            <input 
+                                type="text" 
+                                id="scheduled-tasks-search" 
+                                placeholder="Search tasks by name, state, result..."
+                                oninput="windowsServerAuditorInstance.filterScheduledTasks(this.value)"
+                                style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                                onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                                onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                            >
+                        </div>
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <th style="width: 35%;">Task Name</th>
+                                            <th style="width: 10%;">State</th>
+                                            <th style="width: 15%;">Last Run Time</th>
+                                            <th style="width: 12%;">Last Result</th>
+                                            <th style="width: 15%;">Next Run Time</th>
+                                            <th style="width: 13%;">Missed Runs</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scheduled-tasks-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                        ${allTasks.map(task => {
+                                            const flags = [];
+                                            if (task.runsAsSystem) {
+                                                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
+                                            }
+                                            if (task.runsPowerShellOrCmd) {
+                                                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
+                                            }
+                                            if (task.hasStoredCredentials) {
+                                                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
+                                            }
+                                            return `
+                                            <tr style="display: table; width: 100%; table-layout: fixed;">
+                                                <td style="width: 35%;">
+                                                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
+                                                        <div style="font-weight: 600; color: #e2e8f0;">${task.taskName || 'N/A'}</div>
+                                                        ${flags.length > 0 ? flags.map(flag => `
+                                                            <span class="task-flag" data-tooltip="${flag.tooltip}" style="display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.375rem; background: rgba(${flag.color === '#3b82f6' ? '59, 130, 246' : flag.color === '#f59e0b' ? '245, 158, 11' : '239, 68, 68'}, 0.15); border: 1px solid rgba(${flag.color === '#3b82f6' ? '59, 130, 246' : flag.color === '#f59e0b' ? '245, 158, 11' : '239, 68, 68'}, 0.3); border-radius: 4px; color: ${flag.color}; font-size: 0.6875rem; cursor: help;">
+                                                                <i class="fas ${flag.icon}"></i>
+                                                            </span>
+                                                        `).join('') : ''}
+                                                    </div>
+                                                    ${task.taskPath && task.taskPath !== '\\' ? `
+                                                    <div style="font-size: 0.75rem; color: #64748b; font-family: 'Consolas', 'Monaco', monospace;">${task.taskPath}</div>
+                                                    ` : ''}
+                                                    ${task.actionCommand ? `
+                                                    <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 0.25rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">
+                                                        <i class="fas fa-code" style="margin-right: 0.25rem;"></i>${task.actionCommand}
+                                                    </div>
+                                                    ` : ''}
+                                                    ${task.hasStoredCredentials && task.storedUserName ? `
+                                                    <div style="font-size: 0.75rem; color: #f87171; margin-top: 0.25rem;">
+                                                        <i class="fas fa-user" style="margin-right: 0.25rem;"></i>User: ${task.storedUserName}
+                                                    </div>
+                                                    ` : ''}
+                                                </td>
+                                                <td style="width: 10%;">
+                                                    <span class="status-badge status-${task.state === 'Running' || task.state === 'Ready' ? 'online' : 'offline'}">
+                                                        ${task.state || 'Unknown'}
+                                                    </span>
+                                                </td>
+                                                <td style="width: 15%; color: #94a3b8;">${task.lastRunTime || 'Never'}</td>
+                                                <td style="width: 12%;">
+                                                    ${task.lastTaskResult !== undefined && task.lastTaskResult !== 0 ? `
+                                                    <span style="color: #ef4444; font-weight: 600;">
+                                                        <i class="fas fa-times-circle"></i> 0x${task.lastTaskResult.toString(16).toUpperCase()}
+                                                    </span>
+                                                    ` : task.lastTaskResult === 0 ? `
+                                                    <span style="color: #10b981;">
+                                                        <i class="fas fa-check-circle"></i> Success
+                                                    </span>
+                                                    ` : '<span style="color: #64748b;">N/A</span>'}
+                                                </td>
+                                                <td style="width: 15%; color: #94a3b8;">${task.nextRunTime || 'N/A'}</td>
+                                                <td style="width: 13%;">
+                                                    ${task.numberOfMissedRuns > 0 ? `
+                                                    <span style="color: #f59e0b; font-weight: 600;">
+                                                        <i class="fas fa-exclamation-triangle"></i> ${task.numberOfMissedRuns}
+                                                    </span>
+                                                    ` : '<span style="color: #64748b;">0</span>'}
+                                                </td>
+                                            </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                    ` : `
+                    <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                        <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                            <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No scheduled tasks data available.
+                        </div>
+                    </div>
+                    `}
+            </div>
+        `;
+    }
+
+    renderInstalledUpdatesView(windowsUpdates, windowsUpdatesSummary) {
+        const allUpdates = Array.isArray(windowsUpdates) ? windowsUpdates : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${allUpdates.length > 0 ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="installed-updates-search" 
+                            placeholder="Search installed updates..." 
+                            style="width: 100%; padding: 0.5rem; background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.875rem;"
+                            oninput="windowsServerAuditorInstance.filterInstalledUpdates(this.value)"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th>KB Number</th>
+                                    <th>Description</th>
+                                    <th>Installed By</th>
+                                    <th>Installed On</th>
+                                </tr>
+                            </thead>
+                            <tbody id="installed-updates-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${allUpdates.map(update => `
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <td><strong style="color: #3b82f6;">${update.hotFixID || update.kbNumber || '-'}</strong></td>
+                                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(update.description || '').replace(/"/g, '&quot;')}">${update.description || '-'}</td>
+                                    <td>${update.installedBy || '-'}</td>
+                                    <td>${update.installedOn || update.installedDate || '-'}</td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No installed updates data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    renderMissingUpdatesView(missingUpdates, windowsUpdatesSummary) {
+        const allMissing = Array.isArray(missingUpdates) ? missingUpdates : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${allMissing.length > 0 ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="missing-updates-search" 
+                            placeholder="Search missing updates..." 
+                            style="width: 100%; padding: 0.5rem; background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.875rem;"
+                            oninput="windowsServerAuditorInstance.filterMissingUpdates(this.value)"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th>KB Number</th>
+                                    <th>Title</th>
+                                    <th>Size</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="missing-updates-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${allMissing.map(update => `
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <td><strong style="color: #ef4444;">${update.kbNumber || update.hotFixID || '-'}</strong></td>
+                                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(update.title || '').replace(/"/g, '&quot;')}">${update.title || '-'}</td>
+                                    <td>${update.size || '-'}</td>
+                                    <td>${update.date || '-'}</td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No missing updates data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    renderRolesView(rolesAndFeatures) {
+        const allRoles = Array.isArray(rolesAndFeatures.installedRoles) ? rolesAndFeatures.installedRoles : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${allRoles.length > 0 ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="roles-search" 
+                            placeholder="Search roles..." 
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            oninput="windowsServerAuditorInstance.filterRoles(this.value)"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th>Role Name</th>
+                                    <th>Installed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="roles-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${allRoles.map(role => {
+                                    const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
+                                    const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
+                                    return `
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <td>${roleName}</td>
+                                    <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
+                                </tr>
+                                `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No roles data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    renderFeaturesView(rolesAndFeatures) {
+        const allFeatures = Array.isArray(rolesAndFeatures.installedFeatures) ? rolesAndFeatures.installedFeatures : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${allFeatures.length > 0 ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="features-search" 
+                            placeholder="Search features..." 
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            oninput="windowsServerAuditorInstance.filterFeatures(this.value)"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                        <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <th>Feature Name</th>
+                                    <th>Installed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="features-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                ${allFeatures.map(feature => {
+                                    const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
+                                    const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
+                                    return `
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <td>${featureName}</td>
+                                    <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
+                                </tr>
+                                `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No features data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    filterRoles(searchTerm) {
+        const tbody = document.getElementById('roles-tbody');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = searchTerm.toLowerCase();
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    filterFeatures(searchTerm) {
+        const tbody = document.getElementById('features-tbody');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = searchTerm.toLowerCase();
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    renderEventLogView(eventLogOverview) {
+        const systemErrors = Array.isArray(eventLogOverview.systemErrors) ? eventLogOverview.systemErrors : [];
+        const appErrors = Array.isArray(eventLogOverview.appErrors) ? eventLogOverview.appErrors : [];
+        const criticalEvents = Array.isArray(eventLogOverview.criticalEvents) ? eventLogOverview.criticalEvents : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${eventLogOverview.systemErrors24h !== undefined || eventLogOverview.appErrors24h !== undefined ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <!-- Summary Stats -->
+                    <div class="hardware-grid-modern" style="flex-shrink: 0; margin-bottom: 1rem;">
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.systemErrors24h || 0) > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.systemErrors24h || 0) > 0 ? '#ef4444' : '#10b981'};">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">System Errors</div>
+                                <div class="hardware-value-modern" style="font-size: 0.8125rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                    <span>24h: <strong style="color: ${(eventLogOverview.systemErrors24h || 0) > 0 ? '#ef4444' : '#34d399'}">${eventLogOverview.systemErrors24h || 0}</strong></span>
+                                    <span>7d: <strong style="color: ${(eventLogOverview.systemErrors7d || 0) > 0 ? '#f59e0b' : '#34d399'}">${eventLogOverview.systemErrors7d || 0}</strong></span>
+                                    <span>30d: <strong style="color: ${(eventLogOverview.systemErrors30d || 0) > 0 ? '#f59e0b' : '#94a3b8'}">${eventLogOverview.systemErrors30d || 0}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.appErrors24h || 0) > 0 ? 'rgba(245, 158, 11, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.appErrors24h || 0) > 0 ? '#f59e0b' : '#10b981'};">
+                                <i class="fas fa-bug"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Application Errors</div>
+                                <div class="hardware-value-modern" style="font-size: 0.8125rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                                    <span>24h: <strong style="color: ${(eventLogOverview.appErrors24h || 0) > 0 ? '#ef4444' : '#34d399'}">${eventLogOverview.appErrors24h || 0}</strong></span>
+                                    <span>7d: <strong style="color: ${(eventLogOverview.appErrors7d || 0) > 0 ? '#f59e0b' : '#34d399'}">${eventLogOverview.appErrors7d || 0}</strong></span>
+                                    <span>30d: <strong style="color: ${(eventLogOverview.appErrors30d || 0) > 0 ? '#f59e0b' : '#94a3b8'}">${eventLogOverview.appErrors30d || 0}</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)'} 0%, ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)'} 100%); border: 1px solid ${(eventLogOverview.criticalEventsCount || 0) > 0 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)'}; color: ${(eventLogOverview.criticalEventsCount || 0) > 0 ? '#ef4444' : '#10b981'};">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Critical Events</div>
+                                <div class="hardware-value-modern" style="color: ${(eventLogOverview.criticalEventsCount || 0) > 0 ? '#ef4444' : '#34d399'}">
+                                    ${eventLogOverview.criticalEventsCount || 0}
+                                </div>
+                            </div>
+                        </div>
+                        ${eventLogOverview.oldestLogDays !== undefined && eventLogOverview.oldestLogDays !== 'N/A' ? `
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern icon-blue">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Log Retention</div>
+                                <div class="hardware-value-modern">${eventLogOverview.oldestLogDays} days</div>
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Tabs for switching between tables -->
+                    <div style="display: flex; gap: 0.25rem; margin-bottom: 0.75rem; flex-shrink: 0; border-bottom: 1px solid #334155;">
+                        ${systemErrors.length > 0 ? `
+                        <button id="event-log-tab-system" onclick="windowsServerAuditorInstance.switchEventLogTab('system')" 
+                                style="padding: 0.25rem 0.625rem; background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); color: #60a5fa; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-exclamation-circle"></i> System (${systemErrors.length})
+                        </button>
+                        ` : ''}
+                        ${appErrors.length > 0 ? `
+                        <button id="event-log-tab-application" onclick="windowsServerAuditorInstance.switchEventLogTab('application')" 
+                                style="padding: 0.25rem 0.625rem; background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; color: #94a3b8; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-bug"></i> Application (${appErrors.length})
+                        </button>
+                        ` : ''}
+                        ${criticalEvents.length > 0 ? `
+                        <button id="event-log-tab-critical" onclick="windowsServerAuditorInstance.switchEventLogTab('critical')" 
+                                style="padding: 0.25rem 0.625rem; background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; color: #94a3b8; border-radius: 0.25rem 0.25rem 0 0; font-size: 0.75rem; cursor: pointer; transition: all 0.2s; border-bottom: none;">
+                            <i class="fas fa-exclamation-triangle"></i> Critical (${criticalEvents.length})
+                        </button>
+                        ` : ''}
+                    </div>
+
+                    <!-- System Errors Table -->
+                    <div id="event-log-table-system" class="event-log-table" style="display: ${systemErrors.length > 0 ? 'flex' : 'none'}; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 10%;">Time</th>
+                                        <th style="width: 18%;">Source</th>
+                                        <th style="width: 8%;">Level</th>
+                                        <th style="width: 8%;">ID</th>
+                                        <th style="width: 56%;">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="system-errors-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${systemErrors.map((error, index) => {
+                                        const errorData = {
+                                            time: error.time || 'N/A',
+                                            source: error.source || 'N/A',
+                                            level: error.level || 'Error',
+                                            id: error.id || 'N/A',
+                                            message: error.message || 'N/A'
+                                        };
+                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
+                                        return `
+                                        <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'system'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+                                            <td style="width: 10%;">${error.time || 'N/A'}</td>
+                                            <td style="width: 18%;">${error.source || 'N/A'}</td>
+                                            <td style="width: 8%;"><span style="color: #ef4444;">${error.level || 'Error'}</span></td>
+                                            <td style="width: 8%;">${error.id || 'N/A'}</td>
+                                            <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
+                                        </tr>
+                                    `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Application Errors Table -->
+                    <div id="event-log-table-application" class="event-log-table" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 10%;">Time</th>
+                                        <th style="width: 18%;">Source</th>
+                                        <th style="width: 8%;">Level</th>
+                                        <th style="width: 8%;">ID</th>
+                                        <th style="width: 56%;">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="app-errors-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${appErrors.map((error, index) => {
+                                        const errorData = {
+                                            time: error.time || 'N/A',
+                                            source: error.source || 'N/A',
+                                            level: error.level || 'Error',
+                                            id: error.id || 'N/A',
+                                            message: error.message || 'N/A'
+                                        };
+                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
+                                        return `
+                                        <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'application'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+                                            <td style="width: 10%;">${error.time || 'N/A'}</td>
+                                            <td style="width: 18%;">${error.source || 'N/A'}</td>
+                                            <td style="width: 8%;"><span style="color: #f59e0b;">${error.level || 'Error'}</span></td>
+                                            <td style="width: 8%;">${error.id || 'N/A'}</td>
+                                            <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
+                                        </tr>
+                                    `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Critical Events Table -->
+                    <div id="event-log-table-critical" class="event-log-table" style="display: none; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 10%;">Time</th>
+                                        <th style="width: 18%;">Source</th>
+                                        <th style="width: 8%;">Level</th>
+                                        <th style="width: 8%;">ID</th>
+                                        <th style="width: 56%;">Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="critical-events-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${criticalEvents.map((error, index) => {
+                                        const errorData = {
+                                            time: error.time || 'N/A',
+                                            source: error.source || 'N/A',
+                                            level: error.level || 'Critical',
+                                            id: error.id || 'N/A',
+                                            message: error.message || 'N/A'
+                                        };
+                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
+                                        return `
+                                        <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'critical'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
+                                            <td style="width: 10%;">${error.time || 'N/A'}</td>
+                                            <td style="width: 18%;">${error.source || 'N/A'}</td>
+                                            <td style="width: 8%;"><span style="color: #ef4444;">${error.level || 'Critical'}</span></td>
+                                            <td style="width: 8%;">${error.id || 'N/A'}</td>
+                                            <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
+                                        </tr>
+                                    `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No event log data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    switchEventLogTab(tabName) {
+        // Hide all tables
+        const allTables = document.querySelectorAll('.event-log-table');
+        allTables.forEach(table => {
+            table.style.display = 'none';
+        });
+
+        // Reset all tab buttons
+        const allTabs = document.querySelectorAll('[id^="event-log-tab-"]');
+        allTabs.forEach(tab => {
+            tab.style.background = 'rgba(15, 23, 42, 0.5)';
+            tab.style.borderColor = '#334155';
+            tab.style.color = '#94a3b8';
+        });
+
+        // Show selected table
+        const selectedTable = document.getElementById(`event-log-table-${tabName}`);
+        if (selectedTable) {
+            selectedTable.style.display = 'flex';
+        }
+
+        // Highlight selected tab
+        const selectedTab = document.getElementById(`event-log-tab-${tabName}`);
+        if (selectedTab) {
+            selectedTab.style.background = 'rgba(59, 130, 246, 0.1)';
+            selectedTab.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+            selectedTab.style.color = '#60a5fa';
+        }
+    }
+
+    renderProcessView(processTree) {
+        const allProcesses = processTree && processTree.processes ? processTree.processes : [];
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                ${processTree && processTree.processes ? `
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    ${processTree.summary ? `
+                    <div class="hardware-grid-modern" style="flex-shrink: 0; margin-bottom: 1rem;">
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.2) 100%); border: 1px solid rgba(139, 92, 246, 0.3); color: #8b5cf6;">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Total Processes</div>
+                                <div class="hardware-value-modern">${processTree.summary.totalProcesses || 0}</div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.2) 100%); border: 1px solid rgba(59, 130, 246, 0.3); color: #3b82f6;">
+                                <i class="fas fa-code-branch"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Total Threads</div>
+                                <div class="hardware-value-modern">${processTree.summary.totalThreads || 0}</div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.2) 100%); border: 1px solid rgba(16, 185, 129, 0.3); color: #10b981;">
+                                <i class="fas fa-hand-pointer"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Total Handles</div>
+                                <div class="hardware-value-modern">${processTree.summary.totalHandles || 0}</div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.2) 100%); border: 1px solid rgba(245, 158, 11, 0.3); color: #f59e0b;">
+                                <i class="fas fa-memory"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Total Memory</div>
+                                <div class="hardware-value-modern">${(processTree.summary.totalMemoryMB || 0).toFixed(2)} MB</div>
+                            </div>
+                        </div>
+                        <div class="hardware-item-modern">
+                            <div class="hardware-icon-modern" style="background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.2) 100%); border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <div class="hardware-info-modern">
+                                <div class="hardware-label-modern">Total CPU</div>
+                                <div class="hardware-value-modern">${(processTree.summary.totalCpuPercent || 0).toFixed(2)}%</div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${allProcesses.length > 0 ? `
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="process-search" 
+                            placeholder="Search processes..." 
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            oninput="windowsServerAuditorInstance.filterProcesses(this.value)"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 3%;"></th>
+                                        <th style="width: 11%;">Process Name</th>
+                                        <th style="width: 20%;">Path</th>
+                                        <th style="width: 6%;">PID</th>
+                                        <th style="width: 6%;">PPID</th>
+                                        <th style="width: 10%;">Username</th>
+                                        <th style="width: 6%;">Elevated</th>
+                                        <th style="width: 7%;">CPU %</th>
+                                        <th style="width: 8%;">Memory</th>
+                                        <th style="width: 6%;">Threads</th>
+                                        <th style="width: 6%;">Handles</th>
+                                        <th style="width: 8%;">Status</th>
+                                        <th style="width: 3%;">Priority</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="process-tree-container" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${this.renderProcessTree(allProcesses, 0)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : processTree && processTree.error ? `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #ef4444;">
+                        <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>Error loading process tree: ${processTree.error}
+                    </div>
+                </div>
+                ` : `
+                <div class="hardware-section-modern" style="display: flex; align-items: center; justify-content: center; height: 100%;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No process data available.
+                    </div>
+                </div>
+                `}
+            </div>
+        `;
+    }
+
+    filterInstalledUpdates(searchTerm) {
+        const tbody = document.getElementById('installed-updates-tbody');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = searchTerm.toLowerCase();
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    filterMissingUpdates(searchTerm) {
+        const tbody = document.getElementById('missing-updates-tbody');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = searchTerm.toLowerCase();
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    filterProcesses(searchTerm) {
+        const tbody = document.getElementById('process-tree-container');
+        if (!tbody) return;
+        const term = searchTerm.toLowerCase();
+        const allRows = tbody.querySelectorAll('.process-tree-row');
+        allRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? 'table-row' : 'none';
+        });
     }
 
     renderSoftwareModal() {
@@ -4623,9 +6528,14 @@ export class WindowsServerAuditorPage {
         if (content) {
             this.render().then(html => {
                 content.innerHTML = html;
+                // Update page navbar title after rendering
+                if (window.pageNavbarInstance) {
+                    window.pageNavbarInstance.updateTitle();
+                }
             });
         }
     }
+
 
     // All Tasks Modal
     showAllTasksModal() {
@@ -5718,17 +7628,44 @@ export class WindowsServerAuditorPage {
     }
 
     openEventDetailsModal(event, type) {
+        console.log('openEventDetailsModal called:', event, type);
         this.selectedEventDetails = { event, type };
         this.showEventDetailsModalFlag = true;
         // Close the Event Log modal when opening details
         this.showEventLogModalFlag = false;
-        this.updateDisplay();
+        console.log('showEventDetailsModalFlag set to:', this.showEventDetailsModalFlag);
+        
+        // Instead of calling updateDisplay which replaces all HTML,
+        // directly append the modal to the page content
+        const content = document.getElementById('page-content');
+        if (content) {
+            // Remove any existing event details modal
+            const existingModal = content.querySelector('.modal-overlay');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            // Append the new modal
+            const modalHtml = this.renderEventDetailsModal();
+            if (modalHtml) {
+                content.insertAdjacentHTML('beforeend', modalHtml);
+            }
+        } else {
+            // Fallback to updateDisplay if content not found
+            this.updateDisplay();
+        }
     }
 
     openEventDetailsModalFromString(eventJsonString, type) {
         try {
             const event = JSON.parse(eventJsonString);
-            this.openEventDetailsModal(event, type);
+            // Ensure we're using the correct instance
+            const instance = window.windowsServerAuditorInstance || this;
+            if (!instance) {
+                console.error('WindowsServerAuditorInstance not found');
+                return;
+            }
+            console.log('Opening event details modal:', event, type);
+            instance.openEventDetailsModal(event, type);
         } catch (e) {
             console.error('Error parsing event data:', e);
             console.error('Event JSON string:', eventJsonString);
@@ -5749,12 +7686,12 @@ export class WindowsServerAuditorPage {
         if (!this.showEventDetailsModalFlag || !this.selectedEventDetails) return '';
 
         const { event, type } = this.selectedEventDetails;
-        const eventTypeLabel = type === 'system' ? 'System Error' : 'Application Error';
-        const eventIcon = type === 'system' ? 'fa-exclamation-circle' : 'fa-bug';
-        const eventColor = type === 'system' ? '#ef4444' : '#f59e0b';
+        const eventTypeLabel = type === 'system' ? 'System Error' : type === 'critical' ? 'Critical Event' : 'Application Error';
+        const eventIcon = type === 'system' ? 'fa-exclamation-circle' : type === 'critical' ? 'fa-exclamation-triangle' : 'fa-bug';
+        const eventColor = type === 'system' ? '#ef4444' : type === 'critical' ? '#ef4444' : '#f59e0b';
 
         return `
-            <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeEventDetailsModal()">
+            <div class="modal-overlay" onclick="if(window.windowsServerAuditorInstance) { window.windowsServerAuditorInstance.closeEventDetailsModal(); }">
                 <div class="modal-container modal-wide" onclick="event.stopPropagation()">
                     <div class="modal-header-compact">
                         <div class="modal-title-section">
@@ -5766,28 +7703,28 @@ export class WindowsServerAuditorPage {
                                 <p class="modal-description">Event ID: ${event.id || 'N/A'}</p>
                             </div>
                         </div>
-                        <button class="modal-close-compact" onclick="windowsServerAuditorInstance.closeEventDetailsModal()">
+                        <button class="modal-close-compact" onclick="if(window.windowsServerAuditorInstance) { window.windowsServerAuditorInstance.closeEventDetailsModal(); }">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
-                    <div class="modal-body-compact">
-                        <div style="display: flex; flex-direction: column; gap: 1rem;">
-                            <div style="padding: 1rem; background: rgba(15, 23, 42, 0.5); border-radius: 0.5rem; border: 1px solid rgba(59, 130, 246, 0.1);">
-                                <div style="display: grid; grid-template-columns: 150px 1fr; gap: 0.75rem; align-items: start;">
-                                    <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600;">Time:</div>
-                                    <div style="color: #e2e8f0; font-size: 0.875rem;">${event.time || 'N/A'}</div>
+                    <div class="modal-body-compact" style="padding: 0.5rem;">
+                        <div style="display: flex; flex-direction: column; gap: 0.375rem;">
+                            <div style="padding: 0.375rem; background: rgba(15, 23, 42, 0.5); border-radius: 0.25rem; border: 1px solid rgba(59, 130, 246, 0.1);">
+                                <div style="display: grid; grid-template-columns: 80px 1fr; gap: 0.375rem; align-items: start;">
+                                    <div style="color: #94a3b8; font-size: 0.625rem; font-weight: 600;">Time:</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${event.time || 'N/A'}</div>
                                     
-                                    <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600;">Source:</div>
-                                    <div style="color: #e2e8f0; font-size: 0.875rem;">${event.source || 'N/A'}</div>
+                                    <div style="color: #94a3b8; font-size: 0.625rem; font-weight: 600;">Source:</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${event.source || 'N/A'}</div>
                                     
-                                    <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600;">Level:</div>
-                                    <div style="color: ${eventColor}; font-size: 0.875rem; font-weight: 600;">${event.level || 'Error'}</div>
+                                    <div style="color: #94a3b8; font-size: 0.625rem; font-weight: 600;">Level:</div>
+                                    <div style="color: ${eventColor}; font-size: 0.6875rem; font-weight: 600;">${event.level || 'Error'}</div>
                                     
-                                    <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600;">Event ID:</div>
-                                    <div style="color: #e2e8f0; font-size: 0.875rem; font-family: 'Consolas', 'Monaco', monospace;">${event.id || 'N/A'}</div>
+                                    <div style="color: #94a3b8; font-size: 0.625rem; font-weight: 600;">Event ID:</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${event.id || 'N/A'}</div>
                                     
-                                    <div style="color: #94a3b8; font-size: 0.875rem; font-weight: 600;">Message:</div>
-                                    <div style="color: #e2e8f0; font-size: 0.875rem; white-space: pre-wrap; word-wrap: break-word; max-height: 400px; overflow-y: auto; padding: 0.75rem; background: rgba(0, 0, 0, 0.2); border-radius: 0.375rem; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.5;">${event.message || 'N/A'}</div>
+                                    <div style="color: #94a3b8; font-size: 0.625rem; font-weight: 600;">Message:</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; white-space: pre-wrap; word-wrap: break-word; max-height: 250px; overflow-y: auto; padding: 0.375rem; background: rgba(0, 0, 0, 0.2); border-radius: 0.1875rem; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.3;">${event.message || 'N/A'}</div>
                                 </div>
                             </div>
                         </div>
@@ -5799,7 +7736,7 @@ export class WindowsServerAuditorPage {
 
     renderProcessTree(processes, depth = 0, parentPath = []) {
         if (!processes || processes.length === 0) {
-            return '<div style="color: #64748b; font-style: italic; padding: 1rem; text-align: center;">No processes found</div>';
+            return '<tr><td colspan="13" style="color: #64748b; font-style: italic; padding: 1rem; text-align: center;">No processes found</td></tr>';
         }
 
         let html = '';
@@ -5847,30 +7784,33 @@ export class WindowsServerAuditorPage {
                 statusColor = '#10b981'; // Green for running
             }
             
+            const procData = JSON.stringify(proc).replace(/'/g, "\\'").replace(/"/g, '&quot;');
             html += `
-                <div class="process-tree-row" data-pid="${proc.id}" data-depth="${depth}" style="display: grid; grid-template-columns: 30px minmax(150px, 1fr) minmax(200px, 2fr) 80px 80px minmax(120px, 1fr) 80px 100px 120px 100px 100px minmax(100px, 1fr) 120px; gap: 0.5rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid rgba(51, 65, 85, 0.3); transition: background-color 0.2s; align-items: center; width: 100%;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.08)'" onmouseout="this.style.backgroundColor='transparent'">
-                    <div style="color: #64748b; font-size: 0.75rem; font-family: 'Consolas', 'Monaco', monospace; user-select: none;">${treeConnector || ''}</div>
-                    <div style="color: #e2e8f0; font-weight: 500; display: flex; align-items: center; gap: 0.5rem;">
-                        <i class="fas fa-cube" style="color: #60a5fa; font-size: 0.75rem;"></i>
-                        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.name || 'N/A'}">${proc.name || 'N/A'}</span>
-                    </div>
-                    <div style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.path || 'N/A'}">${proc.path || '-'}</div>
-                    <div style="color: #8b5cf6; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.id}</div>
-                    <div style="color: #60a5fa; font-weight: 500; font-family: 'Consolas', 'Monaco', monospace;">${proc.parentId || '-'}</div>
-                    <div style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.owner || 'N/A'}">${username}</div>
-                    <div style="color: ${isElevated ? '#ef4444' : '#10b981'}; font-weight: 600; font-size: 0.75rem; text-align: center;">
+                <tr class="process-tree-row" data-pid="${proc.id}" data-depth="${depth}" style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" onclick="windowsServerAuditorInstance.showProcessDetailsModalFromData('${procData}')">
+                    <td style="width: 3%; color: #64748b; font-size: 0.75rem; font-family: 'Consolas', 'Monaco', monospace; user-select: none;">${treeConnector || ''}</td>
+                    <td style="width: 11%; color: #e2e8f0; font-weight: 500;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-cube" style="color: #60a5fa; font-size: 0.75rem;"></i>
+                            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.name || 'N/A'}">${proc.name || 'N/A'}</span>
+                        </div>
+                    </td>
+                    <td style="width: 20%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.path || 'N/A'}">${proc.path || '-'}</td>
+                    <td style="width: 6%; color: #8b5cf6; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.id}</td>
+                    <td style="width: 6%; color: #60a5fa; font-weight: 500; font-family: 'Consolas', 'Monaco', monospace;">${proc.parentId || '-'}</td>
+                    <td style="width: 10%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${proc.owner || 'N/A'}">${username}</td>
+                    <td style="width: 6%; color: ${isElevated ? '#ef4444' : '#10b981'}; font-weight: 600; font-size: 0.75rem; text-align: center;">
                         ${isElevated ? '<i class="fas fa-shield-alt" title="Elevated/Admin"></i>' : '-'}
-                    </div>
-                    <div style="color: ${cpuColor}; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${(proc.cpuPercent || 0).toFixed(2)}%</div>
-                    <div style="color: ${memoryColor}; font-family: 'Consolas', 'Monaco', monospace;">${memoryDisplay}</div>
-                    <div style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${proc.threadCount || 0}</div>
-                    <div style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${proc.handleCount || 0}</div>
-                    <div style="color: ${statusColor}; font-size: 0.75rem;">
+                    </td>
+                    <td style="width: 7%; color: ${cpuColor}; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${(proc.cpuPercent || 0).toFixed(2)}%</td>
+                    <td style="width: 8%; color: ${memoryColor}; font-family: 'Consolas', 'Monaco', monospace;">${memoryDisplay}</td>
+                    <td style="width: 6%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${proc.threadCount || 0}</td>
+                    <td style="width: 6%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${proc.handleCount || 0}</td>
+                    <td style="width: 8%; color: ${statusColor}; font-size: 0.75rem;">
                         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; margin-right: 0.375rem;"></span>
                         ${proc.status || 'Unknown'}
-                    </div>
-                    <div style="color: #64748b; font-size: 0.75rem;">${proc.priority || 'N/A'}</div>
-                </div>
+                    </td>
+                    <td style="width: 3%; color: #64748b; font-size: 0.75rem;">${proc.priority || 'N/A'}</td>
+                </tr>
             `;
             
             // Render children recursively
@@ -5878,21 +7818,10 @@ export class WindowsServerAuditorPage {
                 html += this.renderProcessTree(proc.children, depth + 1, currentPath);
             } else if (hasChildren && depth >= maxDepth) {
                 html += `
-                    <div style="display: grid; grid-template-columns: 30px minmax(150px, 1fr) minmax(200px, 2fr) 80px 80px minmax(120px, 1fr) 80px 100px 120px 100px 100px minmax(100px, 1fr) 120px; gap: 0.5rem; padding: 0.5rem 0.75rem; color: #64748b; font-style: italic; font-size: 0.75rem; width: 100%;">
-                        <div style="color: #64748b; font-family: 'Consolas', 'Monaco', monospace;">${'│  '.repeat(depth)}└─</div>
-                        <div><i class="fas fa-ellipsis-h" style="margin-right: 0.25rem;"></i>${proc.children.length} child process(es) (max depth reached)</div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                        <div></div>
-                    </div>
+                    <tr style="display: table; width: 100%; table-layout: fixed; color: #64748b; font-style: italic; font-size: 0.75rem;">
+                        <td style="color: #64748b; font-family: 'Consolas', 'Monaco', monospace;">${'│  '.repeat(depth)}└─</td>
+                        <td colspan="12"><i class="fas fa-ellipsis-h" style="margin-right: 0.25rem;"></i>${proc.children.length} child process(es) (max depth reached)</td>
+                    </tr>
                 `;
             }
         });
@@ -5910,6 +7839,144 @@ export class WindowsServerAuditorPage {
         this.showProcessTreeModalFlag = false;
         this.selectedProcessTreeModal = null;
         this.updateDisplay();
+    }
+
+    showProcessDetailsModalFromData(processData) {
+        try {
+            const process = JSON.parse(processData.replace(/&quot;/g, '"'));
+            this.selectedProcessDetails = process;
+            this.showProcessDetailsModalFlag = true;
+            this.updateDisplay();
+        } catch (e) {
+            console.error('Error parsing process data:', e);
+        }
+    }
+
+    showProcessDetailsModal(process) {
+        this.selectedProcessDetails = process;
+        this.showProcessDetailsModalFlag = true;
+        this.updateDisplay();
+    }
+
+    closeProcessDetailsModal() {
+        this.showProcessDetailsModalFlag = false;
+        this.selectedProcessDetails = null;
+        this.updateDisplay();
+    }
+
+    renderProcessDetailsModal() {
+        if (!this.showProcessDetailsModalFlag || !this.selectedProcessDetails) return '';
+
+        const proc = this.selectedProcessDetails;
+        
+        // Format memory
+        const memoryDisplay = proc.workingSetMB >= 1024 
+            ? `${(proc.workingSetMB / 1024).toFixed(2)} GB` 
+            : `${(proc.workingSetMB || 0).toFixed(2)} MB`;
+        
+        // Format username
+        const username = proc.username && proc.username !== 'N/A' ? proc.username : (proc.owner && proc.owner !== 'N/A' ? proc.owner : '-');
+        const isElevated = proc.isElevated === true || proc.isElevated === 'True';
+        
+        // Determine status color
+        let statusColor = '#10b981';
+        if (proc.status === 'Suspended') {
+            statusColor = '#f59e0b';
+        } else if (proc.status === 'Not Responding') {
+            statusColor = '#ef4444';
+        } else if (proc.status === 'Running') {
+            statusColor = '#10b981';
+        }
+        
+        // CPU color
+        const cpuColor = proc.cpuPercent > 50 ? '#ef4444' : proc.cpuPercent > 20 ? '#f59e0b' : proc.cpuPercent > 5 ? '#3b82f6' : '#10b981';
+        
+        // Memory color
+        const memoryColor = proc.workingSetMB > 1000 ? '#ef4444' : proc.workingSetMB > 500 ? '#f59e0b' : '#10b981';
+
+        return `
+            <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeProcessDetailsModal()">
+                <div class="modal-container modal-wide" onclick="event.stopPropagation()">
+                    <div class="modal-header-compact">
+                        <div class="modal-title-section">
+                            <div class="modal-icon-compact" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                                <i class="fas fa-cube"></i>
+                            </div>
+                            <div class="modal-title-info">
+                                <h3>${proc.name || 'N/A'}</h3>
+                                <p class="modal-description">Process ID: ${proc.id || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <button class="modal-close-compact" onclick="windowsServerAuditorInstance.closeProcessDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body-compact" style="max-height: 80vh; overflow-y: auto;">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Process Name</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 600;">${proc.name || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Process ID (PID)</div>
+                                <div style="color: #8b5cf6; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.id || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Parent Process ID (PPID)</div>
+                                <div style="color: #60a5fa; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.parentId || '-'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Status</div>
+                                <div style="color: ${statusColor}; font-size: 1rem; font-weight: 600;">
+                                    <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ${statusColor}; margin-right: 0.5rem;"></span>
+                                    ${proc.status || 'Unknown'}
+                                </div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">CPU Usage</div>
+                                <div style="color: ${cpuColor}; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${(proc.cpuPercent || 0).toFixed(2)}%</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Memory Usage</div>
+                                <div style="color: ${memoryColor}; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${memoryDisplay}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Username</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 500;">${username}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Elevated</div>
+                                <div style="color: ${isElevated ? '#ef4444' : '#10b981'}; font-size: 1rem; font-weight: 600;">
+                                    ${isElevated ? '<i class="fas fa-shield-alt" title="Elevated/Admin"></i> Yes' : '<i class="fas fa-check-circle"></i> No'}
+                                </div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Threads</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.threadCount || 0}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Handles</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${proc.handleCount || 0}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                                <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Priority</div>
+                                <div style="color: #e2e8f0; font-size: 1rem; font-weight: 600;">${proc.priority || 'N/A'}</div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem; margin-bottom: 1.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Executable Path</div>
+                            <div style="color: #e2e8f0; font-size: 0.875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${proc.path || 'N/A'}</div>
+                        </div>
+                        ${proc.owner && proc.owner !== 'N/A' ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.5rem; padding: 1rem;">
+                            <div style="color: #94a3b8; font-size: 0.75rem; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">Owner</div>
+                            <div style="color: #e2e8f0; font-size: 0.875rem;">${proc.owner}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     changeProcessTreePage(delta) {
@@ -6020,6 +8087,833 @@ export class WindowsServerAuditorPage {
                             </button>
                         </div>
                         `}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async deleteReport() {
+        if (!this.reportId) {
+            this.showMessage('No report ID available', 'error');
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete this report?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/windows-server-reports/delete?id=${this.reportId}`, {
+                method: 'GET'
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete report');
+            }
+
+            this.showMessage('Report deleted successfully!', 'success');
+            
+            // Navigate back to list page
+            setTimeout(() => {
+                if (window.appInstance) {
+                    window.appInstance.navigateTo('windows-server-auditor-list');
+                } else {
+                    window.location.hash = '#windows-server-auditor-list';
+                    window.location.reload();
+                }
+            }, 1000);
+        } catch (error) {
+            console.error('Error deleting report:', error);
+            this.showMessage('Error deleting report: ' + error.message, 'error');
+        }
+    }
+
+    renderMinifiltersView(minifilters) {
+        if (!minifilters || minifilters.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No minifilter drivers available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="minifilters-search" 
+                            placeholder="Search minifilter drivers by name, vendor, path..."
+                            oninput="windowsServerAuditorInstance.filterMinifilters(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 20%;">Filter Name</th>
+                                        <th style="width: 12%;">Altitude</th>
+                                        <th style="width: 10%;">Instances</th>
+                                        <th style="width: 12%;">Attached Volumes</th>
+                                        <th style="width: 30%;">Driver Path</th>
+                                        <th style="width: 16%;">Vendor</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="minifilters-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${this.renderMinifiltersRows(minifilters)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderMinifiltersRows(minifilters) {
+        if (!minifilters || minifilters.length === 0) {
+            return '<tr><td colspan="6" style="text-align: center; color: #94a3b8; padding: 2rem;">No minifilter drivers found</td></tr>';
+        }
+
+        return minifilters.map((filter, index) => {
+            // Use data attribute to store the filter data safely
+            const filterData = JSON.stringify(filter);
+            return `
+            <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
+                data-filter-index="${index}" 
+                onclick="windowsServerAuditorInstance.showMinifilterDetailsModalByIndex(${index})">
+                <td style="width: 20%;"><strong>${filter.filterName || 'N/A'}</strong></td>
+                <td style="width: 12%; color: #8b5cf6; font-family: 'Consolas', 'Monaco', monospace;">${filter.altitude || 'N/A'}</td>
+                <td style="width: 10%; color: #60a5fa; font-weight: 600;">${filter.instances || 0}</td>
+                <td style="width: 12%; color: #34d399; font-weight: 600;">${filter.attachedVolumes || 0}</td>
+                <td style="width: 30%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(filter.driverPath || 'N/A').replace(/"/g, '&quot;')}">${filter.driverPath || 'N/A'}</td>
+                <td style="width: 16%; color: #e2e8f0;">${filter.vendor || 'N/A'}</td>
+            </tr>
+        `;
+        }).join('');
+    }
+
+    filterMinifilters(searchTerm) {
+        const tbody = document.getElementById('minifilters-table-body');
+        if (!tbody) return;
+        const rows = tbody.querySelectorAll('tr');
+        const term = (searchTerm || '').toLowerCase();
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? 'table-row' : 'none';
+        });
+    }
+
+    showMinifilterDetailsModalByIndex(index) {
+        const minifilters = this.reportData?.minifilters || [];
+        if (index >= 0 && index < minifilters.length) {
+            this.selectedMinifilterDetails = minifilters[index];
+            this.showMinifilterDetailsModalFlag = true;
+            this.updateDisplay();
+        }
+    }
+
+    showMinifilterDetailsModalFromData(filterData) {
+        try {
+            const filter = JSON.parse(filterData.replace(/&quot;/g, '"'));
+            this.selectedMinifilterDetails = filter;
+            this.showMinifilterDetailsModalFlag = true;
+            this.updateDisplay();
+        } catch (e) {
+            console.error('Error parsing minifilter data:', e);
+        }
+    }
+
+    showMinifilterDetailsModal(filterName, altitude, instances, attachedVolumes, driverPath, vendor, frame) {
+        this.selectedMinifilterDetails = {
+            filterName: filterName,
+            altitude: altitude,
+            instances: instances,
+            attachedVolumes: attachedVolumes,
+            driverPath: driverPath,
+            vendor: vendor,
+            frame: frame
+        };
+        this.showMinifilterDetailsModalFlag = true;
+        this.updateDisplay();
+    }
+
+    closeMinifilterDetailsModal() {
+        this.showMinifilterDetailsModalFlag = false;
+        this.selectedMinifilterDetails = null;
+        this.updateDisplay();
+    }
+
+    renderMinifilterDetailsModal() {
+        if (!this.showMinifilterDetailsModalFlag || !this.selectedMinifilterDetails) return '';
+
+        const filter = this.selectedMinifilterDetails;
+
+        return `
+            <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeMinifilterDetailsModal()">
+                <div class="modal-container modal-wide" onclick="event.stopPropagation()">
+                    <div class="modal-header-compact">
+                        <div class="modal-title-section">
+                            <div class="modal-icon-compact" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
+                                <i class="fas fa-filter"></i>
+                            </div>
+                            <div class="modal-title-info">
+                                <h3>${filter.filterName || 'N/A'}</h3>
+                                <p class="modal-description">Minifilter Driver Details</p>
+                            </div>
+                        </div>
+                        <button class="modal-close-compact" onclick="windowsServerAuditorInstance.closeMinifilterDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body-compact" style="max-height: 80vh; overflow-y: auto; padding: 0.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Filter Name</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 600;">${filter.filterName || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Altitude</div>
+                                <div style="color: #8b5cf6; font-size: 0.75rem; font-weight: 600; font-family: 'Consolas', 'Monaco', monospace;">${filter.altitude || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Instances</div>
+                                <div style="color: #60a5fa; font-size: 0.75rem; font-weight: 600;">${filter.instances || 0}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Attached Volumes</div>
+                                <div style="color: #34d399; font-size: 0.75rem; font-weight: 600;">${filter.attachedVolumes || 0}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Vendor</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 500;">${filter.vendor || 'N/A'}</div>
+                            </div>
+                            ${filter.frame && filter.frame !== '' ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Frame</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 500;">${filter.frame}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Driver Path</div>
+                            <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${filter.driverPath || 'N/A'}</div>
+                        </div>
+                        ${(() => {
+                            const instanceDetails = Array.isArray(filter.instanceDetails) ? filter.instanceDetails : [];
+                            return instanceDetails.length > 0 ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.5px;">Instances (${instanceDetails.length})</div>
+                            <div class="table-container-modern" style="max-height: 150px; overflow-y: auto;">
+                                <table class="table-compact">
+                                    <thead style="position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                        <tr>
+                                            <th style="width: 50%; padding: 0.1875rem 0.25rem; font-size: 0.625rem;">Instance Name</th>
+                                            <th style="width: 50%; padding: 0.1875rem 0.25rem; font-size: 0.625rem;">Volume</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${instanceDetails.map(instance => `
+                                            <tr>
+                                                <td style="color: #e2e8f0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.6875rem; padding: 0.1875rem 0.25rem;">${instance.instanceName || 'N/A'}</td>
+                                                <td style="color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.6875rem; padding: 0.1875rem 0.25rem;">${instance.volumeName || '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        ` : '';
+                        })()}
+                        ${(() => {
+                            const volumeList = Array.isArray(filter.volumeList) ? filter.volumeList : (filter.volumeList ? [filter.volumeList] : []);
+                            // Filter and convert all volumes to strings, logging objects for debugging
+                            const processedVolumes = volumeList
+                                .map((volume, index) => {
+                                    if (typeof volume === 'string' && volume.trim() !== '') {
+                                        return volume.trim();
+                                    } else if (typeof volume === 'object' && volume !== null) {
+                                        // Log the object for debugging
+                                        console.log(`[Minifilter Debug] Volume ${index} is an object:`, volume);
+                                        console.log(`[Minifilter Debug] Volume ${index} keys:`, Object.keys(volume));
+                                        console.log(`[Minifilter Debug] Volume ${index} stringified:`, JSON.stringify(volume));
+                                        console.log(`[Minifilter Debug] Volume ${index} constructor:`, volume.constructor?.name);
+                                        
+                                        // Try to extract a meaningful string from the object
+                                        if (volume.name && typeof volume.name === 'string') return volume.name;
+                                        if (volume.volumeName && typeof volume.volumeName === 'string') return volume.volumeName;
+                                        if (volume.volume && typeof volume.volume === 'string') return volume.volume;
+                                        if (volume.toString && typeof volume.toString === 'function') {
+                                            try {
+                                                const str = volume.toString();
+                                                if (str && str !== '[object Object]') return str;
+                                            } catch (e) {
+                                                console.error(`[Minifilter Debug] Error calling toString on volume ${index}:`, e);
+                                            }
+                                        }
+                                        // Skip empty objects
+                                        if (Object.keys(volume).length === 0) {
+                                            console.log(`[Minifilter Debug] Volume ${index} is an empty object, skipping`);
+                                            return null;
+                                        }
+                                        // Fallback: show object structure
+                                        return `[Object: ${JSON.stringify(volume)}]`;
+                                    } else if (volume !== null && volume !== undefined) {
+                                        const str = String(volume);
+                                        return str && str.trim() !== '' ? str.trim() : null;
+                                    }
+                                    return null;
+                                })
+                                .filter(volume => volume !== null && volume !== undefined && volume !== '');
+                            
+                            return processedVolumes.length > 0 ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Attached Volumes (${processedVolumes.length})</div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
+                                ${processedVolumes.map(volume => `
+                                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.125rem 0.25rem; border-radius: 0.125rem; font-size: 0.625rem; font-family: 'Consolas', 'Monaco', monospace;">${volume}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : '';
+                        })()}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderFirewallRulesView(firewallRules) {
+        if (!firewallRules || firewallRules.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No firewall rules available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="firewall-rules-search" 
+                            placeholder="Search firewall rules by name, description, action, direction..."
+                            oninput="windowsServerAuditorInstance.filterFirewallRules(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 25%;">Name</th>
+                                        <th style="width: 8%;">Enabled</th>
+                                        <th style="width: 10%;">Direction</th>
+                                        <th style="width: 10%;">Action</th>
+                                        <th style="width: 12%;">Profile</th>
+                                        <th style="width: 12%;">Protocol</th>
+                                        <th style="width: 10%;">Local Port</th>
+                                        <th style="width: 13%;">Remote Address</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="firewall-rules-tbody" style="flex: 1; display: block; overflow-y: auto; overflow-x: hidden;">
+                                    ${this.renderFirewallRulesRows(firewallRules)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderFirewallRulesRows(firewallRules) {
+        if (!firewallRules || firewallRules.length === 0) {
+            return `
+                <tr style="display: table; width: 100%; table-layout: fixed;">
+                    <td colspan="8" style="text-align: center; padding: 2rem; color: #94a3b8;">No firewall rules found.</td>
+                </tr>
+            `;
+        }
+
+        return firewallRules.map((rule, index) => {
+            const enabled = rule.enabled === true || rule.enabled === 'True' || rule.enabled === 'true';
+            const enabledBadge = enabled 
+                ? '<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">Yes</span>'
+                : '<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">No</span>';
+            
+            const directionColor = rule.direction === 'Inbound' ? '#3b82f6' : '#10b981';
+            const actionColor = rule.action === 'Allow' ? '#10b981' : '#ef4444';
+            
+            return `
+                <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
+                    onclick="windowsServerAuditorInstance.showFirewallRuleDetailsModalByIndex(${index})"
+                    onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'"
+                    onmouseout="this.style.background='transparent'">
+                    <td style="width: 25%; color: #e2e8f0; font-weight: 500;">${rule.name || rule.displayName || 'N/A'}</td>
+                    <td style="width: 8%;">${enabledBadge}</td>
+                    <td style="width: 10%; color: ${directionColor};">${rule.direction || '-'}</td>
+                    <td style="width: 10%; color: ${actionColor};">${rule.action || '-'}</td>
+                    <td style="width: 12%; color: #94a3b8;">${rule.profile || '-'}</td>
+                    <td style="width: 12%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${rule.protocol || '-'}</td>
+                    <td style="width: 10%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${rule.localPort || '-'}</td>
+                    <td style="width: 13%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${rule.remoteAddress || '-'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    filterFirewallRules(searchTerm) {
+        const tbody = document.getElementById('firewall-rules-tbody');
+        if (!tbody) return;
+
+        const term = (searchTerm || '').toLowerCase().trim();
+        const rows = tbody.querySelectorAll('tr');
+
+        if (!term) {
+            rows.forEach(row => {
+                row.style.display = 'table-row';
+            });
+            return;
+        }
+
+        const firewallRules = this.reportData?.firewallRules || [];
+        rows.forEach((row, index) => {
+            if (index >= firewallRules.length) return;
+            
+            const rule = firewallRules[index];
+            const searchableText = [
+                rule.name || '',
+                rule.displayName || '',
+                rule.description || '',
+                rule.action || '',
+                rule.direction || '',
+                rule.profile || '',
+                rule.protocol || '',
+                rule.localPort || '',
+                rule.remotePort || '',
+                rule.localAddress || '',
+                rule.remoteAddress || '',
+                rule.program || '',
+                rule.service || ''
+            ].join(' ').toLowerCase();
+
+            if (searchableText.includes(term)) {
+                row.style.display = 'table-row';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    showFirewallRuleDetailsModalByIndex(index) {
+        const firewallRules = this.reportData?.firewallRules || [];
+        if (index >= 0 && index < firewallRules.length) {
+            this.selectedFirewallRuleDetails = firewallRules[index];
+            this.showFirewallRuleDetailsModalFlag = true;
+            this.updateDisplay();
+        }
+    }
+
+    closeFirewallRuleDetailsModal() {
+        this.showFirewallRuleDetailsModalFlag = false;
+        this.selectedFirewallRuleDetails = null;
+        this.updateDisplay();
+    }
+
+    renderFirewallRuleDetailsModal() {
+        if (!this.showFirewallRuleDetailsModalFlag || !this.selectedFirewallRuleDetails) return '';
+
+        const rule = this.selectedFirewallRuleDetails;
+        const enabled = rule.enabled === true || rule.enabled === 'True' || rule.enabled === 'true';
+        const enabledBadge = enabled 
+            ? '<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">Yes</span>'
+            : '<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">No</span>';
+
+        return `
+            <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeFirewallRuleDetailsModal()">
+                <div class="modal-container modal-wide" onclick="event.stopPropagation()">
+                    <div class="modal-header-compact">
+                        <div class="modal-title-section">
+                            <div class="modal-icon-compact" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="modal-title-info">
+                                <h3>${rule.name || rule.displayName || 'N/A'}</h3>
+                                <p class="modal-description">Firewall Rule Details</p>
+                            </div>
+                        </div>
+                        <button class="modal-close-compact" onclick="windowsServerAuditorInstance.closeFirewallRuleDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body-compact" style="max-height: 80vh; overflow-y: auto; padding: 0.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Name</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 600;">${rule.name || rule.displayName || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Enabled</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 600;">${enabledBadge}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Direction</div>
+                                <div style="color: ${rule.direction === 'Inbound' ? '#3b82f6' : '#10b981'}; font-size: 0.75rem; font-weight: 600;">${rule.direction || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Action</div>
+                                <div style="color: ${rule.action === 'Allow' ? '#10b981' : '#ef4444'}; font-size: 0.75rem; font-weight: 600;">${rule.action || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Profile</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 500;">${rule.profile || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Group</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 500;">${rule.group || 'N/A'}</div>
+                            </div>
+                        </div>
+                        ${rule.description && rule.description !== 'N/A' ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Description</div>
+                            <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.description}</div>
+                        </div>
+                        ` : ''}
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.625rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Address & Port Filters</div>
+                            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem;">
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Local Address</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.localAddress || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Remote Address</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.remoteAddress || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Local Port</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.localPort || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Remote Port</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.remotePort || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Protocol</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.protocol || 'Any'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.625rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Application & Interface Filters</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.375rem;">
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Program</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${rule.program || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Service</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.service || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Interface Type</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.interfaceType || 'Any'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Interface Alias</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace;">${rule.interfaceAlias || 'Any'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="color: #94a3b8; font-size: 0.625rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">Security Settings</div>
+                            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.375rem;">
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Authentication</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.authentication || 'NotRequired'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Encryption</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.encryption || 'NotRequired'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Override Block Rules</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.overrideBlockRules || 'N/A'}</div>
+                                </div>
+                                <div>
+                                    <div style="color: #64748b; font-size: 0.5625rem; margin-bottom: 0.0625rem;">Edge Traversal Policy</div>
+                                    <div style="color: #e2e8f0; font-size: 0.6875rem;">${rule.edgeTraversalPolicy || 'N/A'}</div>
+                                </div>
+                            </div>
+                        </div>
+                        ${rule.id && rule.id !== 'N/A' ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Rule ID</div>
+                            <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${rule.id}</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderListeningPortsView(listeningPorts) {
+        const tcpListeners = listeningPorts.tcpListeners || [];
+        const udpListeners = listeningPorts.udpListeners || [];
+        const allListeners = [...tcpListeners, ...udpListeners];
+
+        if (allListeners.length === 0) {
+            return `
+                <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; align-items: center; justify-content: center;">
+                    <div style="padding: 2rem; text-align: center; color: #94a3b8;">
+                        <i class="fas fa-info-circle" style="margin-right: 0.5rem;"></i>No listening ports available.
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
+            <div class="audit-content" style="height: 100%; margin-top: 0; padding: 0.5rem 0.75rem; display: flex; flex-direction: column;">
+                <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                    <div style="margin-bottom: 1rem; flex-shrink: 0;">
+                        <input 
+                            type="text" 
+                            id="listening-ports-search" 
+                            placeholder="Search by port, address, process name, PID..."
+                            oninput="windowsServerAuditorInstance.filterListeningPorts(this.value)"
+                            style="width: 100%; padding: 0.5rem 0.75rem; background: #1e293b; border: 1px solid #334155; border-radius: 0.375rem; color: #e2e8f0; font-size: 0.8125rem; transition: all 0.2s;"
+                            onfocus="this.style.borderColor='#3b82f6'; this.style.boxShadow='0 0 0 3px rgba(59, 130, 246, 0.1)'"
+                            onblur="this.style.borderColor='#334155'; this.style.boxShadow='none'"
+                        >
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; min-height: 0;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block; position: sticky; top: 0; background: #1e293b; z-index: 10;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th style="width: 7%;">Protocol</th>
+                                        <th style="width: 12%;">Local Address</th>
+                                        <th style="width: 8%;">Local Port</th>
+                                        <th style="width: 7%;">State</th>
+                                        <th style="width: 12%;">Service</th>
+                                        <th style="width: 8%;">Risk</th>
+                                        <th style="width: 10%;">Process Name</th>
+                                        <th style="width: 7%;">PID</th>
+                                        <th style="width: 27%;">Process Path</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listening-ports-tbody" style="flex: 1; display: block; overflow-y: auto; overflow-x: hidden;">
+                                    ${this.renderListeningPortsRows(allListeners)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderListeningPortsRows(listeners) {
+        if (!listeners || listeners.length === 0) {
+            return `
+                <tr style="display: table; width: 100%; table-layout: fixed;">
+                    <td colspan="9" style="text-align: center; padding: 2rem; color: #94a3b8;">No listening ports found.</td>
+                </tr>
+            `;
+        }
+
+        return listeners.map((listener, index) => {
+            const protocolColor = listener.protocol === 'TCP' ? '#3b82f6' : '#10b981';
+            const stateColor = listener.state === 'Listen' ? '#10b981' : '#94a3b8';
+            
+            // Risk level colors
+            let riskColor = '#94a3b8'; // Low (gray)
+            let riskBadge = '';
+            if (listener.riskLevel === 'High') {
+                riskColor = '#ef4444';
+                riskBadge = '<span style="background: rgba(239, 68, 68, 0.15); color: #ef4444; padding: 0.125rem 0.25rem; border-radius: 0.125rem; font-size: 0.625rem; font-weight: 500;">High</span>';
+            } else if (listener.riskLevel === 'Medium') {
+                riskColor = '#f59e0b';
+                riskBadge = '<span style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; padding: 0.125rem 0.25rem; border-radius: 0.125rem; font-size: 0.625rem; font-weight: 500;">Medium</span>';
+            } else {
+                riskBadge = '<span style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; padding: 0.125rem 0.25rem; border-radius: 0.125rem; font-size: 0.625rem; font-weight: 500;">Low</span>';
+            }
+            
+            // Service name display
+            const serviceName = listener.serviceName && listener.serviceName !== 'N/A' ? listener.serviceName : '-';
+            const serviceColor = listener.isSystemService ? '#60a5fa' : '#94a3b8';
+            
+            return `
+                <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
+                    onclick="windowsServerAuditorInstance.showListeningPortDetailsModalByIndex(${index})"
+                    onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'"
+                    onmouseout="this.style.background='transparent'">
+                    <td style="width: 7%; color: ${protocolColor}; font-weight: 600;">${listener.protocol || '-'}</td>
+                    <td style="width: 12%; color: #e2e8f0; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${listener.localAddress || '-'}</td>
+                    <td style="width: 8%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${listener.localPort || '-'}</td>
+                    <td style="width: 7%; color: ${stateColor};">${listener.state || '-'}</td>
+                    <td style="width: 12%; color: ${serviceColor}; font-size: 0.8125rem;">${serviceName}</td>
+                    <td style="width: 8%;">${riskBadge}</td>
+                    <td style="width: 10%; color: #e2e8f0; font-weight: 500;">${listener.processName || '-'}</td>
+                    <td style="width: 7%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem;">${listener.processId !== 'N/A' ? listener.processId : '-'}</td>
+                    <td style="width: 27%; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.875rem; word-break: break-all;">${listener.processPath !== 'N/A' ? listener.processPath : '-'}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    filterListeningPorts(searchTerm) {
+        const tbody = document.getElementById('listening-ports-tbody');
+        if (!tbody) return;
+
+        const term = (searchTerm || '').toLowerCase().trim();
+        const rows = tbody.querySelectorAll('tr');
+
+        if (!term) {
+            rows.forEach(row => {
+                row.style.display = 'table-row';
+            });
+            return;
+        }
+
+        const listeningPorts = this.reportData?.listeningPorts || {};
+        const allListeners = [...(listeningPorts.tcpListeners || []), ...(listeningPorts.udpListeners || [])];
+        
+        rows.forEach((row, index) => {
+            if (index >= allListeners.length) return;
+            
+            const listener = allListeners[index];
+            const searchableText = [
+                listener.protocol || '',
+                listener.localAddress || '',
+                String(listener.localPort || ''),
+                listener.state || '',
+                listener.serviceName || '',
+                listener.riskLevel || '',
+                listener.processName || '',
+                String(listener.processId !== 'N/A' ? listener.processId : ''),
+                listener.processPath !== 'N/A' ? listener.processPath : ''
+            ].join(' ').toLowerCase();
+
+            if (searchableText.includes(term)) {
+                row.style.display = 'table-row';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    showListeningPortDetailsModalByIndex(index) {
+        const listeningPorts = this.reportData?.listeningPorts || {};
+        const allListeners = [...(listeningPorts.tcpListeners || []), ...(listeningPorts.udpListeners || [])];
+        if (index >= 0 && index < allListeners.length) {
+            this.selectedListeningPortDetails = allListeners[index];
+            this.showListeningPortDetailsModalFlag = true;
+            this.updateDisplay();
+        }
+    }
+
+    closeListeningPortDetailsModal() {
+        this.showListeningPortDetailsModalFlag = false;
+        this.selectedListeningPortDetails = null;
+        this.updateDisplay();
+    }
+
+    renderListeningPortDetailsModal() {
+        if (!this.showListeningPortDetailsModalFlag || !this.selectedListeningPortDetails) return '';
+
+        const listener = this.selectedListeningPortDetails;
+        const protocolColor = listener.protocol === 'TCP' ? '#3b82f6' : '#10b981';
+        const stateColor = listener.state === 'Listen' ? '#10b981' : '#94a3b8';
+
+        return `
+            <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeListeningPortDetailsModal()">
+                <div class="modal-container modal-wide" onclick="event.stopPropagation()">
+                    <div class="modal-header-compact">
+                        <div class="modal-title-section">
+                            <div class="modal-icon-compact" style="background: rgba(59, 130, 246, 0.15); color: ${protocolColor};">
+                                <i class="fas fa-network-wired"></i>
+                            </div>
+                            <div class="modal-title-info">
+                                <h3>${listener.protocol || 'N/A'} Port ${listener.localPort || 'N/A'}</h3>
+                                <p class="modal-description">Listening Port Details</p>
+                            </div>
+                        </div>
+                        <button class="modal-close-compact" onclick="windowsServerAuditorInstance.closeListeningPortDetailsModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body-compact" style="max-height: 80vh; overflow-y: auto; padding: 0.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.375rem; margin-bottom: 0.5rem;">
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Protocol</div>
+                                <div style="color: ${protocolColor}; font-size: 0.75rem; font-weight: 600;">${listener.protocol || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Local Address</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-family: 'Consolas', 'Monaco', monospace;">${listener.localAddress || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Local Port</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-family: 'Consolas', 'Monaco', monospace; font-weight: 600;">${listener.localPort || 'N/A'}</div>
+                            </div>
+                            ${listener.state ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">State</div>
+                                <div style="color: ${stateColor}; font-size: 0.75rem; font-weight: 600;">${listener.state}</div>
+                            </div>
+                            ` : ''}
+                            ${listener.serviceName && listener.serviceName !== 'N/A' ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Service</div>
+                                <div style="color: ${listener.isSystemService ? '#60a5fa' : '#94a3b8'}; font-size: 0.75rem; font-weight: 500;">${listener.serviceName}</div>
+                            </div>
+                            ` : ''}
+                            ${listener.riskLevel ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Risk Level</div>
+                                <div style="color: ${listener.riskLevel === 'High' ? '#ef4444' : listener.riskLevel === 'Medium' ? '#f59e0b' : '#94a3b8'}; font-size: 0.75rem; font-weight: 600;">${listener.riskLevel}</div>
+                            </div>
+                            ` : ''}
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Process Name</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-weight: 500;">${listener.processName || 'N/A'}</div>
+                            </div>
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Process ID</div>
+                                <div style="color: #e2e8f0; font-size: 0.75rem; font-family: 'Consolas', 'Monaco', monospace;">${listener.processId !== 'N/A' ? listener.processId : 'N/A'}</div>
+                            </div>
+                            ${listener.isSystemService !== undefined ? `
+                            <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                                <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">System Service</div>
+                                <div style="color: ${listener.isSystemService ? '#10b981' : '#94a3b8'}; font-size: 0.75rem; font-weight: 500;">${listener.isSystemService ? 'Yes' : 'No'}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ${listener.processPath && listener.processPath !== 'N/A' ? `
+                        <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
+                            <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.125rem; text-transform: uppercase; letter-spacing: 0.5px;">Process Path</div>
+                            <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${listener.processPath}</div>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             </div>

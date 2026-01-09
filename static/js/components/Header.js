@@ -1,9 +1,11 @@
 import { SubNavbar } from './SubNavbar.js';
+import { PageNavbar } from './PageNavbar.js';
 
 export class Header {
     constructor(currentPage = 'apps') {
         this.currentPage = currentPage;
         this.subNavbar = new SubNavbar();
+        this.pageNavbar = new PageNavbar();
     }
 
     getPageName(pageId) {
@@ -101,13 +103,20 @@ export class Header {
     render() {
         const pageName = this.getPageName(this.currentPage);
         const isAppsPage = this.currentPage === 'apps';
+        const needsConfigToggle = this.currentPage === 'ping-tracer' || this.currentPage === 'ip-scanner';
 
         return `
             <div class="modern-header">
                 <div class="header-left">
-                    <button class="apps-toggle-btn" onclick="headerInstance.openApps()" title="Applications">
-                        <i class="fas fa-bars"></i>
-                    </button>
+                    ${needsConfigToggle ? `
+                        <button class="header-config-toggle" id="header-config-toggle" onclick="headerInstance.toggleConfigSidebar()" title="Configuration">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    ` : `
+                        <button class="apps-toggle-btn" onclick="headerInstance.openApps()" title="Applications">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    `}
                     <div class="header-brand">
                         <div class="brand-text">
                             ${isAppsPage ? 
@@ -167,21 +176,62 @@ export class Header {
         this.currentPage = pageId;
         const pageName = this.getPageName(pageId);
         const isAppsPage = pageId === 'apps';
+        const needsConfigToggle = pageId === 'ping-tracer' || pageId === 'ip-scanner';
         
-        const brandText = document.querySelector('.brand-text');
-        if (brandText) {
-            if (isAppsPage) {
-                brandText.innerHTML = `<span class="header-page-name">Applications</span>`;
+        // Update the header-left section to show the correct button
+        const headerLeft = document.querySelector('.header-left');
+        if (headerLeft) {
+            const brandText = headerLeft.querySelector('.brand-text');
+            if (brandText) {
+                if (isAppsPage) {
+                    brandText.innerHTML = `<span class="header-page-name">Applications</span>`;
+                } else {
+                    brandText.innerHTML = `
+                        <span class="header-breadcrumb">
+                            <span class="breadcrumb-item breadcrumb-link" onclick="headerInstance.openApps()">Applications</span>
+                            <i class="fas fa-chevron-right breadcrumb-separator"></i>
+                            <span class="breadcrumb-item">${pageName}</span>
+                        </span>
+                    `;
+                }
+            }
+            
+            // Update the toggle button
+            const existingToggle = headerLeft.querySelector('.apps-toggle-btn, .header-config-toggle');
+            if (existingToggle) {
+                if (needsConfigToggle) {
+                    // Replace apps toggle with config toggle
+                    existingToggle.outerHTML = `
+                        <button class="header-config-toggle" id="header-config-toggle" onclick="headerInstance.toggleConfigSidebar()" title="Configuration">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    `;
+                } else {
+                    // Replace config toggle with apps toggle
+                    existingToggle.outerHTML = `
+                        <button class="apps-toggle-btn" onclick="headerInstance.openApps()" title="Applications">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    `;
+                }
             } else {
-                brandText.innerHTML = `
-                    <span class="header-breadcrumb">
-                        <span class="breadcrumb-item breadcrumb-link" onclick="headerInstance.openApps()">Applications</span>
-                        <i class="fas fa-chevron-right breadcrumb-separator"></i>
-                        <span class="breadcrumb-item">${pageName}</span>
-                    </span>
-                `;
+                // No toggle button found, insert the correct one before brand-text
+                const brandTextElement = headerLeft.querySelector('.brand-text');
+                if (brandTextElement) {
+                    const toggleHTML = needsConfigToggle ? `
+                        <button class="header-config-toggle" id="header-config-toggle" onclick="headerInstance.toggleConfigSidebar()" title="Configuration">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    ` : `
+                        <button class="apps-toggle-btn" onclick="headerInstance.openApps()" title="Applications">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                    `;
+                    brandTextElement.insertAdjacentHTML('beforebegin', toggleHTML);
+                }
             }
         }
+        
         // Update sub-navbar
         this.updateSubNavbar(pageId);
     }
@@ -193,8 +243,14 @@ export class Header {
             existingSubNavbar.remove();
         }
 
-        // Update body padding
-        document.body.classList.remove('has-sub-navbar');
+        // Remove existing page navbar
+        const existingPageNavbar = document.querySelector('.page-navbar');
+        if (existingPageNavbar) {
+            existingPageNavbar.remove();
+        }
+
+        // Update body classes - remove all navbar classes first
+        document.body.classList.remove('has-sub-navbar', 'has-page-navbar');
 
         // Render new sub-navbar if needed
         const subNavbarHTML = this.subNavbar.render(pageId);
@@ -205,10 +261,90 @@ export class Header {
                 this.subNavbar.attachEventListeners();
                 // Add class to body to adjust padding
                 document.body.classList.add('has-sub-navbar');
+                
+                // Render page navbar after sub-navbar (skip for ping-tracer and ip-scanner)
+                if (pageId !== 'ping-tracer' && pageId !== 'ip-scanner') {
+                    const pageNavbarHTML = this.pageNavbar.render(pageId);
+                    if (pageNavbarHTML) {
+                        // Find the sub-navbar we just inserted
+                        const subNavbar = header.nextElementSibling;
+                        if (subNavbar && subNavbar.classList.contains('sub-navbar')) {
+                            subNavbar.insertAdjacentHTML('afterend', pageNavbarHTML);
+                            window.pageNavbarInstance = this.pageNavbar;
+                            // Add class to body to adjust padding
+                            document.body.classList.add('has-page-navbar');
+                            // Attach event listeners after rendering
+                            setTimeout(() => {
+                                this.pageNavbar.attachEventListeners();
+                            }, 0);
+                        } else {
+                            // Fallback: search for sub-navbar
+                            setTimeout(() => {
+                                const subNavbarFallback = document.querySelector('.sub-navbar');
+                                if (subNavbarFallback) {
+                                    subNavbarFallback.insertAdjacentHTML('afterend', pageNavbarHTML);
+                                    window.pageNavbarInstance = this.pageNavbar;
+                                    document.body.classList.add('has-page-navbar');
+                                    // Attach event listeners after rendering
+                                    this.pageNavbar.attachEventListeners();
+                                }
+                            }, 50);
+                        }
+                    } else {
+                        // No page navbar for this page, ensure class is removed
+                        document.body.classList.remove('has-page-navbar');
+                    }
+                } else {
+                    // No page navbar for ping-tracer and ip-scanner
+                    document.body.classList.remove('has-page-navbar');
+                }
+            }
+        } else {
+            // If no sub-navbar, render page navbar after header (skip for ping-tracer and ip-scanner)
+            if (pageId !== 'ping-tracer' && pageId !== 'ip-scanner') {
+                const pageNavbarHTML = this.pageNavbar.render(pageId);
+                if (pageNavbarHTML) {
+                    const header = document.querySelector('.modern-header');
+                    if (header && header.parentNode) {
+                        header.insertAdjacentHTML('afterend', pageNavbarHTML);
+                        window.pageNavbarInstance = this.pageNavbar;
+                        // Add class to body to adjust padding
+                        document.body.classList.add('has-page-navbar');
+                        // Attach event listeners after rendering
+                        setTimeout(() => {
+                            this.pageNavbar.attachEventListeners();
+                        }, 0);
+                    }
+                } else {
+                    // No page navbar for this page, ensure class is removed
+                    document.body.classList.remove('has-page-navbar');
+                }
+            } else {
+                // No page navbar for ping-tracer and ip-scanner
+                document.body.classList.remove('has-page-navbar');
             }
         }
     }
     
+    toggleConfigSidebar() {
+        // Toggle config sidebar for ping-tracer or ip-scanner
+        const pageId = this.currentPage;
+        
+        if (pageId === 'ping-tracer' && window.pingTracerInstance) {
+            if (typeof window.pingTracerInstance.toggleConfigSidebar === 'function') {
+                window.pingTracerInstance.toggleConfigSidebar();
+            }
+            return;
+        }
+        
+        if (pageId === 'ip-scanner' && window.ipScannerInstance) {
+            if (typeof window.ipScannerInstance.toggleConfigSidebar === 'function') {
+                window.ipScannerInstance.toggleConfigSidebar();
+            }
+            return;
+        }
+    }
+
     async logout() {
         if (confirm('Are you sure you want to logout?')) {
             // Log logout event to server (include session ID if available)

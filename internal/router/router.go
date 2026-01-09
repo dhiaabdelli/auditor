@@ -396,6 +396,28 @@ func SetupRoutes(staticFS http.FileSystem) {
 	http.Handle("/api/windows-server-reports/generate-script", secureAPIHandler(handlers.HandleGenerateWindowsServerReportScript))
 	http.Handle("/api/windows-server-reports/import", secureAPIHandler(handlers.HandleImportWindowsServerReport))
 
+	// Linux Server Auditor API endpoints
+	http.Handle("/api/linux-server-reports", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			handlers.HandleGetLinuxServerReports(w, r)
+		case "POST":
+			handlers.HandleCreateLinuxServerReport(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+	http.Handle("/api/linux-server-reports/get", secureAPIHandler(handlers.HandleGetSingleLinuxServerReport))
+	http.Handle("/api/linux-server-reports/", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/api/linux-server-reports/") {
+			handlers.HandleGetSingleLinuxServerReport(w, r)
+		}
+	}))
+	http.Handle("/api/linux-server-reports/update", secureAPIHandler(handlers.HandleUpdateLinuxServerReport))
+	http.Handle("/api/linux-server-reports/delete", secureAPIHandler(handlers.HandleDeleteLinuxServerReport))
+	http.Handle("/api/linux-server-reports/generate-script", secureAPIHandler(handlers.HandleGenerateLinuxServerReportScript))
+	http.Handle("/api/linux-server-reports/import", secureAPIHandler(handlers.HandleImportLinuxServerReport))
+
 	// Veeam Auditor API endpoints
 	http.Handle("/api/veeam-reports", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
@@ -437,6 +459,7 @@ func SetupRoutes(staticFS http.FileSystem) {
 	http.Handle("/api/file-share-reports/delete", secureAPIHandler(handlers.HandleDeleteFileShareReport))
 	http.Handle("/api/file-share-reports/generate-script", secureAPIHandler(handlers.HandleGenerateFileShareReportScript))
 	http.Handle("/api/file-share-reports/import", secureAPIHandler(handlers.HandleImportFileShareReport))
+	http.Handle("/api/file-share-reports/html", secureAPIHandler(handlers.HandleGenerateFileShareHTMLReport))
 
 	// SSH Client API endpoints
 	http.Handle("/api/ssh-connections/check", secureAPIHandler(handlers.HandleCheckSSHConnections))

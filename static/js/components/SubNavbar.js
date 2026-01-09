@@ -14,6 +14,7 @@ export class SubNavbar {
                 esxiAuditor: 'ESXi',
                 vsphereAuditor: 'vSphere',
                 windowsAuditor: 'Windows',
+                linuxAuditor: 'Linux',
                 fileShareAuditor: 'File Share',
                 veeamAuditor: 'Veeam',
                 activeDirectoryAuditor: 'Active Directory',
@@ -44,6 +45,7 @@ export class SubNavbar {
                 esxiAuditor: 'ESXi',
                 vsphereAuditor: 'vSphere',
                 windowsAuditor: 'Windows',
+                linuxAuditor: 'Linux',
                 fileShareAuditor: 'Partage de Fichiers',
                 veeamAuditor: 'Veeam',
                 activeDirectoryAuditor: 'Active Directory',
@@ -126,6 +128,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -138,6 +141,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -150,6 +154,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -162,6 +167,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: true },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -174,6 +180,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: true },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -186,6 +193,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -209,7 +217,7 @@ export class SubNavbar {
                     { id: 'hyperv-auditor-list', label: this.t('hypervAuditor'), icon: 'fa-server', active: false },
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
-                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: true },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
@@ -246,7 +254,7 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
-                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
+                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: true },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
                 ]
@@ -282,6 +290,58 @@ export class SubNavbar {
                     { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
                     { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
                     { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
+                    { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: true },
+                    { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
+                ]
+            },
+            'veeam-auditor': {
+                group: 'auditor',
+                items: [
+                    { id: 'hyperv-auditor-list', label: this.t('hypervAuditor'), icon: 'fa-server', active: false },
+                    { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
+                    { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
+                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
+                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
+                    { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
+                    { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
+                ]
+            },
+            'windows-server-auditor': {
+                group: 'auditor',
+                items: [
+                    { id: 'hyperv-auditor-list', label: this.t('hypervAuditor'), icon: 'fa-server', active: false },
+                    { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
+                    { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
+                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
+                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
+                    { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
+                    { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
+                ]
+            },
+            'file-share-auditor': {
+                group: 'auditor',
+                items: [
+                    { id: 'hyperv-auditor-list', label: this.t('hypervAuditor'), icon: 'fa-server', active: false },
+                    { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
+                    { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
+                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
+                    { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
+                    { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
+                    { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }
+                ]
+            },
+            'hyperv-auditor': {
+                group: 'auditor',
+                items: [
+                    { id: 'hyperv-auditor-list', label: this.t('hypervAuditor'), icon: 'fa-server', active: false },
+                    { id: 'esxi-auditor', label: this.t('esxiAuditor'), icon: 'fa-server', active: false },
+                    { id: 'vsphere-auditor', label: this.t('vsphereAuditor'), icon: 'fa-cloud', active: false },
+                    { id: 'windows-server-auditor-list', label: this.t('windowsAuditor'), icon: 'fa-windows', active: false },
+                    { id: 'linux-server-auditor-list', label: this.t('linuxAuditor'), icon: 'fab fa-linux', active: false },
                     { id: 'file-share-auditor-list', label: this.t('fileShareAuditor'), icon: 'fa-folder-open', active: false },
                     { id: 'veeam-auditor-list', label: this.t('veeamAuditor'), icon: 'fa-cloud-upload-alt', active: false },
                     { id: 'active-directory-auditor', label: this.t('activeDirectoryAuditor'), icon: 'fa-sitemap', active: false }

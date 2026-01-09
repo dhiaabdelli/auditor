@@ -12,6 +12,8 @@ import { HyperVAuditorPage } from './pages/HyperVAuditor.js';
 import { HyperVAuditorListPage } from './pages/HyperVAuditorList.js';
 import { WindowsServerAuditorPage } from './pages/WindowsServerAuditor.js';
 import { WindowsServerAuditorListPage } from './pages/WindowsServerAuditorList.js';
+import { LinuxServerAuditorListPage } from './pages/LinuxServerAuditorList.js';
+import { LinuxServerAuditorPage } from './pages/LinuxServerAuditor.js';
 import { FileShareAuditorPage } from './pages/FileShareAuditor.js';
 import { FileShareAuditorListPage } from './pages/FileShareAuditorList.js';
 import { VeeamAuditorPage } from './pages/VeeamAuditor.js';
@@ -941,6 +943,13 @@ class App {
                 break;
             case 'windows-server-auditor-details':
                 page = new WindowsServerAuditorPage();
+                break;
+            case 'linux-auditor':
+            case 'linux-server-auditor-list':
+                page = new LinuxServerAuditorListPage();
+                break;
+            case 'linux-server-auditor-details':
+                page = new LinuxServerAuditorPage();
                 break;
             case 'file-share-auditor':
             case 'file-share-auditor-list':
