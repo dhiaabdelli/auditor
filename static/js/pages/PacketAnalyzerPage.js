@@ -12,12 +12,12 @@ export class PacketAnalyzerPage {
         this.scrollRafPending = false;
         this.lastRenderedStart = null;
         this.lastRenderedEnd = null;
-        
+
         // Virtual scroll range optimization
         this.lastStartIndex = -1;
         this.lastEndIndex = -1;
         this.forceRerender = false;
-        
+
         // Column configuration
         this.availableColumns = [
             { id: 'number', name: '#', enabled: true, width: '60px' },
@@ -34,7 +34,7 @@ export class PacketAnalyzerPage {
             { id: 'length', name: 'Length', enabled: true, width: '80px' },
             { id: 'info', name: 'Info', enabled: true, width: 'auto' }
         ];
-        
+
         // Load column preferences from localStorage
         const savedColumns = localStorage.getItem('packetAnalyzerColumns');
         if (savedColumns) {
@@ -53,9 +53,9 @@ export class PacketAnalyzerPage {
     async render() {
         window.packetAnalyzerInstance = this;
         const session = this.sessions[0]; // Single session design
-        
+
         console.log('PacketAnalyzer render - session exists:', !!session, 'sessions array:', this.sessions);
-        
+
         return `
             <div class="page-container-full">
                 <div class="packet-analyzer-full-container">
@@ -72,20 +72,20 @@ export class PacketAnalyzerPage {
                 <!-- Header -->
                 <div class="packet-header">
                     <div class="packet-header-left">
-                        <h3><i class="fas fa-microscope"></i> Packet Analyzer</h3>
+
                         <div class="packet-header-controls">
                             <select id="interfaceSelect" class="interface-select">
                                 <option value="">Select Network Interface...</option>
                                 ${this.interfaces.length === 0 ? '<option value="" disabled>Loading interfaces...</option>' : ''}
                                 ${this.interfaces.map(iface => {
-                                    // Prioritize description (actual adapter name) over friendlyName
-                                    const displayName = iface.description || iface.friendlyName || iface.name;
-                                    const mac = iface.macAddress ? ` [${iface.macAddress}]` : '';
-                                    // Filter for IPv4 addresses only (not IPv6)
-                                    const ipv4 = iface.addresses && iface.addresses.find(addr => addr.includes('.') && !addr.includes(':'));
-                                    const ip = ipv4 ? ` - ${ipv4}` : '';
-                                    return `<option value="${this.escapeHTML(iface.name)}" title="${this.escapeHTML(iface.name)}">${this.escapeHTML(displayName)}${this.escapeHTML(mac)}${this.escapeHTML(ip)}</option>`;
-                                }).join('')}
+            // Prioritize description (actual adapter name) over friendlyName
+            const displayName = iface.description || iface.friendlyName || iface.name;
+            const mac = iface.macAddress ? ` [${iface.macAddress}]` : '';
+            // Filter for IPv4 addresses only (not IPv6)
+            const ipv4 = iface.addresses && iface.addresses.find(addr => addr.includes('.') && !addr.includes(':'));
+            const ip = ipv4 ? ` - ${ipv4}` : '';
+            return `<option value="${this.escapeHTML(iface.name)}" title="${this.escapeHTML(iface.name)}">${this.escapeHTML(displayName)}${this.escapeHTML(mac)}${this.escapeHTML(ip)}</option>`;
+        }).join('')}
                             </select>
                             <div class="filter-input-wrapper">
                                 <input 
@@ -152,7 +152,7 @@ export class PacketAnalyzerPage {
 
     renderPacketDisplay(session) {
         const filteredPackets = this.getFilteredPackets(session);
-        
+
         return `
             <div class="packet-display-container">
                 <!-- Header -->
@@ -222,10 +222,10 @@ export class PacketAnalyzerPage {
                                         <tr class="packet-empty">
                                             <td colspan="${this.availableColumns.filter(c => c.enabled).length}">
                                                 <div class="packet-empty-state">
-                                                    ${session.packets.length === 0 ? 
-                                                        '<i class="fas fa-inbox fa-2x"></i><p>No packets captured yet</p>' :
-                                                        '<i class="fas fa-filter fa-2x"></i><p>No packets match the filter</p>'
-                                                    }
+                                                    ${session.packets.length === 0 ?
+                    '<i class="fas fa-inbox fa-2x"></i><p>No packets captured yet</p>' :
+                    '<i class="fas fa-filter fa-2x"></i><p>No packets match the filter</p>'
+                }
                                                 </div>
                                             </td>
                                         </tr>
@@ -245,13 +245,13 @@ export class PacketAnalyzerPage {
                             ` : ''}
                         </div>
                         <div class="packet-details-scroll">
-                            ${session.selectedPacketIndex !== null && session.packets[session.selectedPacketIndex] ? 
-                                this.renderPacketDetails(session.packets[session.selectedPacketIndex]) :
-                                `<div class="no-selection">
+                            ${session.selectedPacketIndex !== null && session.packets[session.selectedPacketIndex] ?
+                this.renderPacketDetails(session.packets[session.selectedPacketIndex]) :
+                `<div class="no-selection">
                                     <i class="fas fa-mouse-pointer fa-2x"></i>
                                     <p>Select a packet to view details</p>
                                 </div>`
-                            }
+            }
                         </div>
                     </div>
                 </div>
@@ -262,14 +262,14 @@ export class PacketAnalyzerPage {
     renderTableHeader() {
         return this.availableColumns
             .filter(col => col.enabled)
-            .map(col => `<th style="width: ${col.width}">${col.name}</th>`)
+            .map(col => `<th class="packet-col-${col.id}" style="width: ${col.width}">${col.name}</th>`)
             .join('');
     }
 
     getColumnValue(packet, columnId, time = null) {
         const displayTime = time || (packet.timestamp ? (packet.timestamp.includes(' ') ? packet.timestamp.split(' ')[1] : packet.timestamp) : '');
         const protocol = (packet.protocol || 'UNKNOWN').toLowerCase();
-        
+
         const values = {
             number: packet.number,
             time: displayTime,
@@ -345,7 +345,7 @@ export class PacketAnalyzerPage {
             <table class="packet-detail-table">`;
 
         // Special rendering for different protocols
-        switch(layerName.toLowerCase()) {
+        switch (layerName.toLowerCase()) {
             case 'ethernet':
                 html += `
                     <tr><td>Destination MAC</td><td>${layerData.destinationMAC}${layerData.destinationVendor && layerData.destinationVendor !== 'Unknown' ? ` <span class="mac-vendor">(${layerData.destinationVendor})</span>` : ''}</td></tr>
@@ -354,7 +354,7 @@ export class PacketAnalyzerPage {
                     <tr><td>EtherType</td><td>${layerData.etherType} <span class="eth-hex">${layerData.etherTypeHex}</span></td></tr>
                     <tr><td>Frame Length</td><td>${layerData.frameLength} bytes</td></tr>
                 `;
-                
+
                 if (layerData.vlanTagged) {
                     html += `<tr><td>VLAN</td><td><span class="vlan-tag">802.1Q Tagged</span></td></tr>`;
                 }
@@ -370,7 +370,7 @@ export class PacketAnalyzerPage {
                     <tr><td>Total Length</td><td>${layerData.totalLength || layerData.length} bytes</td></tr>
                     <tr><td>Identification</td><td>${layerData.idHex || '0x0000'} (${layerData.identification || layerData.id})</td></tr>
                 `;
-                
+
                 if (layerData.flags) {
                     const flags = layerData.flags;
                     html += `<tr><td>Flags</td><td>${layerData.flagsRaw !== undefined ? `0x${layerData.flagsRaw.toString(16)}` : ''} `;
@@ -379,7 +379,7 @@ export class PacketAnalyzerPage {
                     if (flags.moreFragments) html += `<span class="ip-flag">MF</span>`;
                     html += `</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Fragment Offset</td><td>${layerData.fragmentOffset !== undefined ? layerData.fragmentOffset : (layerData.fragOffset !== undefined ? layerData.fragOffset : 0)}</td></tr>
                     <tr><td>Time to Live</td><td>${layerData.ttl || 0}</td></tr>
@@ -388,11 +388,11 @@ export class PacketAnalyzerPage {
                     <tr><td>Source Address</td><td>${layerData.sourceIP || 'N/A'}</td></tr>
                     <tr><td>Destination Address</td><td>${layerData.destinationIP || 'N/A'}</td></tr>
                 `;
-                
+
                 if (layerData.payloadLength !== undefined) {
                     html += `<tr><td>Payload Length</td><td>${layerData.payloadLength} bytes</td></tr>`;
                 }
-                
+
                 if (layerData.options && Array.isArray(layerData.options)) {
                     html += `<tr><td colspan="2"><strong>IP Options (${layerData.optionsCount})</strong></td></tr>`;
                     layerData.options.forEach((opt, i) => {
@@ -424,25 +424,25 @@ export class PacketAnalyzerPage {
                     <tr><td>Source Port</td><td>${layerData.srcPort}${layerData.application && layerData.application !== 'Unknown' ? ` <span class="port-app">(${layerData.application})</span>` : ''}</td></tr>
                     <tr><td>Destination Port</td><td>${layerData.dstPort}${layerData.application && layerData.application !== 'Unknown' ? ` <span class="port-app">(${layerData.application})</span>` : ''}</td></tr>
                 `;
-                
+
                 if (layerData.connectionState) {
                     html += `<tr><td>Connection State</td><td><span class="tcp-state">${layerData.connectionState}</span></td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Sequence Number</td><td>${layerData.sequenceNumber !== undefined ? layerData.sequenceNumber : (layerData.seq !== undefined ? layerData.seq : 0)}</td></tr>
                 `;
-                
+
                 if (layerData.nextSequenceNumber !== undefined) {
                     html += `<tr><td class="indent">Next Sequence</td><td>${layerData.nextSequenceNumber}</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Acknowledgment Number</td><td>${layerData.ackNumber !== undefined ? layerData.ackNumber : (layerData.ack !== undefined ? layerData.ack : 0)}</td></tr>
                     <tr><td>Header Length</td><td>${layerData.headerLength || (layerData.dataOffset * 4)} bytes (${layerData.dataOffset} words)</td></tr>
                     <tr><td>Flags</td><td><span class="tcp-flags">${layerData.flags}</span></td></tr>
                 `;
-                
+
                 if (layerData.flagsDetailed) {
                     html += `<tr><td class="indent">Detailed Flags</td><td>`;
                     for (const [flag, value] of Object.entries(layerData.flagsDetailed)) {
@@ -452,7 +452,7 @@ export class PacketAnalyzerPage {
                     }
                     html += `</td></tr>`;
                 }
-                
+
                 // Find window scale option to calculate scaled window
                 let windowScale = null;
                 let windowMultiplier = 1;
@@ -463,39 +463,39 @@ export class PacketAnalyzerPage {
                         windowMultiplier = scaleOption.multiplier || (1 << windowScale);
                     }
                 }
-                
+
                 const rawWindow = layerData.windowSize || layerData.window || 0;
                 const scaledWindow = rawWindow * windowMultiplier;
-                
+
                 html += `
                     <tr><td>Window Size</td><td>${rawWindow} bytes`;
-                
+
                 if (windowScale !== null) {
                     html += ` <span class="window-scaled">(scaled: ${scaledWindow.toLocaleString()} bytes)</span>`;
                 }
-                
+
                 html += `</td></tr>`;
-                
+
                 if (windowScale !== null) {
                     html += `<tr><td class="indent">Window Scale</td><td>Shift: ${windowScale}, Multiplier: ${windowMultiplier.toLocaleString()}</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Checksum</td><td>0x${layerData.checksum ? layerData.checksum.toString(16).padStart(4, '0') : '0000'}</td></tr>
                     <tr><td>Urgent Pointer</td><td>${layerData.urgentPointer !== undefined ? layerData.urgentPointer : (layerData.urgent !== undefined ? layerData.urgent : 0)}</td></tr>
                 `;
-                
+
                 if (layerData.segmentLength !== undefined) {
                     html += `<tr><td>Segment Length</td><td>${layerData.segmentLength} bytes</td></tr>`;
                 }
-                
+
                 html += `<tr><td>Payload Length</td><td>${layerData.payloadLength} bytes</td></tr>`;
-                
+
                 if (layerData.options && layerData.options.length > 0) {
                     html += `<tr><td colspan="2"><strong>TCP Options (${layerData.optionsCount || layerData.options.length})</strong></td></tr>`;
                     layerData.options.forEach((opt, i) => {
                         let optDetails = `<span class="tcp-option">${opt.kind || opt.type}</span>`;
-                        
+
                         // Show detailed values for specific options
                         if (opt.mss !== undefined) {
                             optDetails += ` <span class="tcp-opt-value">MSS: ${opt.mss} bytes</span>`;
@@ -506,7 +506,7 @@ export class PacketAnalyzerPage {
                         } else if (opt.value) {
                             optDetails += ` ${opt.value}`;
                         }
-                        
+
                         html += `<tr><td class="indent">Option ${i + 1}</td><td>${optDetails}</td></tr>`;
                     });
                 }
@@ -537,7 +537,7 @@ export class PacketAnalyzerPage {
                     });
                     html += `</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Transaction ID</td><td>${layerData.idHex || '0x0000'}</td></tr>
                     <tr><td>Flags</td><td>${layerData.flags || '0x0000'}</td></tr>
@@ -555,14 +555,14 @@ export class PacketAnalyzerPage {
                     <tr><td>Authority RRs</td><td>${layerData.authorityCount || 0}</td></tr>
                     <tr><td>Additional RRs</td><td>${layerData.additionalCount || 0}</td></tr>
                 `;
-                
+
                 if (layerData.questions && layerData.questions.length > 0) {
                     html += `<tr><td colspan="2"><strong>Queries</strong></td></tr>`;
                     layerData.questions.forEach((q, i) => {
                         html += `<tr><td class="indent">${q.name}</td><td>Type: ${q.type}, Class: ${q.class}</td></tr>`;
                     });
                 }
-                
+
                 if (layerData.answers && layerData.answers.length > 0) {
                     html += `<tr><td colspan="2"><strong>Answers</strong></td></tr>`;
                     layerData.answers.forEach((a, i) => {
@@ -575,7 +575,7 @@ export class PacketAnalyzerPage {
                 html += `
                     <tr><td>Type</td><td>${layerData.type === 'request' ? 'Request' : 'Response'}</td></tr>
                 `;
-                
+
                 if (layerData.method) {
                     html += `<tr><td>Method</td><td><span class="http-method">${layerData.method}</span></td></tr>`;
                 }
@@ -588,7 +588,7 @@ export class PacketAnalyzerPage {
                 if (layerData.status) {
                     html += `<tr><td>Status</td><td><span class="http-status">${layerData.status}</span></td></tr>`;
                 }
-                
+
                 if (layerData.headers && Object.keys(layerData.headers).length > 0) {
                     html += `<tr><td colspan="2"><strong>Headers</strong></td></tr>`;
                     for (const [key, value] of Object.entries(layerData.headers)) {
@@ -605,7 +605,7 @@ export class PacketAnalyzerPage {
                         <a href="${layerData.url}" target="_blank" class="tls-url">${this.escapeHTML(layerData.url)}</a>
                     </td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Version</td><td><span class="tls-version">${layerData.version}</span></td></tr>
                     <tr><td>Content Type</td><td>${layerData.contentType}</td></tr>
@@ -630,7 +630,7 @@ export class PacketAnalyzerPage {
                     <tr><td>Next Server IP Address</td><td>${layerData.serverIP}</td></tr>
                     <tr><td>Client MAC Address</td><td>${layerData.clientMAC}</td></tr>
                 `;
-                
+
                 if (layerData.options && Object.keys(layerData.options).length > 0) {
                     html += `<tr><td colspan="2"><strong>DHCP Options</strong></td></tr>`;
                     for (const [key, value] of Object.entries(layerData.options)) {
@@ -644,29 +644,29 @@ export class PacketAnalyzerPage {
                     <tr><td>Header Type</td><td><span class="quic-header">${layerData.headerType}</span></td></tr>
                     <tr><td>Packet Type</td><td><span class="quic-type">${layerData.packetType}</span></td></tr>
                 `;
-                
+
                 if (layerData.version !== undefined) {
                     html += `<tr><td>Version</td><td>${layerData.version} <span class="eth-hex">${layerData.versionHex}</span></td></tr>`;
                 }
-                
+
                 if (layerData.destinationConnectionID) {
                     html += `
                         <tr><td>Destination Connection ID</td><td><code class="conn-id">${layerData.destinationConnectionID}</code></td></tr>
                         <tr><td class="indent">Length</td><td>${layerData.destinationConnectionIDLength} bytes</td></tr>
                     `;
                 }
-                
+
                 if (layerData.sourceConnectionID) {
                     html += `
                         <tr><td>Source Connection ID</td><td><code class="conn-id">${layerData.sourceConnectionID}</code></td></tr>
                         <tr><td class="indent">Length</td><td>${layerData.sourceConnectionIDLength} bytes</td></tr>
                     `;
                 }
-                
+
                 if (layerData.keyPhase !== undefined) {
                     html += `<tr><td>Key Phase</td><td>${layerData.keyPhase ? 'Phase 1' : 'Phase 0'}</td></tr>`;
                 }
-                
+
                 html += `<tr><td>Payload Length</td><td>${layerData.payloadLength} bytes</td></tr>`;
                 break;
 
@@ -675,16 +675,16 @@ export class PacketAnalyzerPage {
                 html += `
                     <tr><td>Frame Type</td><td><span class="wifi-type">${layerData.frameType || layerData.type}</span></td></tr>
                 `;
-                
+
                 if (layerData.subtype) {
                     html += `<tr><td>Subtype</td><td>${layerData.subtype}</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Flags</td><td>${layerData.flags}</td></tr>
                     <tr><td>Duration/ID</td><td>${layerData.durationID}</td></tr>
                 `;
-                
+
                 if (layerData.address1) {
                     html += `<tr><td>Address 1 (Receiver)</td><td>${layerData.address1}</td></tr>`;
                 }
@@ -697,7 +697,7 @@ export class PacketAnalyzerPage {
                 if (layerData.address4) {
                     html += `<tr><td>Address 4 (WDS)</td><td>${layerData.address4}</td></tr>`;
                 }
-                
+
                 html += `
                     <tr><td>Fragment Number</td><td>${layerData.fragmentNumber}</td></tr>
                     <tr><td>Sequence Number</td><td>${layerData.sequenceNumber}</td></tr>
@@ -783,7 +783,7 @@ export class PacketAnalyzerPage {
     updatePacketDetails(session) {
         const detailsScroll = document.querySelector('.packet-details-scroll');
         if (!detailsScroll) return;
-        
+
         // Update content area class for mobile CSS
         const contentArea = document.querySelector('.packet-content-area');
         if (contentArea) {
@@ -793,7 +793,7 @@ export class PacketAnalyzerPage {
                 contentArea.classList.remove('has-selection');
             }
         }
-        
+
         if (session.selectedPacketIndex !== null && session.packets[session.selectedPacketIndex]) {
             detailsScroll.innerHTML = this.renderPacketDetails(session.packets[session.selectedPacketIndex]);
         } else {
@@ -804,7 +804,7 @@ export class PacketAnalyzerPage {
                 </div>
             `;
         }
-        
+
         // Update clear selection button visibility
         const detailsHeader = document.querySelector('.packet-details-header');
         if (detailsHeader) {
@@ -826,10 +826,10 @@ export class PacketAnalyzerPage {
         window.packetAnalyzerInstance = this;
         this.attachGlobalHandlers();
         await this.loadInterfaces();
-        
+
         // Setup mobile touch scrolling
         this.setupMobileTouchScrolling();
-        
+
         // Initialize virtual scroll after render
         setTimeout(() => {
             const session = this.sessions[0];
@@ -843,25 +843,25 @@ export class PacketAnalyzerPage {
         try {
             console.log('Loading network interfaces...');
             const response = await fetch('/api/packet-analyzer/interfaces');
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
             console.log('Interfaces response:', data);
 
             if (data.success && data.interfaces && data.interfaces.length > 0) {
                 this.interfaces = data.interfaces;
                 console.log(`Loaded ${data.interfaces.length} network interfaces:`, this.interfaces);
-                
+
                 // Update the dropdown if it exists
                 const interfaceSelect = document.getElementById('interfaceSelect');
                 if (interfaceSelect) {
                     console.log('Updating interface dropdown...');
                     // Clear existing options except the first one
                     interfaceSelect.innerHTML = '<option value="">Select Network Interface...</option>';
-                    
+
                     // Add interface options
                     this.interfaces.forEach(iface => {
                         const option = document.createElement('option');
@@ -917,7 +917,7 @@ export class PacketAnalyzerPage {
                     // Get the friendly name from the selected option
                     const selectedOption = interfaceSelect.options[interfaceSelect.selectedIndex];
                     const interfaceDisplayName = selectedOption ? selectedOption.textContent : interfaceSelect.value;
-                    
+
                     const session = {
                         id: data.sessionId,
                         interface: interfaceSelect.value, // Device name for API calls
@@ -935,22 +935,22 @@ export class PacketAnalyzerPage {
                     console.log('Created session:', session);
                     this.sessions = [session]; // Single session only
                     console.log('Sessions array after assignment:', this.sessions);
-                    
+
                     // Render the table FIRST, then connect WebSocket
                     console.log('About to rerender with session');
                     await this.rerender();
                     console.log('Rerender complete');
-                    
+
                     // Wait for DOM to actually update
                     await new Promise(resolve => setTimeout(resolve, 100));
-                    
+
                     // Verify table exists
                     const tbody = document.getElementById('packetTableBody');
                     console.log('Table body exists after rerender:', !!tbody);
-                    
+
                     // Now connect WebSocket so packets can be added to the already-rendered table
                     this.connectWebSocket(session);
-                    
+
                     this.showNotification('Packet capture started', 'success');
                 } else {
                     console.error('Capture failed:', data.error || data.message);
@@ -985,7 +985,7 @@ export class PacketAnalyzerPage {
             if (session) {
                 // Update selected index
                 session.selectedPacketIndex = index;
-                
+
                 // Update content area class for mobile CSS
                 const contentArea = document.querySelector('.packet-content-area');
                 if (contentArea) {
@@ -995,11 +995,11 @@ export class PacketAnalyzerPage {
                         contentArea.classList.remove('has-selection');
                     }
                 }
-                
+
                 // Update row selection styling
                 const allRows = document.querySelectorAll('.packet-row');
                 allRows.forEach(row => row.classList.remove('selected'));
-                
+
                 if (index !== null) {
                     const selectedRow = document.querySelector(`.packet-row[data-packet-index="${index}"]`);
                     if (selectedRow) {
@@ -1007,7 +1007,7 @@ export class PacketAnalyzerPage {
                         selectedRow.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
                     }
                 }
-                
+
                 // Update packet details sidebar only
                 this.updatePacketDetails(session);
             }
@@ -1036,37 +1036,37 @@ export class PacketAnalyzerPage {
 
             // On mobile, use immediate rendering for better touch responsiveness
             const isMobile = window.innerWidth <= 768;
-            
+
             // Use requestAnimationFrame for smooth rendering during fast scrolling
             if (this.scrollRafPending && !isMobile) {
                 return; // Already scheduled (desktop only)
             }
-            
+
             this.scrollRafPending = true;
             requestAnimationFrame(() => {
                 this.renderVirtualRows(session, isMobile); // Immediate on mobile
                 this.scrollRafPending = false;
             });
         };
-        
+
         // Handle wheel events for immediate rendering during fast scroll
         window.packetAnalyzerHandleWheel = (e) => {
             const session = this.sessions[0];
             if (!session) return;
-            
+
             const panel = document.getElementById('packetListPanel');
             if (!panel) return;
-            
+
             // Render immediately on wheel scroll for better responsiveness
             this.renderVirtualRows(session, true);
         };
-        
+
         window.packetAnalyzerClearPackets = async () => {
             const session = this.sessions[0];
             if (session && !session.capturing) {
                 session.packets = [];
                 session.selectedPacketIndex = null;
-                
+
                 // Clear the packet table
                 const tbody = document.getElementById('packetTableBody');
                 if (tbody) {
@@ -1081,13 +1081,13 @@ export class PacketAnalyzerPage {
                         </tr>
                     `;
                 }
-                
+
                 // Update stats
                 this.updatePacketStats(session);
-                
+
                 // Clear packet details
                 this.updatePacketDetails(session);
-                
+
                 this.showNotification('Packets cleared', 'info');
             }
         };
@@ -1103,8 +1103,8 @@ export class PacketAnalyzerPage {
                     link.href = url;
                     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
                     // Extract just the adapter name from interfaceDisplay (before MAC address)
-                    const adapterName = session.interfaceDisplay ? 
-                        session.interfaceDisplay.split('[')[0].trim().replace(/[^a-zA-Z0-9-_]/g, '_') : 
+                    const adapterName = session.interfaceDisplay ?
+                        session.interfaceDisplay.split('[')[0].trim().replace(/[^a-zA-Z0-9-_]/g, '_') :
                         'session';
                     link.download = `packet-capture-${adapterName}-${timestamp}.json`;
                     document.body.appendChild(link);
@@ -1176,7 +1176,7 @@ export class PacketAnalyzerPage {
                 { id: 'info', name: 'Info', enabled: true, width: 'auto' }
             ];
             localStorage.removeItem('packetAnalyzerColumns');
-            
+
             // Update checkboxes
             this.availableColumns.forEach(col => {
                 const checkbox = document.getElementById(`col_${col.id}`);
@@ -1184,7 +1184,7 @@ export class PacketAnalyzerPage {
                     checkbox.checked = col.enabled;
                 }
             });
-            
+
             // Update table
             const session = this.sessions[0];
             if (session) {
@@ -1199,31 +1199,31 @@ export class PacketAnalyzerPage {
                     console.log('Stopping capture...');
                     await this.stopCapture(session);
                     session.capturing = false;
-                    
+
                     // Update UI
                     const statusBadge = document.querySelector('.packet-status-badge');
                     if (statusBadge) {
                         statusBadge.className = 'packet-status-badge stopped';
                         statusBadge.innerHTML = '<i class="fas fa-circle"></i> Stopped';
                     }
-                    
+
                     const toggleBtn = document.querySelector('[onclick*="packetAnalyzerToggleCapture"]');
                     if (toggleBtn) {
                         toggleBtn.className = 'btn btn-sm btn-success';
                         toggleBtn.innerHTML = '<i class="fas fa-play"></i> Resume';
                     }
-                    
+
                     // Enable Clear and Export buttons
                     const clearBtn = document.querySelector('[onclick*="packetAnalyzerClearPackets"]');
                     if (clearBtn) {
                         clearBtn.disabled = false;
                     }
-                    
+
                     const exportBtn = document.querySelector('[onclick*="packetAnalyzerExportPackets"]');
                     if (exportBtn && session.packets.length > 0) {
                         exportBtn.disabled = false;
                     }
-                    
+
                     this.showNotification('Capture stopped', 'info');
                 } else {
                     // Resume capture with same settings
@@ -1247,25 +1247,25 @@ export class PacketAnalyzerPage {
         session.ws.onmessage = async (event) => {
             try {
                 const data = JSON.parse(event.data);
-                
+
                 // Handle batched packets (array) or single packet (object)
                 const packets = Array.isArray(data) ? data : [data];
-                
+
                 for (const packet of packets) {
                     if (packet.protocol === 'ERROR') {
                         this.showNotification(packet.info, 'error');
                         await this.stopCapture(session);
                         return;
                     }
-                    
+
                     session.packets.push(packet);
-                    
+
                     // Maintain max packet limit
                     if (session.packets.length > this.maxPackets) {
                         session.packets.shift();
                     }
                 }
-                
+
                 // Update display once for the entire batch
                 if (packets.length > 0) {
                     // For large batches, trigger virtual scroll update
@@ -1344,7 +1344,7 @@ export class PacketAnalyzerPage {
     async resumeCapture(session) {
         try {
             console.log('Resuming capture on interface:', session.interface);
-            
+
             // Start a new capture session with the same settings
             const response = await fetch('/api/packet-analyzer/start', {
                 method: 'POST',
@@ -1363,29 +1363,29 @@ export class PacketAnalyzerPage {
                 // Update session with new ID
                 session.id = data.sessionId;
                 session.capturing = true;
-                
+
                 // Reconnect WebSocket
                 this.connectWebSocket(session);
-                
+
                 // Update UI
                 const statusBadge = document.querySelector('.packet-status-badge');
                 if (statusBadge) {
                     statusBadge.className = 'packet-status-badge capturing';
                     statusBadge.innerHTML = '<i class="fas fa-circle"></i> Capturing';
                 }
-                
+
                 const toggleBtn = document.querySelector('[onclick*="packetAnalyzerToggleCapture"]');
                 if (toggleBtn) {
                     toggleBtn.className = 'btn btn-sm btn-danger';
                     toggleBtn.innerHTML = '<i class="fas fa-stop"></i> Stop';
                 }
-                
+
                 // Disable Clear button while capturing
                 const clearBtn = document.querySelector('[onclick*="packetAnalyzerClearPackets"]');
                 if (clearBtn) {
                     clearBtn.disabled = true;
                 }
-                
+
                 this.showNotification('Capture resumed', 'success');
             } else {
                 console.error('Resume failed:', data.error || data.message);
@@ -1405,9 +1405,9 @@ export class PacketAnalyzerPage {
         const searchText = session.filterText.toLowerCase();
         return session.packets.filter(packet => {
             return (packet.source && packet.source.toLowerCase().includes(searchText)) ||
-                   (packet.destination && packet.destination.toLowerCase().includes(searchText)) ||
-                   packet.protocol.toLowerCase().includes(searchText) ||
-                   packet.info.toLowerCase().includes(searchText);
+                (packet.destination && packet.destination.toLowerCase().includes(searchText)) ||
+                packet.protocol.toLowerCase().includes(searchText) ||
+                packet.info.toLowerCase().includes(searchText);
         });
     }
 
@@ -1419,17 +1419,17 @@ export class PacketAnalyzerPage {
             console.log('Rerender - HTML length:', html.length);
             content.innerHTML = html;
             console.log('Rerender - innerHTML set');
-            
+
             // Setup mobile modal backdrop click handler
             this.setupMobileModalHandlers();
-            
+
             // Force a synchronous reflow to ensure DOM is updated
             void content.offsetHeight;
-            
+
             // Check if table body exists now
             const tbody = document.getElementById('packetTableBody');
             console.log('Rerender - packetTableBody exists after innerHTML:', !!tbody);
-            
+
             // Re-load interfaces into dropdown if needed
             const interfaceSelect = document.getElementById('interfaceSelect');
             if (interfaceSelect && this.interfaces.length > 0) {
@@ -1457,23 +1457,23 @@ export class PacketAnalyzerPage {
     getTrafficType(packet) {
         const protocol = (packet.protocol || '').toLowerCase();
         const info = (packet.info || '').toLowerCase();
-        
+
         // Check for malformed/invalid packets first
-        if (packet.protocol === 'ERROR' || 
+        if (packet.protocol === 'ERROR' ||
             (packet.layers && (packet.layers.ethernet?.checksumError || packet.layers.ip?.checksumError || packet.layers.tcp?.checksumError || packet.layers.udp?.checksumError)) ||
             (packet.layers && (packet.layers.dns?.truncated || packet.layers.udp?.truncated))) {
             return 'malformed';
         }
-        
+
         // TLS/SSL traffic (usually over TCP, port 443)
-        if (protocol === 'tls' || 
+        if (protocol === 'tls' ||
             protocol === 'ssl' ||
             (packet.layers && packet.layers.tls) ||
             (packet.srcPort === 443 || packet.dstPort === 443) ||
             info.includes('tls') || info.includes('ssl') || info.includes('handshake')) {
             // Check for TCP problems first if it's also TCP
-            if (protocol === 'tcp' && (info.includes('retransmission') || 
-                info.includes('duplicate ack') || 
+            if (protocol === 'tcp' && (info.includes('retransmission') ||
+                info.includes('duplicate ack') ||
                 info.includes('out-of-order') ||
                 info.includes('fast retransmission') ||
                 info.includes('spurious retransmission'))) {
@@ -1482,66 +1482,66 @@ export class PacketAnalyzerPage {
             // TLS is normal TCP traffic (HTTPS)
             return 'tcp-normal';
         }
-        
+
         // QUIC traffic (usually over UDP)
         if (protocol === 'quic') {
             return 'udp'; // QUIC uses UDP, so use UDP color
         }
-        
+
         // DNS traffic (can be over UDP or TCP)
-        if (protocol === 'dns' || 
+        if (protocol === 'dns' ||
             (packet.layers && packet.layers.dns) ||
             (packet.srcPort === 53 || packet.dstPort === 53) ||
             info.includes('dns') || info.includes('query') || info.includes('response')) {
             return 'udp'; // DNS typically uses UDP, so use UDP color
         }
-        
+
         // Check for TCP problems
         if (protocol === 'tcp') {
             // Check for retransmissions, duplicate ACKs, out-of-order
-            if (info.includes('retransmission') || 
-                info.includes('duplicate ack') || 
+            if (info.includes('retransmission') ||
+                info.includes('duplicate ack') ||
                 info.includes('out-of-order') ||
                 info.includes('fast retransmission') ||
                 info.includes('spurious retransmission')) {
                 return 'tcp-problem';
             }
-            
+
             // Check for STP/Spanning Tree (usually on specific ports or etherType)
-            if (info.includes('stp') || 
+            if (info.includes('stp') ||
                 info.includes('spanning tree') ||
                 (packet.layers && packet.layers.ethernet && packet.layers.ethernet.etherTypeHex === '0x8100')) {
                 return 'control';
             }
-            
+
             // Normal TCP traffic
             return 'tcp-normal';
         }
-        
+
         // UDP traffic
         if (protocol === 'udp') {
             return 'udp';
         }
-        
+
         // ICMP traffic
         if (protocol === 'icmp') {
             return 'icmp';
         }
-        
+
         // ARP traffic
         if (protocol === 'arp') {
             return 'arp';
         }
-        
+
         // Check for STP/Spanning Tree in other protocols
-        if (info.includes('stp') || 
+        if (info.includes('stp') ||
             info.includes('spanning tree') ||
             info.includes('rstp') ||
             info.includes('mstp') ||
             (packet.layers && packet.layers.ethernet && packet.layers.ethernet.etherTypeHex === '0x8100')) {
             return 'control';
         }
-        
+
         // Default to gray for unknown/malformed
         return 'unknown';
     }
@@ -1549,12 +1549,12 @@ export class PacketAnalyzerPage {
     renderVirtualRows(session, immediate = false) {
         const tbody = document.getElementById('packetTableBody');
         const panel = document.getElementById('packetListPanel');
-        
+
         if (!tbody || !panel || !session) return;
 
         const filteredPackets = this.getFilteredPackets(session);
         const totalCount = filteredPackets.length;
-        
+
         // If no packets, set height to 0 and return
         if (totalCount === 0) {
             tbody.innerHTML = '';
@@ -1566,66 +1566,66 @@ export class PacketAnalyzerPage {
         const isMobile = window.innerWidth <= 768;
         const scrollTop = panel.scrollTop;
         const clientHeight = panel.clientHeight;
-        
+
         // On mobile, render all rows to show full info (no virtual scrolling)
         if (isMobile) {
             // Clear existing rows
             tbody.innerHTML = '';
-            tbody.style.position = 'relative';
+            tbody.style.position = '';
             tbody.style.height = 'auto';
-            tbody.style.display = 'block';
-            
+            tbody.style.display = '';
+
             // Use a document fragment for better performance
             const fragment = document.createDocumentFragment();
-            
+
             // Render all rows
             for (let i = 0; i < totalCount; i++) {
                 const packet = filteredPackets[i];
                 if (!packet) continue;
-                
+
                 const packetIndex = session.packets.indexOf(packet);
                 if (packetIndex === -1) continue;
-                
+
                 const protocol = (packet.protocol || 'UNKNOWN').toLowerCase();
                 const time = packet.timestamp ? (packet.timestamp.includes(' ') ? packet.timestamp.split(' ')[1] : packet.timestamp) : '';
                 const trafficType = this.getTrafficType(packet);
-                
+
                 const row = document.createElement('tr');
                 row.className = `packet-row protocol-${protocol} traffic-${trafficType} ${packetIndex === session.selectedPacketIndex ? 'selected' : ''}`;
-                row.style.position = 'relative';
-                row.style.width = '100%';
-                
+                row.style.position = '';
+                row.style.width = '';
+
                 row.dataset.packetIndex = packetIndex;
                 row.onclick = () => window.packetAnalyzerSelectPacket(packetIndex);
-                
+
                 // Build row with enabled columns
                 const cells = this.availableColumns
                     .filter(col => col.enabled)
                     .map(col => {
                         const value = this.getColumnValue(packet, col.id, time);
                         const style = col.width === 'auto' ? 'flex: 1;' : `width: ${col.width}; min-width: ${col.width}; max-width: ${col.width};`;
-                        return `<td style="${style}">${value}</td>`;
+                        return `<td class="packet-col-${col.id}" style="${style}">${value}</td>`;
                     })
                     .join('');
-                
+
                 row.innerHTML = cells;
                 fragment.appendChild(row);
             }
-            
+
             tbody.appendChild(fragment);
             this.lastStartIndex = 0;
             this.lastEndIndex = totalCount;
             return;
         }
-        
+
         // Desktop: use virtual scrolling with fixed row height
         const rowHeight = 32; // Force a consistent row height (matching CSS)
-        
+
         // Calculate visible range
         const visibleCount = Math.ceil(clientHeight / rowHeight);
         const startIndex = Math.max(0, Math.floor(scrollTop / rowHeight) - 20); // 20 rows buffer
         const endIndex = Math.min(totalCount, startIndex + visibleCount + 40); // 40 rows buffer
-        
+
         // Only re-render if the range changed or forced
         if (!immediate && this.lastStartIndex === startIndex && this.lastEndIndex === endIndex && !this.forceRerender) {
             // Still update tbody height to be safe
@@ -1639,25 +1639,25 @@ export class PacketAnalyzerPage {
 
         // Clear existing rows
         tbody.innerHTML = '';
-        
+
         // Use a document fragment for better performance
         const fragment = document.createDocumentFragment();
-        
+
         // Render visible rows
         for (let i = startIndex; i < endIndex; i++) {
             const packet = filteredPackets[i];
             if (!packet) continue;
-            
+
             const packetIndex = session.packets.indexOf(packet);
             if (packetIndex === -1) continue;
-            
+
             const protocol = (packet.protocol || 'UNKNOWN').toLowerCase();
             const time = packet.timestamp ? (packet.timestamp.includes(' ') ? packet.timestamp.split(' ')[1] : packet.timestamp) : '';
             const trafficType = this.getTrafficType(packet);
-            
+
             const row = document.createElement('tr');
             row.className = `packet-row protocol-${protocol} traffic-${trafficType} ${packetIndex === session.selectedPacketIndex ? 'selected' : ''}`;
-            
+
             // Critical for virtual scroll: absolute positioning with top
             row.style.position = 'absolute';
             row.style.top = `${i * rowHeight}px`;
@@ -1665,26 +1665,26 @@ export class PacketAnalyzerPage {
             row.style.right = '0';
             row.style.height = `${rowHeight}px`;
             row.style.width = '100%';
-            
+
             row.dataset.packetIndex = packetIndex;
             row.onclick = () => window.packetAnalyzerSelectPacket(packetIndex);
-            
+
             // Build row with enabled columns
             const cells = this.availableColumns
                 .filter(col => col.enabled)
                 .map(col => {
                     const value = this.getColumnValue(packet, col.id, time);
                     const style = col.width === 'auto' ? 'flex: 1;' : `width: ${col.width}; min-width: ${col.width}; max-width: ${col.width};`;
-                    return `<td style="${style}">${value}</td>`;
+                    return `<td class="packet-col-${col.id}" style="${style}">${value}</td>`;
                 })
                 .join('');
-            
+
             row.innerHTML = cells;
             fragment.appendChild(row);
         }
-        
+
         tbody.appendChild(fragment);
-        
+
         // Always update tbody height to maintain scroll
         tbody.style.position = 'relative';
         tbody.style.height = `${totalCount * rowHeight}px`;
@@ -1701,7 +1701,7 @@ export class PacketAnalyzerPage {
             setTimeout(() => {
                 requestAnimationFrame(() => {
                     this.renderVirtualRows(session);
-                    
+
                     // Auto-scroll to bottom only if at bottom and auto-scroll is enabled
                     if (this.isAtBottom && session.autoScroll !== false) {
                         const panel = document.getElementById('packetListPanel');
@@ -1718,11 +1718,11 @@ export class PacketAnalyzerPage {
     updatePacketStats(session) {
         const packetCount = document.getElementById('packetCount');
         const displayedCount = document.getElementById('displayedCount');
-        
+
         if (packetCount) {
             packetCount.textContent = session.packets.length;
         }
-        
+
         if (displayedCount) {
             const filteredPackets = this.getFilteredPackets(session);
             displayedCount.textContent = filteredPackets.length;
@@ -1735,7 +1735,7 @@ export class PacketAnalyzerPage {
         if (header) {
             header.innerHTML = this.renderTableHeader();
         }
-        
+
         // Re-render all visible rows
         this.renderVirtualRows(session);
     }
@@ -1851,7 +1851,7 @@ export class PacketAnalyzerPage {
             </div>
         `;
         document.body.appendChild(modal);
-        
+
         // Click outside to close
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1899,7 +1899,7 @@ export class PacketAnalyzerPage {
             </div>
         `;
         document.body.appendChild(modal);
-        
+
         // Click outside to close
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
@@ -1926,7 +1926,7 @@ export class PacketAnalyzerPage {
     async unmount() {
         // Stop all active captures and close WebSockets
         console.log('[PacketAnalyzer] Unmounting - stopping all captures');
-        
+
         const stopPromises = [];
         for (const session of this.sessions) {
             if (session.capturing || session.ws) {
@@ -1939,23 +1939,23 @@ export class PacketAnalyzerPage {
                     }
                     session.ws = null;
                 }
-                
+
                 // Stop capture on backend
                 if (session.capturing && session.id) {
                     stopPromises.push(this.stopCapture(session));
                 }
             }
         }
-        
+
         // Wait for all captures to stop
         if (stopPromises.length > 0) {
             await Promise.all(stopPromises);
         }
-        
+
         // Clear sessions
         this.sessions = [];
         window.packetAnalyzerInstance = null;
-        
+
         console.log('[PacketAnalyzer] Unmount complete - all captures stopped');
     }
 }

@@ -7,11 +7,12 @@
     max-width: 100% !important;
     position: fixed;
     background: #0f172a;
-    top: 45px; /* Just header on desktop */
+    top: 55px;
+    /* Just header on desktop */
     left: 0;
     right: 0;
     bottom: 0;
-    height: calc(100vh - 45px);
+    height: calc(100vh - 55px);
     padding-bottom: 56px !important;
     box-sizing: border-box;
     display: flex;
@@ -21,8 +22,9 @@
 }
 
 body.has-sub-navbar .page-container-full:has(.ping-tracer-full-container) {
-    top: 81px; /* Header (45px) + sub-navbar (36px) */
-    height: calc(100vh - 81px);
+    top: 91px;
+    /* Header (55px) + sub-navbar (36px) */
+    height: calc(100vh - 91px);
     padding-bottom: 56px !important;
     box-sizing: border-box;
 }
@@ -30,13 +32,15 @@ body.has-sub-navbar .page-container-full:has(.ping-tracer-full-container) {
 /* On mobile, account for page navbar */
 @media (max-width: 768px) {
     .page-container-full:has(.ping-tracer-full-container) {
-        top: 45px; /* Header only (no page-navbar) */
-        height: calc(100vh - 45px);
+        top: 55px;
+        /* Header only (no page-navbar) */
+        height: calc(100vh - 55px);
     }
 
     body.has-sub-navbar .page-container-full:has(.ping-tracer-full-container) {
-        top: 81px; /* Header (45px) + sub-navbar (36px) */
-        height: calc(100vh - 81px);
+        top: 86px;
+        /* Header (50px) + sub-navbar (36px) */
+        height: calc(100vh - 91px);
     }
 }
 
@@ -299,7 +303,8 @@ body:has(.ping-tracer-full-container) {
     font-size: 0.8125rem;
     color: #3b82f6;
     font-weight: 500;
-    flex: 1; /* Allow to grow to fill space */
+    flex: 1;
+    /* Allow to grow to fill space */
 }
 
 .discovery-spinner {
@@ -309,21 +314,26 @@ body:has(.ping-tracer-full-container) {
     border-radius: 50%;
     border-top-color: #3b82f6;
     animation: spin 1s linear infinite;
-    flex-shrink: 0; /* Prevent shrinking */
+    flex-shrink: 0;
+    /* Prevent shrinking */
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .discovery-progress-bar {
-    width: 100%; /* Use full width */
+    width: 100%;
+    /* Use full width */
     height: 6px;
     background: #1e293b;
     border-radius: 3px;
     overflow: hidden;
     position: relative;
-    flex: 1; /* Grow to fill remaining space */
+    flex: 1;
+    /* Grow to fill remaining space */
 }
 
 .discovery-progress-value {
@@ -331,16 +341,29 @@ body:has(.ping-tracer-full-container) {
     top: 0;
     left: 0;
     height: 100%;
-    width: 30%; /* Slightly smaller for better effect on wide bar */
+    width: 30%;
+    /* Slightly smaller for better effect on wide bar */
     background: #3b82f6;
     border-radius: 3px;
-    animation: indeterminate 2s infinite ease-in-out; /* Slower animation for long bar */
+    animation: indeterminate 2s infinite ease-in-out;
+    /* Slower animation for long bar */
 }
 
 @keyframes indeterminate {
-    0% { left: -30%; width: 30%; }
-    50% { left: 40%; width: 40%; }
-    100% { left: 100%; width: 30%; }
+    0% {
+        left: -30%;
+        width: 30%;
+    }
+
+    50% {
+        left: 40%;
+        width: 40%;
+    }
+
+    100% {
+        left: 100%;
+        width: 30%;
+    }
 }
 
 .results-stats {
@@ -454,8 +477,8 @@ body:has(.ping-tracer-full-container) {
 /* Responsive */
 @media (max-width: 768px) {
     .page-container-full:has(.ping-tracer-full-container) {
-        top: 50px;
-        height: calc(100vh - 50px);
+        top: 55px;
+        height: calc(100vh - 55px);
         padding-bottom: 0 !important;
         overflow: hidden;
     }
@@ -469,10 +492,12 @@ body:has(.ping-tracer-full-container) {
 
     .ping-tracer-form {
         position: fixed;
-        top: 45px; /* Start below header (no page-navbar) */
+        top: 55px;
+        /* Start below header (no page-navbar) */
         left: -320px;
         width: 320px;
-        height: calc(100vh - 45px - 50px); /* Full height minus header and footer */
+        height: calc(100vh - 55px - 50px);
+        /* Full height minus header and footer */
         z-index: 999;
         transform: translateX(0);
         border-right: 1px solid #334155;
@@ -484,7 +509,8 @@ body:has(.ping-tracer-full-container) {
 
     /* Adjust for sub-navbar */
     body.has-sub-navbar .ping-tracer-form {
-        top: 81px; /* Header (45px) + sub-navbar (36px) */
+        top: 86px;
+        /* Header (50px) + sub-navbar (36px) */
         height: calc(100vh - 81px - 50px);
     }
 
@@ -493,7 +519,8 @@ body:has(.ping-tracer-full-container) {
     }
 
     .ping-tracer-sidebar-overlay {
-        top: 45px; /* Below header */
+        top: 55px;
+        /* Below header */
         bottom: 50px;
     }
 

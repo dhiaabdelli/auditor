@@ -3,21 +3,21 @@ package handlers
 import (
 	// Standard library - database
 	"database/sql"
-	
+
 	// Standard library - encoding
 	"encoding/json"
-	
+
 	// Standard library - io
 	"io"
-	
+
 	// Standard library - net
 	"net/http"
-	
+
 	// Standard library - other
 	"fmt"
 	"strconv"
 	"strings"
-	
+
 	// Internal packages
 	"network-script-generator/internal/database"
 	"network-script-generator/internal/utils"
@@ -345,13 +345,13 @@ func HandleDeleteCategory(w http.ResponseWriter, r *http.Request) {
 func HandleGetDocuments(w http.ResponseWriter, r *http.Request) {
 	categoryID := r.URL.Query().Get("category")
 	subcategoryID := r.URL.Query().Get("subcategory")
-	
+
 	var rows *sql.Rows
 	var err error
-	
+
 	if subcategoryID != "" {
-		subID, err := strconv.Atoi(subcategoryID)
-		if err != nil {
+		subID, err2 := strconv.Atoi(subcategoryID)
+		if err2 != nil {
 			http.Error(w, "invalid subcategory ID", http.StatusBadRequest)
 			return
 		}
@@ -361,8 +361,8 @@ func HandleGetDocuments(w http.ResponseWriter, r *http.Request) {
 			subID,
 		)
 	} else if categoryID != "" {
-		catID, err := strconv.Atoi(categoryID)
-		if err != nil {
+		catID, err3 := strconv.Atoi(categoryID)
+		if err3 != nil {
 			http.Error(w, "invalid category ID", http.StatusBadRequest)
 			return
 		}
@@ -408,8 +408,8 @@ func HandleGetDocuments(w http.ResponseWriter, r *http.Request) {
 
 		doc := map[string]interface{}{
 			"id":              id,
-			"category":       catIDStr,
-			"subcategory":    subIDStr,
+			"category":        catIDStr,
+			"subcategory":     subIDStr,
 			"title":           title.String,
 			"content":         content.String,
 			"tags":            tagsArray,
@@ -725,4 +725,3 @@ func HandleDeleteAttachment(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
 }
-

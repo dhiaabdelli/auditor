@@ -30,10 +30,11 @@ export class SpeedtestPage {
         return `
             <div class="speedtest-dashboard">
                 <div class="speedtest-header-section" id="speedtestHeaderSection">
+${this.isRunning && this.currentTest ? `
                     <div class="speedtest-header">
-                        <h2></h2>
-                        ${this.isRunning && this.currentTest ? this.renderHeaderStats() : ''}
+                        ${this.renderHeaderStats()}
                     </div>
+                    ` : ''}
 
                     <div class="speedtest-controls">
                         ${!this.isRunning ? `
@@ -161,7 +162,7 @@ export class SpeedtestPage {
             'complete': 'fa-check-circle',
             'idle': 'fa-spinner fa-spin'
         };
-        
+
         const phaseLabels = {
             'ping': 'Testing Ping & Jitter',
             'download': 'Testing Download Speed',
@@ -169,10 +170,10 @@ export class SpeedtestPage {
             'complete': 'Test Complete',
             'idle': 'Initializing Test'
         };
-        
+
         const icon = phaseIcons[this.currentPhase] || 'fa-spinner fa-spin';
         const label = phaseLabels[this.currentPhase] || 'Running Test';
-        
+
         return `
             <div class="speedtest-phase-indicator" id="phaseIndicator" data-phase="${this.currentPhase}">
                 <div class="phase-indicator-content">
@@ -185,28 +186,28 @@ export class SpeedtestPage {
 
     renderHeaderStats() {
         if (!this.currentTest) return '';
-        
+
         // Use smoothed values for display to prevent rapid changes
-        const downloadValue = this.smoothedValues.downloadSpeed !== null ? 
-            this.smoothedValues.downloadSpeed.toFixed(2) : 
-            (this.currentTest.downloadSpeed !== null && this.currentTest.downloadSpeed !== undefined ? 
+        const downloadValue = this.smoothedValues.downloadSpeed !== null ?
+            this.smoothedValues.downloadSpeed.toFixed(2) :
+            (this.currentTest.downloadSpeed !== null && this.currentTest.downloadSpeed !== undefined ?
                 this.currentTest.downloadSpeed.toFixed(2) : '--');
-        
-        const uploadValue = this.smoothedValues.uploadSpeed !== null ? 
-            this.smoothedValues.uploadSpeed.toFixed(2) : 
-            (this.currentTest.uploadSpeed !== null && this.currentTest.uploadSpeed !== undefined ? 
+
+        const uploadValue = this.smoothedValues.uploadSpeed !== null ?
+            this.smoothedValues.uploadSpeed.toFixed(2) :
+            (this.currentTest.uploadSpeed !== null && this.currentTest.uploadSpeed !== undefined ?
                 this.currentTest.uploadSpeed.toFixed(2) : '--');
-        
-        const pingValue = this.smoothedValues.ping !== null ? 
-            this.smoothedValues.ping.toFixed(2) : 
-            (this.currentTest.ping !== null && this.currentTest.ping !== undefined ? 
+
+        const pingValue = this.smoothedValues.ping !== null ?
+            this.smoothedValues.ping.toFixed(2) :
+            (this.currentTest.ping !== null && this.currentTest.ping !== undefined ?
                 this.currentTest.ping.toFixed(2) : '--');
-        
+
         // Show active phase indicator
         const downloadActive = this.currentPhase === 'download' ? 'active' : '';
         const uploadActive = this.currentPhase === 'upload' ? 'active' : '';
         const pingActive = this.currentPhase === 'ping' ? 'active' : '';
-        
+
         return `
             <div class="speedtest-header-stats">
                 <div class="speedtest-header-stat ${pingActive}" data-phase="ping">
@@ -503,19 +504,19 @@ export class SpeedtestPage {
                     </thead>
                     <tbody>
                         ${results.map(result => {
-                            const date = new Date(result.timestamp);
-                            const formattedDate = date.toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                            });
-                            const formattedTime = date.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                second: '2-digit'
-                            });
-                            
-                            return `
+            const date = new Date(result.timestamp);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            const formattedTime = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            return `
                             <tr>
                                 <td>
                                     <div class="speedtest-table-date">
@@ -577,7 +578,7 @@ export class SpeedtestPage {
                                 </td>
                             </tr>
                         `;
-                        }).join('')}
+        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -587,7 +588,7 @@ export class SpeedtestPage {
     async mount() {
         window.speedtestPageInstance = this;
         this.isLoading = true;
-        
+
         // Load data in parallel
         await Promise.all([
             this.loadServers(),
@@ -595,19 +596,19 @@ export class SpeedtestPage {
             this.loadStats(),
             this.loadHistory()
         ]);
-        
+
         this.attachEventListeners();
         await this.loadCharts();
-        
+
         // Check for running speedtest tasks and reconnect if needed
         this.checkForRunningTasks();
-        
+
         // Hide loading skeletons
         this.isLoading = false;
         this.updateLatestStats();
         this.updateOverallStats();
         this.updateHistoryUI();
-        
+
         // Re-render charts without skeleton
         const chartsGrid = document.querySelector('.speedtest-charts-grid');
         if (chartsGrid) {
@@ -656,7 +657,7 @@ export class SpeedtestPage {
             await this.loadCharts();
         }
     }
-    
+
     async checkForRunningTasks() {
         // Check if there are any running speedtest tasks
         try {
@@ -665,16 +666,16 @@ export class SpeedtestPage {
                     'Authorization': `Bearer ${window.api?.apiKey || ''}`
                 }
             });
-            
+
             if (response.ok) {
                 const tasks = await response.json();
                 // Response is an array of tasks, not wrapped in {success, tasks}
                 if (Array.isArray(tasks)) {
                     const speedtestTasks = tasks.filter(
-                        task => task.metadata && task.metadata.type === 'speedtest' && 
-                               (task.status === 'running' || task.status === 'pending')
+                        task => task.metadata && task.metadata.type === 'speedtest' &&
+                            (task.status === 'running' || task.status === 'pending')
                     );
-                    
+
                     if (speedtestTasks.length > 0) {
                         const task = speedtestTasks[0];
                         // The task will continue in background and update via WebSocket
@@ -691,8 +692,8 @@ export class SpeedtestPage {
                                     const checkTasks = await checkResponse.json();
                                     if (Array.isArray(checkTasks)) {
                                         const stillRunning = checkTasks.find(
-                                            t => t.id === task.id && 
-                                            (t.status === 'running' || t.status === 'pending')
+                                            t => t.id === task.id &&
+                                                (t.status === 'running' || t.status === 'pending')
                                         );
                                         if (!stillRunning) {
                                             // Task completed, reload all data
@@ -782,26 +783,26 @@ export class SpeedtestPage {
             // Remove existing listeners to avoid duplicates
             const newBtn = btn.cloneNode(true);
             btn.parentNode.replaceChild(newBtn, btn);
-            
+
             newBtn.addEventListener('click', async (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const period = newBtn.dataset.period;
                 if (!period) return;
-                
+
                 this.chartPeriod = period;
-                
+
                 // Update active state
                 const allBtns = document.querySelectorAll('.chart-filter-btn');
                 allBtns.forEach(b => b.classList.remove('active'));
                 newBtn.classList.add('active');
-                
+
                 // Show loading state
                 newBtn.style.opacity = '0.7';
                 newBtn.style.cursor = 'wait';
                 newBtn.disabled = true;
-                
+
                 try {
                     await this.loadCharts();
                 } catch (error) {
@@ -830,7 +831,7 @@ export class SpeedtestPage {
             serverName: null,
             serverLocation: null
         };
-        
+
         // Reset smoothed values
         this.smoothedValues = {
             downloadSpeed: null,
@@ -921,30 +922,30 @@ export class SpeedtestPage {
         if (update.downloadSpeed !== undefined && update.downloadSpeed > 0) {
             // Store raw value
             this.currentTest.downloadSpeed = update.downloadSpeed;
-            
+
             // Always update smoothed values immediately for real-time feel
             if (this.smoothedValues.downloadSpeed === null) {
                 this.smoothedValues.downloadSpeed = update.downloadSpeed;
             } else {
                 // Exponential moving average for smoother updates
                 const smoothingFactor = 0.3; // 0.3 = 30% new, 70% old
-                this.smoothedValues.downloadSpeed = 
-                    (smoothingFactor * update.downloadSpeed) + 
+                this.smoothedValues.downloadSpeed =
+                    (smoothingFactor * update.downloadSpeed) +
                     ((1 - smoothingFactor) * this.smoothedValues.downloadSpeed);
             }
         }
         if (update.uploadSpeed !== undefined && update.uploadSpeed > 0) {
             // Store raw value
             this.currentTest.uploadSpeed = update.uploadSpeed;
-            
+
             // Always update smoothed values immediately for real-time feel
             if (this.smoothedValues.uploadSpeed === null) {
                 this.smoothedValues.uploadSpeed = update.uploadSpeed;
             } else {
                 // Exponential moving average for smoother updates
                 const smoothingFactor = 0.3; // 0.3 = 30% new, 70% old
-                this.smoothedValues.uploadSpeed = 
-                    (smoothingFactor * update.uploadSpeed) + 
+                this.smoothedValues.uploadSpeed =
+                    (smoothingFactor * update.uploadSpeed) +
                     ((1 - smoothingFactor) * this.smoothedValues.uploadSpeed);
             }
         }
@@ -967,7 +968,7 @@ export class SpeedtestPage {
 
         // Always update header stats immediately for live values (no throttling)
         this.updateHeaderStats();
-        
+
         // Throttle full UI updates to prevent too frequent re-renders
         const now = Date.now();
         if (now - this.lastUpdateTime >= this.updateThrottle) {
@@ -988,17 +989,17 @@ export class SpeedtestPage {
             this.smoothedValues.uploadSpeed = this.currentTest.uploadSpeed;
             this.smoothedValues.ping = this.currentTest.ping;
             this.smoothedValues.jitter = this.currentTest.jitter;
-            
+
             // Update UI immediately
             this.updateUI();
             this.updateHeaderStats();
-            
+
             // Remove progress bar from DOM
             const progressContainer = document.querySelector('.speedtest-progress');
             if (progressContainer) {
                 progressContainer.style.display = 'none';
             }
-            
+
             // Reload all data and update stats with final values
             await this.loadLatestResult();
             await this.loadStats();
@@ -1090,7 +1091,7 @@ export class SpeedtestPage {
 
     async loadCharts() {
         const metrics = ['ping', 'download', 'upload', 'jitter'];
-        
+
         for (const metric of metrics) {
             try {
                 const response = await fetch(`/api/speedtest/chart?metric=${metric}&period=${this.chartPeriod}`, {
@@ -1103,10 +1104,10 @@ export class SpeedtestPage {
                     const data = await response.json();
                     if (data.success && data.data) {
                         // Check if there's actual data
-                        const hasData = data.data.labels && data.data.labels.length > 0 && 
-                                       data.data.datasets && data.data.datasets.length > 0 &&
-                                       data.data.datasets.some(ds => ds.data && ds.data.length > 0);
-                        
+                        const hasData = data.data.labels && data.data.labels.length > 0 &&
+                            data.data.datasets && data.data.datasets.length > 0 &&
+                            data.data.datasets.some(ds => ds.data && ds.data.length > 0);
+
                         if (hasData) {
                             this.renderChart(metric, data.data);
                         } else {
@@ -1139,12 +1140,12 @@ export class SpeedtestPage {
 
         const ctx = canvas.getContext('2d');
         const container = canvas.parentElement;
-        
+
         if (!container) return;
 
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
+
         // Set canvas size
         canvas.width = container.clientWidth || 400;
         canvas.height = container.clientHeight || 200;
@@ -1171,7 +1172,7 @@ export class SpeedtestPage {
         }
 
         const ctx = canvas.getContext('2d');
-        
+
         // Check if Chart.js is available
         if (typeof Chart === 'undefined') {
             return;
@@ -1276,7 +1277,7 @@ export class SpeedtestPage {
                     }
                 }
             });
-            
+
             // Force resize after creation
             setTimeout(() => {
                 if (this.charts[metric]) {
@@ -1331,11 +1332,11 @@ export class SpeedtestPage {
                 }
             }
         }
-        
+
         if (viewAllBtn) {
             // Update button text with count
             viewAllBtn.innerHTML = `<i class="fas fa-external-link-alt"></i> View All (${this.totalResults || 0})`;
-            
+
             if (this.totalResults > 0) {
                 viewAllBtn.style.display = 'inline-flex';
             } else {
@@ -1365,13 +1366,13 @@ export class SpeedtestPage {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
         // Load all history for modal
         let modalPage = 1;
         const modalPageSize = 15;
-        
+
         const loadModalHistory = async () => {
             try {
                 const offset = (modalPage - 1) * modalPageSize;
@@ -1386,7 +1387,7 @@ export class SpeedtestPage {
                     if (data.success) {
                         const results = data.results || [];
                         const total = data.total || 0;
-                        
+
                         // Render table
                         const bodyEl = document.getElementById('modalHistoryBody');
                         if (bodyEl) {
@@ -1396,7 +1397,7 @@ export class SpeedtestPage {
                                 bodyEl.innerHTML = this.renderHistoryTable(results);
                             }
                         }
-                        
+
                         // Update pagination
                         updateModalPagination(modalPage, total, modalPageSize);
                     }
@@ -1405,60 +1406,60 @@ export class SpeedtestPage {
                 // Silent error handling
             }
         };
-        
+
         // Update modal pagination
         const updateModalPagination = (page, total, pageSize) => {
             const paginationEl = document.getElementById('modalHistoryPagination');
             if (!paginationEl) return;
-            
+
             const totalPages = Math.ceil(total / pageSize);
-            
+
             if (totalPages <= 1) {
                 paginationEl.innerHTML = '';
                 return;
             }
-            
+
             let html = '';
-            
+
             // Previous button
             html += `<button class="pagination-btn" ${page === 1 ? 'disabled' : ''} data-page="${page - 1}">
                 <i class="fas fa-chevron-left"></i>
             </button>`;
-            
+
             // Page numbers
             const maxVisible = 5;
             let startPage = Math.max(1, page - Math.floor(maxVisible / 2));
             let endPage = Math.min(totalPages, startPage + maxVisible - 1);
-            
+
             if (endPage - startPage < maxVisible - 1) {
                 startPage = Math.max(1, endPage - maxVisible + 1);
             }
-            
+
             if (startPage > 1) {
                 html += `<button class="pagination-btn" data-page="1">1</button>`;
                 if (startPage > 2) {
                     html += `<span class="pagination-ellipsis">...</span>`;
                 }
             }
-            
+
             for (let i = startPage; i <= endPage; i++) {
                 html += `<button class="pagination-btn ${i === page ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
-            
+
             if (endPage < totalPages) {
                 if (endPage < totalPages - 1) {
                     html += `<span class="pagination-ellipsis">...</span>`;
                 }
                 html += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
             }
-            
+
             // Next button
             html += `<button class="pagination-btn" ${page === totalPages ? 'disabled' : ''} data-page="${page + 1}">
                 <i class="fas fa-chevron-right"></i>
             </button>`;
-            
+
             paginationEl.innerHTML = html;
-            
+
             // Attach event listeners
             paginationEl.querySelectorAll('.pagination-btn:not([disabled])').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -1470,15 +1471,15 @@ export class SpeedtestPage {
                 });
             });
         };
-        
+
         // Close modal handlers
         const closeModal = () => {
             document.body.removeChild(modal);
         };
-        
+
         modal.querySelector('.speedtest-history-modal-close').addEventListener('click', closeModal);
         modal.querySelector('.speedtest-history-modal-overlay').addEventListener('click', closeModal);
-        
+
         // Load initial data
         await loadModalHistory();
     }
@@ -1506,19 +1507,19 @@ export class SpeedtestPage {
                     </thead>
                     <tbody>
                         ${results.map(result => {
-                            const date = new Date(result.timestamp);
-                            const formattedDate = date.toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                            });
-                            const formattedTime = date.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                second: '2-digit'
-                            });
-                            
-                            return `
+            const date = new Date(result.timestamp);
+            const formattedDate = date.toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            const formattedTime = date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+
+            return `
                             <tr>
                                 <td>
                                     <div class="speedtest-table-date">
@@ -1578,7 +1579,7 @@ export class SpeedtestPage {
                                 </td>
                             </tr>
                             `;
-                        }).join('')}
+        }).join('')}
                     </tbody>
                 </table>
             </div>
@@ -1640,7 +1641,7 @@ export class SpeedtestPage {
         if (progressContainer) {
             progressContainer.style.display = this.isRunning ? 'block' : 'none';
         }
-        
+
     }
 
     updateLatestStats() {
@@ -1653,70 +1654,75 @@ export class SpeedtestPage {
 
     updateHeaderStats() {
         const headerSection = document.getElementById('speedtestHeaderSection');
-        if (headerSection && this.isRunning && this.currentTest) {
-            const header = headerSection.querySelector('.speedtest-header');
-            if (header) {
-                const existingStats = header.querySelector('.speedtest-header-stats');
-                if (existingStats) {
-                    // Update existing stats with live smoothed values (for real-time feel)
-                    const stats = existingStats.querySelectorAll('.speedtest-header-stat');
-                    if (stats.length >= 3) {
-                        // Update active states based on current phase
-                        stats.forEach(stat => {
-                            const phase = stat.dataset.phase;
-                            if (phase === this.currentPhase) {
-                                stat.classList.add('active');
-                            } else {
-                                stat.classList.remove('active');
-                            }
-                        });
-                        
-                        // Update ping (first stat)
-                        const pingValue = stats[0].querySelector('.speedtest-header-stat-value');
-                        if (pingValue) {
-                            const ping = this.smoothedValues.ping !== null ? 
-                                this.smoothedValues.ping : 
-                                (this.currentTest.ping !== null && this.currentTest.ping !== undefined ? 
-                                    this.currentTest.ping : null);
-                            pingValue.textContent = ping !== null ? ping.toFixed(2) : '--';
-                        }
-                        
-                        // Update download (second stat)
-                        const downloadValue = stats[1].querySelector('.speedtest-header-stat-value');
-                        if (downloadValue) {
-                            const download = this.smoothedValues.downloadSpeed !== null ? 
-                                this.smoothedValues.downloadSpeed : 
-                                (this.currentTest.downloadSpeed !== null && this.currentTest.downloadSpeed !== undefined ? 
-                                    this.currentTest.downloadSpeed : null);
-                            downloadValue.textContent = download !== null ? download.toFixed(2) : '--';
-                        }
-                        
-                        // Update upload (third stat)
-                        const uploadValue = stats[2].querySelector('.speedtest-header-stat-value');
-                        if (uploadValue) {
-                            const upload = this.smoothedValues.uploadSpeed !== null ? 
-                                this.smoothedValues.uploadSpeed : 
-                                (this.currentTest.uploadSpeed !== null && this.currentTest.uploadSpeed !== undefined ? 
-                                    this.currentTest.uploadSpeed : null);
-                            uploadValue.textContent = upload !== null ? upload.toFixed(2) : '--';
-                        }
-                    }
-                } else {
-                    // Insert stats if they don't exist
-                    const h2 = header.querySelector('h2');
-                    if (h2) {
-                        h2.insertAdjacentHTML('afterend', this.renderHeaderStats());
-                    }
-                }
+        if (!headerSection) return;
+
+        if (this.isRunning && this.currentTest) {
+            let header = headerSection.querySelector('.speedtest-header');
+
+            // If header doesn't exist but we are running, create it
+            if (!header) {
+                headerSection.insertAdjacentHTML('afterbegin', `
+                    <div class="speedtest-header">
+                        ${this.renderHeaderStats()}
+                    </div>
+                `);
+                return; // Created with initial stats, no need to update individual fields yet
             }
-        } else if (headerSection && !this.isRunning) {
-            // Remove stats from header when test is not running
+
+            const existingStats = header.querySelector('.speedtest-header-stats');
+            if (existingStats) {
+                // Update existing stats with live smoothed values (for real-time feel)
+                const stats = existingStats.querySelectorAll('.speedtest-header-stat');
+                if (stats.length >= 3) {
+                    // Update active states based on current phase
+                    stats.forEach(stat => {
+                        const phase = stat.dataset.phase;
+                        if (phase === this.currentPhase) {
+                            stat.classList.add('active');
+                        } else {
+                            stat.classList.remove('active');
+                        }
+                    });
+
+                    // Update ping (first stat)
+                    const pingValue = stats[0].querySelector('.speedtest-header-stat-value');
+                    if (pingValue) {
+                        const ping = this.smoothedValues.ping !== null ?
+                            this.smoothedValues.ping :
+                            (this.currentTest.ping !== null && this.currentTest.ping !== undefined ?
+                                this.currentTest.ping : null);
+                        pingValue.textContent = ping !== null ? ping.toFixed(2) : '--';
+                    }
+
+                    // Update download (second stat)
+                    const downloadValue = stats[1].querySelector('.speedtest-header-stat-value');
+                    if (downloadValue) {
+                        const download = this.smoothedValues.downloadSpeed !== null ?
+                            this.smoothedValues.downloadSpeed :
+                            (this.currentTest.downloadSpeed !== null && this.currentTest.downloadSpeed !== undefined ?
+                                this.currentTest.downloadSpeed : null);
+                        downloadValue.textContent = download !== null ? download.toFixed(2) : '--';
+                    }
+
+                    // Update upload (third stat)
+                    const uploadValue = stats[2].querySelector('.speedtest-header-stat-value');
+                    if (uploadValue) {
+                        const upload = this.smoothedValues.uploadSpeed !== null ?
+                            this.smoothedValues.uploadSpeed :
+                            (this.currentTest.uploadSpeed !== null && this.currentTest.uploadSpeed !== undefined ?
+                                this.currentTest.uploadSpeed : null);
+                        uploadValue.textContent = upload !== null ? upload.toFixed(2) : '--';
+                    }
+                }
+            } else {
+                // Stats container missing inside header, re-render content
+                header.innerHTML = this.renderHeaderStats();
+            }
+        } else if (!this.isRunning) {
+            // Remove header entirely when not running
             const header = headerSection.querySelector('.speedtest-header');
             if (header) {
-                const existingStats = header.querySelector('.speedtest-header-stats');
-                if (existingStats) {
-                    existingStats.remove();
-                }
+                header.remove();
             }
         }
     }
@@ -1754,14 +1760,14 @@ export class SpeedtestPage {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
         // Load servers if not already loaded
         if (this.servers.length === 0) {
             await this.loadServers();
         }
-        
+
         // Render server list
         const bodyEl = document.getElementById('serverModalBody');
         if (bodyEl) {
@@ -1769,7 +1775,7 @@ export class SpeedtestPage {
                 bodyEl.innerHTML = '<div class="speedtest-history-empty"><i class="fas fa-exclamation-triangle"></i><p>No servers available</p></div>';
             } else {
                 let html = '<div class="speedtest-server-list">';
-                
+
                 // Server list (backend already includes Auto option with id=0)
                 this.servers.forEach(server => {
                     const isSelected = this.selectedServerId === server.id;
@@ -1791,24 +1797,24 @@ export class SpeedtestPage {
                         </div>
                     `;
                 });
-                
+
                 html += '</div>';
                 bodyEl.innerHTML = html;
-                
+
                 // Attach click handlers
                 bodyEl.querySelectorAll('.speedtest-server-item').forEach(item => {
                     item.addEventListener('click', () => {
                         const serverId = parseInt(item.dataset.serverId);
                         this.selectedServerId = serverId;
-                        
+
                         // Update UI
                         bodyEl.querySelectorAll('.speedtest-server-item').forEach(i => i.classList.remove('selected'));
                         item.classList.add('selected');
-                        
+
                         // Update checkmarks
                         bodyEl.querySelectorAll('.speedtest-server-item i.fa-check').forEach(i => i.remove());
                         item.appendChild(document.createElement('i')).className = 'fas fa-check';
-                        
+
                         // Update button text
                         const selectBtn = document.getElementById('selectServerBtn');
                         if (selectBtn) {
@@ -1822,21 +1828,21 @@ export class SpeedtestPage {
                                 selectBtn.innerHTML = `<i class="fas fa-server"></i> ${displayName}`;
                             }
                         }
-                        
+
                         // Close modal after selection
                         closeModal();
                     });
                 });
             }
         }
-        
+
         // Close modal handlers
         const closeModal = () => {
             if (document.body.contains(modal)) {
                 document.body.removeChild(modal);
             }
         };
-        
+
         modal.querySelector('.speedtest-server-modal-close').addEventListener('click', closeModal);
         modal.querySelector('.speedtest-server-modal-overlay').addEventListener('click', closeModal);
     }

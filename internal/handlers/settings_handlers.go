@@ -49,7 +49,7 @@ func HandleMFASettings(w http.ResponseWriter, r *http.Request) {
 func HandleMFATOTPGenerate(w http.ResponseWriter, r *http.Request) {
 	// Log for debugging
 	fmt.Printf("[MFA Generate] Request received: Method=%s, Path=%s\n", r.Method, r.URL.Path)
-	
+
 	if r.Method != "POST" {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -128,19 +128,19 @@ func HandleMFATOTPGenerate(w http.ResponseWriter, r *http.Request) {
 
 	// Store the secret temporarily in database (we'll validate it next)
 	var mfaResp struct {
-		Secret     string `json:"secret"`
-		QRCodeURL  string `json:"qr_code_url"`
-		Account    string `json:"account"`
-		Issuer     string `json:"issuer"`
-		Message    string `json:"message"`
+		Secret    string `json:"secret"`
+		QRCodeURL string `json:"qr_code_url"`
+		Account   string `json:"account"`
+		Issuer    string `json:"issuer"`
+		Message   string `json:"message"`
 	}
 
 	if err := json.Unmarshal(body, &mfaResp); err != nil {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Failed to parse MFA response",
-			"details": err.Error(),
+			"error":         "Failed to parse MFA response",
+			"details":       err.Error(),
 			"response_body": string(body),
 		})
 		return
@@ -389,7 +389,7 @@ func HandleMFATOTPEnable(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(enableResp)
 }
 
-func getMFASettings(w http.ResponseWriter, r *http.Request, username string) {
+func getMFASettings(w http.ResponseWriter, _ *http.Request, username string) {
 	var mfaEnabled bool
 	err := database.DB.QueryRow("SELECT mfa_enabled FROM users WHERE username = ?", username).Scan(&mfaEnabled)
 	if err != nil {

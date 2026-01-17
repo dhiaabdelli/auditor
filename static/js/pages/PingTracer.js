@@ -161,7 +161,7 @@ export class PingTracerPage {
 
                         <!-- Right Side: Graphs and Results -->
                         <div class="ping-tracer-results">
-                            <div class="results-header" id="results-header">
+                            <div class="results-header" id="results-header" style="display: none;">
                                 <div id="discovery-status" class="discovery-status" style="display: none;">
                                     <div class="discovery-spinner"></div>
                                     <span>Discovering network path...</span>
@@ -250,7 +250,7 @@ export class PingTracerPage {
         if (graphsEmpty) graphsEmpty.style.display = 'none';
         if (graphsContainer) graphsContainer.innerHTML = '';
         if (resultsHeader) resultsHeader.style.display = 'flex';
-        
+
         // Show discovery status if traceroute is enabled
         if (this.config.traceRoute && discoveryStatus) {
             discoveryStatus.style.display = 'flex';
@@ -262,19 +262,19 @@ export class PingTracerPage {
         // Build WebSocket URL
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsUrl = `${protocol}//${window.location.host}/api/network/ping-tracer`;
-        
+
         // Create WebSocket connection
         this.ws = new WebSocket(wsUrl);
-        
+
         this.ws.onopen = () => {
             // Send configuration
             this.ws.send(JSON.stringify(this.config));
         };
-        
+
         this.ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-                
+
                 if (data.type === 'hops') {
                     this.hops = data.hops || [];
                     this.initializeGraphs();
@@ -302,13 +302,13 @@ export class PingTracerPage {
                 console.error('Error parsing WebSocket message:', e, 'Data:', event.data);
             }
         };
-        
+
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
             alert('WebSocket connection error. Please check your connection.');
             this.stop();
         };
-        
+
         this.ws.onclose = () => {
             if (this.isRunning) {
                 console.log('WebSocket closed');
@@ -319,7 +319,7 @@ export class PingTracerPage {
 
     stop() {
         this.isRunning = false;
-        
+
         // Send stop message to server BEFORE closing
         if (this.ws) {
             if (this.ws.readyState === WebSocket.OPEN) {
@@ -329,7 +329,7 @@ export class PingTracerPage {
                     console.error('Error sending stop message:', e);
                 }
             }
-            
+
             // Close WebSocket connection immediately
             try {
                 this.ws.close();
@@ -366,7 +366,7 @@ export class PingTracerPage {
         // Force stop and close WebSocket when leaving the page
         console.log('[PingTracer] Cleaning up - stopping scan and closing WebSocket');
         this.isRunning = false;
-        
+
         // Immediately close WebSocket without waiting
         if (this.ws) {
             // Send stop message if possible
@@ -377,7 +377,7 @@ export class PingTracerPage {
                     // Ignore errors - we're closing anyway
                 }
             }
-            
+
             // Force close the connection
             try {
                 this.ws.close(1000, 'Page navigation');
@@ -386,7 +386,7 @@ export class PingTracerPage {
             }
             this.ws = null;
         }
-        
+
         // Clear all data
         this.hops = [];
         this.graphData = {};
@@ -418,7 +418,7 @@ export class PingTracerPage {
         const graphDiv = document.createElement('div');
         graphDiv.className = 'hop-graph';
         graphDiv.id = `hop-graph-${hop.hopNumber}`;
-        
+
         // Build label with hostname only if serverNames is enabled
         let label = `${hop.hopNumber}. ${hop.ip}`;
         if (this.config.serverNames && hop.hostname && hop.hostname.trim() !== '') {
@@ -473,7 +473,7 @@ export class PingTracerPage {
 
     updateHop(hop) {
         if (!this.hops) return;
-        
+
         // Update hop data
         const hopIndex = this.hops.findIndex(h => h.hopNumber === hop.hopNumber);
         if (hopIndex >= 0) {
@@ -482,7 +482,7 @@ export class PingTracerPage {
                 hop.hostname = this.hops[hopIndex].hostname;
             }
             this.hops[hopIndex] = hop;
-            
+
             // Update the label in the graph
             this.updateHopLabel(hop);
         }
@@ -625,10 +625,10 @@ export class PingTracerPage {
         let hasData = false;
         graph.data.forEach((point, index) => {
             const x = (index / (graph.data.length - 1)) * width;
-            
+
             if (point.latency >= 0) { // Include 0 as valid point
                 const y = height - ((point.latency - minLatency) / (maxLatency - minLatency)) * height;
-                
+
                 if (!hasData) {
                     ctx.moveTo(x, y);
                     hasData = true;

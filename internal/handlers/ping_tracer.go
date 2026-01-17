@@ -130,7 +130,7 @@ func HandlePingTracer(w http.ResponseWriter, r *http.Request) {
 	// Handle client messages (for stop requests) and connection close
 	stopChan := make(chan bool, 1)
 	connClosed := make(chan bool, 1)
-	
+
 	// Monitor connection close
 	go func() {
 		for {
@@ -154,7 +154,22 @@ func HandlePingTracer(w http.ResponseWriter, r *http.Request) {
 	// Start traceroute or single hop generation in a goroutine
 	go func() {
 		defer close(hopChan)
-		if config.TraceRoute {
+
+		// Check if we should do traceroute
+		doTraceroute := config.TraceRoute
+
+		// If traceroute is requested, check if the tool is available
+		if doTraceroute {
+			tool := "traceroute"
+			if runtime.GOOS == "windows" {
+				tool = "tracert"
+			}
+			if _, err := exec.LookPath(tool); err != nil {
+				doTraceroute = false
+			}
+		}
+
+		if doTraceroute {
 			performTraceroute(ctx, config.Host, config.PreferIPv4, hopChan)
 		} else {
 			// Single hop - just ping the host
@@ -163,15 +178,15 @@ func HandlePingTracer(w http.ResponseWriter, r *http.Request) {
 			if config.ReverseDNS {
 				hostname = reverseDNSLookup(ip)
 			}
-		hop := &HopData{
-			HopNumber:  1,
-			IP:         ip,
-			Hostname:   hostname,
-			Latencies:  []int{},
-			IsActive:   true,
-			Successful: 0, // Explicitly initialize to 0
-			Failed:     0, // Explicitly initialize to 0
-		}
+			hop := &HopData{
+				HopNumber:  1,
+				IP:         ip,
+				Hostname:   hostname,
+				Latencies:  []int{},
+				IsActive:   true,
+				Successful: 0, // Explicitly initialize to 0
+				Failed:     0, // Explicitly initialize to 0
+			}
 			select {
 			case hopChan <- hop:
 			case <-ctx.Done():
@@ -364,17 +379,17 @@ func HandlePingTracer(w http.ResponseWriter, r *http.Request) {
 	case <-connClosed:
 		// Connection closed
 	}
-	
+
 	// Cancel all contexts to stop all ping goroutines immediately
 	cancel()
-	
+
 	// Wait for all goroutines to finish (with timeout)
 	done := make(chan bool, 1)
 	go func() {
 		wg.Wait()
 		done <- true
 	}()
-	
+
 	// Wait up to 2 seconds for goroutines to finish
 	select {
 	case <-done:
@@ -398,9 +413,19 @@ func HandlePingTracer(w http.ResponseWriter, r *http.Request) {
 func performTraceroute(ctx context.Context, host string, preferIPv4 bool, hopChan chan<- *HopData) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("tracert", "-d", "-h", "30", host)
+		args := []string{"-d", "-h", "30"}
+		if preferIPv4 {
+			args = append(args, "-4")
+		}
+		args = append(args, host)
+		cmd = exec.Command("tracert", args...)
 	} else {
-		cmd = exec.Command("traceroute", "-n", "-m", "30", host)
+		args := []string{"-n", "-m", "30"}
+		if preferIPv4 {
+			args = append(args, "-4")
+		}
+		args = append(args, host)
+		cmd = exec.Command("traceroute", args...)
 	}
 
 	// Get stdout pipe
@@ -660,15 +685,6 @@ func pingHostWithConnection(conn *icmp.PacketConn, host string, icmpID int, seqN
 			}
 		}
 	}
-
-	// If we got a response from the correct IP but never matched ID, and it's been a while,
-	// accept it as a fallback (some routers modify IDs)
-	if !firstResponseTime.IsZero() && time.Since(firstResponseTime) > 500*time.Millisecond {
-		latency := time.Since(startTime).Milliseconds()
-		return int(latency), true
-	}
-
-	return -1, false
 }
 
 // pingHostWithID pings a host with a specific ICMP ID to avoid mixing responses
@@ -790,9 +806,19 @@ func pingHostWithID(host string, preferIPv4 bool, icmpID int) (int, bool) {
 func pingHostFallback(host string, preferIPv4 bool) (int, bool) {
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("ping", "-n", "1", "-w", "1000", host)
+		args := []string{"-n", "1", "-w", "1000"}
+		if preferIPv4 {
+			args = append(args, "-4")
+		}
+		args = append(args, host)
+		cmd = exec.Command("ping", args...)
 	} else {
-		cmd = exec.Command("ping", "-c", "1", "-W", "1", host)
+		args := []string{"-c", "1", "-W", "1"}
+		if preferIPv4 {
+			args = append(args, "-4")
+		}
+		args = append(args, host)
+		cmd = exec.Command("ping", args...)
 	}
 
 	output, err := cmd.Output()

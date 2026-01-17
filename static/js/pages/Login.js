@@ -295,24 +295,24 @@ export class LoginPage {
         if (this.mounting) {
             return;
         }
-        
+
         this.mounting = true;
-        
+
         try {
             // Set global instance for form submission
             window.loginPageInstance = this;
-            
+
             // If user is already authenticated, don't check anything - they shouldn't be on login page
             if (window.appInstance && window.appInstance.authenticated) {
                 // User is authenticated, redirect to apps immediately
-                window.appInstance.currentPage = 'apps';
-                window.location.hash = '#apps';
+                window.appInstance.currentPage = 'controller';
+                window.location.hash = '#controller';
                 // Skip validation since we know they're authenticated
                 window.appInstance.skipTokenValidation = true;
                 await window.appInstance.renderPage(true);
                 return;
             }
-            
+
             // Also check if we have a valid token in localStorage
             const token = localStorage.getItem('jwt_token');
             if (token && window.appInstance) {
@@ -331,8 +331,8 @@ export class LoginPage {
                             if (window.api) {
                                 window.api.apiKey = cleanToken;
                             }
-                            window.appInstance.currentPage = 'apps';
-                            window.location.hash = '#apps';
+                            window.appInstance.currentPage = 'controller';
+                            window.location.hash = '#controller';
                             window.appInstance.skipTokenValidation = true;
                             await window.appInstance.renderPage(true);
                             return;
@@ -342,15 +342,15 @@ export class LoginPage {
                     }
                 }
             }
-            
-        // Check if user exists (for setup mode) - only if not already checking
-        if (!this.setupMode && !this.checkingUser) {
+
+            // Check if user exists (for setup mode) - only if not already checking
+            if (!this.setupMode && !this.checkingUser) {
                 this.checkingUser = true;
                 try {
                     const response = await fetch('/api/auth/check', {
                         signal: AbortSignal.timeout(5000) // 5 second timeout
                     });
-                    
+
                     if (response.ok) {
                         const data = await response.json();
                         // Only check exists property, ignore count
@@ -402,7 +402,7 @@ export class LoginPage {
                     }
                 }
             }
-        
+
             // Allow Enter key to submit (only if login form exists)
             const usernameInput = document.getElementById('username');
             if (usernameInput && !this.setupMode) {
@@ -423,42 +423,42 @@ export class LoginPage {
 
     async handleRegister(event) {
         event.preventDefault();
-        
+
         if (this.isLoading) return;
-        
+
         const usernameInput = document.getElementById('setup-username');
         const passwordInput = document.getElementById('setup-password');
         const passwordConfirmInput = document.getElementById('setup-password-confirm');
-        
+
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
         const passwordConfirm = passwordConfirmInput.value;
-        
+
         // Validation
         if (!username || !password || !passwordConfirm) {
             this.showError('All fields are required');
             return;
         }
-        
+
         if (username.length < 3) {
             this.showError('Username must be at least 3 characters');
             return;
         }
-        
+
         if (password.length < 8) {
             this.showError('Password must be at least 8 characters');
             return;
         }
-        
+
         if (password !== passwordConfirm) {
             this.showError('Passwords do not match');
             return;
         }
-        
+
         this.isLoading = true;
         this.errorMessage = '';
         this.updateDisplay();
-        
+
         try {
             const response = await fetch('/api/auth/register', {
                 method: 'POST',
@@ -467,74 +467,74 @@ export class LoginPage {
                 },
                 body: JSON.stringify({ username, password })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.token) {
                     // Store JWT token
                     localStorage.setItem('jwt_token', data.token);
-                    
+
                     // Update API utility with JWT token
                     if (window.api) {
                         window.api.apiKey = data.token;
                     }
-                    
+
                     // Set authentication state
                     if (window.appInstance) {
                         // Stop any validation intervals that might interfere
                         window.appInstance.stopTokenValidationInterval();
-                        
+
                         // Set authenticated BEFORE anything else to prevent showLogin from running
                         window.appInstance.setAuthenticated(true);
                         window.appInstance.authenticated = true;
                         window.appInstance.showingLogin = false; // Reset showingLogin flag
-                        
+
                         // Clear login page state
                         this.setupMode = false;
                         this.checkingUser = true; // Prevent mount from running
                         this.mounting = true; // Prevent any further mount calls
-                        
+
                         // Update API utility with JWT token and reload it properly
                         if (window.api) {
                             window.api.apiKey = data.token;
                             // Reload to ensure it's properly set
                             await window.api.loadAPIKey(true);
                         }
-                        
+
                         // Show header and footer
                         const header = document.getElementById('header');
                         const footer = document.querySelector('.app-footer');
                         if (header) header.style.display = '';
                         if (footer) footer.style.display = '';
                         document.body.style.paddingTop = '';
-                        
+
                         // Clear login content and navigate to apps
                         const content = document.getElementById('page-content');
                         if (content) {
                             content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
                         }
-                        
+
                         // Set a flag to skip token validation on next renderPage call
                         window.appInstance.skipTokenValidation = true;
-                        
+
                         // Small delay to ensure everything is set before navigation
                         await new Promise(resolve => setTimeout(resolve, 100));
-                        
-                        window.appInstance.currentPage = 'apps';
-                        window.location.hash = '#apps';
+
+                        window.appInstance.currentPage = 'controller';
+                        window.location.hash = '#controller';
                         await window.appInstance.renderPage(true);
-                        
+
                         // Clear skip flag after a short delay to resume normal validation
                         setTimeout(() => {
                             if (window.appInstance) {
                                 window.appInstance.skipTokenValidation = false;
                             }
                         }, 2000); // 2 seconds should be enough for initial page load
-                        
+
                         // Restart validation interval after successful navigation
                         window.appInstance.startTokenValidationInterval();
                     } else {
-                        window.location.hash = '#apps';
+                        window.location.hash = '#controller';
                         window.location.reload();
                     }
                     return;
@@ -556,40 +556,40 @@ export class LoginPage {
 
     async handleLogin(event) {
         event.preventDefault();
-        
+
         console.log('[Login] handleLogin called');
-        
+
         if (this.isLoading) {
             console.log('[Login] Already loading, returning');
             return;
         }
-        
+
         const usernameInput = document.getElementById('username');
         const passwordInput = document.getElementById('password');
-        
+
         if (!usernameInput || !passwordInput) {
             console.error('[Login] Username or password input not found');
             this.showError('Form inputs not found. Please refresh the page.');
             return;
         }
-        
+
         const username = usernameInput.value.trim();
         const password = passwordInput.value;
-        
+
         if (!username || !password) {
             console.log('[Login] Username or password empty');
             this.showError('Please enter username and password');
             return;
         }
-        
+
         console.log('[Login] Starting login process for user:', username);
         this.isLoading = true;
         this.errorMessage = '';
         this.checkingUser = true; // Prevent mount from running during login
         this.updateDisplay();
-        
+
         let loginSuccessful = false;
-        
+
         try {
             console.log('[Login] Sending login request to /api/auth/login');
             // Validate credentials and get JWT token
@@ -600,70 +600,70 @@ export class LoginPage {
                 },
                 body: JSON.stringify({ username, password })
             });
-            
+
             console.log('[Login] Response status:', response.status, 'ok:', response.ok);
-            
+
             if (response.ok) {
                 const data = await response.json();
-                console.log('[Login] Response data:', { 
-                    valid: data.valid, 
-                    hasToken: !!data.token, 
+                console.log('[Login] Response data:', {
+                    valid: data.valid,
+                    hasToken: !!data.token,
                     mfaRequired: data.mfa_required,
                     hasTempToken: !!data.temp_token,
-                    message: data.message 
+                    message: data.message
                 });
-                
+
                 // Check if MFA is required
                 if (data.valid && data.mfa_required && data.temp_token) {
                     console.log('[Login] MFA required, starting MFA flow with temp_token');
                     // MFA required - store temp token and start MFA flow
                     this.tempToken = data.temp_token;
-                    
+
                     // Store temp token temporarily (don't use it for normal auth, but keep it for MFA)
                     // Don't set it as the main token - it's temporary
                     localStorage.setItem('mfa_temp_token', data.temp_token);
                     console.log('[Login] Temp token stored in localStorage as mfa_temp_token');
-                    
+
                     // Prevent token validation from running during MFA flow
                     if (window.appInstance) {
                         window.appInstance.skipTokenValidation = true;
                         console.log('[Login] skipTokenValidation set to true for MFA flow');
                     }
-                    
+
                     // Don't set authenticated state - we're waiting for MFA
                     // But prevent validation loops
                     this.isLoading = false; // Allow UI updates
                     await this.startMFAFlow();
                     return; // Don't proceed with normal login
                 }
-                
+
                 if (data.valid && data.token) {
                     loginSuccessful = true;
-                    
+
                     // CRITICAL: Store JWT token FIRST
                     localStorage.setItem('jwt_token', data.token);
                     console.log('[Login] Token stored in localStorage');
-                    
+
                     // CRITICAL: Update API utility with JWT token BEFORE anything else
                     if (window.api) {
                         // Extract clean JWT token first
                         const cleanToken = window.api.extractJWTToken ? window.api.extractJWTToken(data.token) : data.token;
-                        
+
                         // Set directly first
                         window.api.apiKey = cleanToken || data.token;
                         console.log('[Login] Token set in window.api.apiKey:', window.api.apiKey ? 'SET' : 'NOT SET');
-                        
+
                         // Verify localStorage has the token
                         const storedToken = localStorage.getItem('jwt_token');
                         if (storedToken !== data.token) {
                             console.warn('[Login] Token mismatch in localStorage, updating...');
                             localStorage.setItem('jwt_token', data.token);
                         }
-                        
+
                         // Then reload to ensure it's properly set
                         await window.api.loadAPIKey(true);
                         console.log('[Login] Token loaded via loadAPIKey, apiKey:', window.api.apiKey ? 'SET' : 'NOT SET');
-                        
+
                         // Final verification - force set if still not set
                         if (!window.api.apiKey) {
                             console.error('[Login] ERROR: Token not set in api.apiKey after loadAPIKey! Forcing set...');
@@ -672,45 +672,45 @@ export class LoginPage {
                             // Also ensure localStorage has it
                             localStorage.setItem('jwt_token', cleanToken || data.token);
                         }
-                        
+
                         console.log('[Login] Final token verification - localStorage:', localStorage.getItem('jwt_token') ? 'HAS TOKEN' : 'NO TOKEN', 'api.apiKey:', window.api.apiKey ? 'HAS TOKEN' : 'NO TOKEN');
                     } else {
                         console.error('[Login] ERROR: window.api is not available!');
                     }
-                    
+
                     // Show header and footer
                     const header = document.getElementById('header');
                     const footer = document.querySelector('.app-footer');
                     if (header) header.style.display = '';
                     if (footer) footer.style.display = '';
                     document.body.style.paddingTop = '';
-                    
+
                     // Set authentication state
                     if (window.appInstance) {
                         // Stop any validation intervals that might interfere
                         window.appInstance.stopTokenValidationInterval();
-                        
+
                         // CRITICAL: Set authenticated and skip validation BEFORE anything else
                         window.appInstance.setAuthenticated(true);
                         window.appInstance.authenticated = true;
                         window.appInstance.showingLogin = false; // Reset showingLogin flag
                         window.appInstance.skipTokenValidation = true; // Skip validation immediately
                         console.log('[Login] Authentication state set, skipTokenValidation = true');
-                        
+
                         // Clear login content immediately and prevent any further mount calls
                         const content = document.getElementById('page-content');
                         if (content) {
                             content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
                         }
-                        
+
                         // Prevent mount from running again
                         this.checkingUser = true;
                         this.mounting = true; // Prevent any further mount calls
                         this.isLoading = false;
-                        
+
                         // Small delay to ensure everything is set before navigation
                         await new Promise(resolve => setTimeout(resolve, 200));
-                        
+
                         // Verify token is still in localStorage before navigation
                         const storedToken = localStorage.getItem('jwt_token');
                         if (!storedToken) {
@@ -718,19 +718,19 @@ export class LoginPage {
                             // Re-store it
                             localStorage.setItem('jwt_token', data.token);
                         }
-                        
+
                         // Navigate to apps page
                         if (!window.appInstance) {
                             console.error('[Login] ERROR: window.appInstance is null! Reloading page...');
-                            window.location.hash = '#apps';
+                            window.location.hash = '#controller';
                             window.location.reload();
                             return;
                         }
-                        
-                        window.appInstance.currentPage = 'apps';
-                        window.location.hash = '#apps';
+
+                        window.appInstance.currentPage = 'controller';
+                        window.location.hash = '#controller';
                         console.log('[Login] Navigating to apps page, currentPage:', window.appInstance.currentPage);
-                        
+
                         // Render page without validating token (we just logged in, token is valid)
                         try {
                             console.log('[Login] Calling renderPage(true)...');
@@ -740,11 +740,11 @@ export class LoginPage {
                             console.error('[Login] Error rendering page:', error);
                             console.error('[Login] Error stack:', error.stack);
                             // If render fails, try reloading
-                            window.location.hash = '#apps';
+                            window.location.hash = '#controller';
                             window.location.reload();
                             return;
                         }
-                        
+
                         // Clear skip flag after a short delay to resume normal validation
                         // Token will be validated reactively when API calls return 401
                         setTimeout(() => {
@@ -755,7 +755,7 @@ export class LoginPage {
                         }, 1000); // 1 second should be enough for initial page load
                     } else {
                         console.error('[Login] ERROR: window.appInstance is not available!');
-                        window.location.hash = '#apps';
+                        window.location.hash = '#controller';
                         window.location.reload();
                     }
                     return; // Exit early on success
@@ -782,22 +782,22 @@ export class LoginPage {
     async startMFAFlow() {
         this.mfaStep = 'pending';
         this.errorMessage = '';
-        
+
         // Ensure we have the temp token
         if (!this.tempToken) {
             this.tempToken = localStorage.getItem('mfa_temp_token');
             console.log('[MFA] Retrieved temp token from localStorage:', this.tempToken ? 'FOUND' : 'NOT FOUND');
         }
-        
+
         if (!this.tempToken) {
             this.showError('MFA token not found. Please try logging in again.');
             this.isLoading = false;
             this.updateDisplay();
             return;
         }
-        
+
         this.updateDisplay();
-        
+
         try {
             console.log('[MFA] Creating MFA request with temp token');
             // Create MFA request
@@ -809,17 +809,17 @@ export class LoginPage {
                 },
                 body: JSON.stringify({})
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 this.mfaRequestId = data.mfa_request_id;
                 this.mfaExpiresIn = data.expires_in || 300;
-                
+
                 console.log('[MFA] Request created, ID:', this.mfaRequestId, 'Expires in:', this.mfaExpiresIn);
-                
+
                 // Start polling for status
                 this.startMFAPolling();
-                
+
                 // Show TOTP option after 15 seconds (give push notification time to arrive)
                 // Only show if still pending (not approved/denied)
                 setTimeout(() => {
@@ -834,7 +834,7 @@ export class LoginPage {
                 const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
                 console.error('[MFA] Failed to create request:', errorData);
                 // If can't communicate with MFA server, fallback to TOTP immediately
-                if (errorData.error && (errorData.error.includes('Failed to contact MFA server') || 
+                if (errorData.error && (errorData.error.includes('Failed to contact MFA server') ||
                     errorData.error.includes('Failed to contact'))) {
                     console.log('[MFA] MFA server unreachable, showing TOTP immediately');
                     this.mfaStep = 'totp';
@@ -853,34 +853,34 @@ export class LoginPage {
             this.updateDisplay();
         }
     }
-    
+
     startMFAPolling() {
         if (this.mfaPollInterval) {
             clearInterval(this.mfaPollInterval);
         }
-        
+
         const maxAttempts = Math.floor(this.mfaExpiresIn / 3); // Poll every 3 seconds
         let attempts = 0;
-        
+
         console.log('[MFA] Starting polling, max attempts:', maxAttempts, 'Request ID:', this.mfaRequestId);
-        
+
         // Poll immediately first time
         const pollOnce = async () => {
             attempts++;
             console.log('[MFA] Polling attempt', attempts, 'of', maxAttempts, 'Request ID:', this.mfaRequestId);
-            
+
             try {
                 const statusUrl = `/api/auth/mfa/status/${this.mfaRequestId}`;
                 console.log('[MFA] Fetching status from:', statusUrl);
                 const response = await fetch(statusUrl);
-                
+
                 console.log('[MFA] Status response status:', response.status, 'ok:', response.ok);
-                
+
                 if (response.ok) {
                     const data = await response.json();
                     console.log('[MFA] Status response data:', data);
                     console.log('[MFA] Current status:', data.status);
-                    
+
                     if (data.status === 'approved') {
                         console.log('[MFA] ✅ Status approved, completing login');
                         clearInterval(this.mfaPollInterval);
@@ -922,7 +922,7 @@ export class LoginPage {
                 console.error('[MFA] Error polling status:', error);
                 // Don't stop polling on network errors - might be temporary
             }
-            
+
             if (attempts >= maxAttempts) {
                 console.log('[MFA] Max polling attempts reached');
                 clearInterval(this.mfaPollInterval);
@@ -935,20 +935,20 @@ export class LoginPage {
                 }
             }
         };
-        
+
         // Poll immediately
         pollOnce();
-        
+
         // Then poll every 3 seconds
         this.mfaPollInterval = setInterval(pollOnce, 3000);
     }
-    
+
     async verifyTOTPCode(code) {
         if (!this.mfaRequestId) {
             this.showError('MFA request not found. Please try logging in again.');
             return false;
         }
-        
+
         try {
             const response = await fetch('/api/auth/mfa/totp/verify', {
                 method: 'POST',
@@ -961,7 +961,7 @@ export class LoginPage {
                     code: code
                 })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.valid) {
@@ -983,18 +983,18 @@ export class LoginPage {
             return false;
         }
     }
-    
+
     async completeMFALogin() {
         console.log('[MFA] Starting completeMFALogin');
         this.isLoading = true;
         this.errorMessage = '';
-        
+
         // Ensure we have the temp token
         if (!this.tempToken) {
             this.tempToken = localStorage.getItem('mfa_temp_token');
             console.log('[MFA] Retrieved temp token from localStorage for completion');
         }
-        
+
         if (!this.tempToken) {
             console.error('[MFA] No temp token found for completion');
             this.showError('MFA token not found. Please try logging in again.');
@@ -1002,13 +1002,13 @@ export class LoginPage {
             this.updateDisplay();
             return;
         }
-        
+
         // Update UI to show we're completing login
         const content = document.getElementById('page-content');
         if (content) {
             content.innerHTML = '<div class="loading" style="text-align: center; padding: 2rem;"><div class="spinner"></div><p style="color: #94a3b8; margin-top: 1rem;">Completing login...</p></div>';
         }
-        
+
         try {
             console.log('[MFA] Calling /api/auth/mfa/complete with temp token');
             const response = await fetch('/api/auth/mfa/complete', {
@@ -1019,22 +1019,22 @@ export class LoginPage {
                 },
                 body: JSON.stringify({})
             });
-            
+
             console.log('[MFA] Complete response status:', response.status);
-            
+
             if (response.ok) {
                 const data = await response.json();
                 console.log('[MFA] Complete response data:', { valid: data.valid, hasToken: !!data.token });
-                
+
                 if (data.valid && data.token) {
                     console.log('[MFA] ✅ Token received, storing and completing login');
-                    
+
                     // Store final JWT token
                     localStorage.setItem('jwt_token', data.token);
                     // Clear temp token
                     localStorage.removeItem('mfa_temp_token');
                     console.log('[MFA] Token stored in localStorage, temp token cleared');
-                    
+
                     // Update API utility
                     if (window.api) {
                         const cleanToken = window.api.extractJWTToken ? window.api.extractJWTToken(data.token) : data.token;
@@ -1042,7 +1042,7 @@ export class LoginPage {
                         await window.api.loadAPIKey(true);
                         console.log('[MFA] Token set in API utility');
                     }
-                    
+
                     // Set authentication state
                     if (window.appInstance) {
                         window.appInstance.stopTokenValidationInterval();
@@ -1051,22 +1051,22 @@ export class LoginPage {
                         window.appInstance.showingLogin = false;
                         window.appInstance.skipTokenValidation = true;
                         console.log('[MFA] Authentication state set');
-                        
+
                         // Show header and footer
                         const header = document.getElementById('header');
                         const footer = document.querySelector('.app-footer');
                         if (header) header.style.display = '';
                         if (footer) footer.style.display = '';
                         document.body.style.paddingTop = '';
-                        
+
                         // Navigate to apps page
                         await new Promise(resolve => setTimeout(resolve, 200));
-                        window.appInstance.currentPage = 'apps';
-                        window.location.hash = '#apps';
+                        window.appInstance.currentPage = 'controller';
+                        window.location.hash = '#controller';
                         console.log('[MFA] Navigating to apps page');
                         await window.appInstance.renderPage(true);
                         console.log('[MFA] Page rendered');
-                        
+
                         // Clear skip flag after delay
                         setTimeout(() => {
                             if (window.appInstance) {
@@ -1075,7 +1075,7 @@ export class LoginPage {
                         }, 1000);
                     } else {
                         console.error('[MFA] ERROR: window.appInstance not available');
-                        window.location.hash = '#apps';
+                        window.location.hash = '#controller';
                         window.location.reload();
                     }
                 } else {
@@ -1104,18 +1104,18 @@ export class LoginPage {
         if (!codeInput) {
             return;
         }
-        
+
         const code = codeInput.value.trim();
         if (!code || code.length !== 6 || !/^\d{6}$/.test(code)) {
             this.showError('Please enter a valid 6-digit code');
             codeInput.focus();
             return;
         }
-        
+
         this.isLoading = true;
         this.errorMessage = '';
         this.updateDisplay();
-        
+
         const success = await this.verifyTOTPCode(code);
         if (!success) {
             this.isLoading = false;
@@ -1133,7 +1133,7 @@ export class LoginPage {
     togglePasswordVisibility(fieldId = 'password') {
         const passwordInput = document.getElementById(fieldId);
         let toggleIcon;
-        
+
         if (fieldId === 'password') {
             toggleIcon = document.getElementById('password-toggle-icon');
         } else if (fieldId === 'setup-password') {
@@ -1141,7 +1141,7 @@ export class LoginPage {
         } else if (fieldId === 'setup-password-confirm') {
             toggleIcon = document.getElementById('setup-password-confirm-toggle-icon');
         }
-        
+
         if (passwordInput && toggleIcon) {
             if (passwordInput.type === 'password') {
                 passwordInput.type = 'text';
@@ -1164,7 +1164,7 @@ export class LoginPage {
             });
         }
     }
-    
+
     cleanup() {
         // Stop MFA polling if active
         if (this.mfaPollInterval) {

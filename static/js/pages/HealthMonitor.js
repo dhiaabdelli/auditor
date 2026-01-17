@@ -1,6 +1,7 @@
 export class HealthMonitorPage {
     constructor() {
         this.healthData = null;
+        this.systemMetrics = null;
         this.refreshInterval = null;
         this.autoRefresh = true;
         this.refreshIntervalMs = 5000; // 5 seconds
@@ -67,6 +68,7 @@ export class HealthMonitorPage {
                 </div>
 
                 ${this.renderOverallStatus()}
+                ${this.renderSystemMetrics()}
                 ${this.renderServices()}
                 ${this.renderTasks()}
                 ${this.renderSystemInfo()}
@@ -100,6 +102,179 @@ export class HealthMonitorPage {
                         <div class="health-uptime-value">${uptime}</div>
                         <div class="health-uptime-label">${this.t('uptime')}</div>
                     </div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderSystemMetrics() {
+        if (!this.systemMetrics) return '';
+
+        return `
+            <div class="health-metrics-section">
+                <h2>
+                    <i class="fas fa-chart-area"></i>
+                    System Metrics
+                </h2>
+                <div class="health-metrics-grid">
+                    ${this.renderCPUMetrics()}
+                    ${this.renderMemoryMetrics()}
+                    ${this.renderDiskMetrics()}
+                    ${this.renderNetworkLatency()}
+                </div>
+                ${this.renderSystemServices()}
+            </div>
+        `;
+    }
+
+    renderCPUMetrics() {
+        if (!this.systemMetrics || !this.systemMetrics.cpu) return '';
+
+        const cpu = this.systemMetrics.cpu;
+        const usageColor = cpu.usage > 80 ? '#ef4444' : cpu.usage > 60 ? '#f59e0b' : '#10b981';
+
+        return `
+            <div class="health-metric-card">
+                <div class="health-metric-header">
+                    <div class="health-metric-icon" style="background: ${usageColor}20; color: ${usageColor}">
+                        <i class="fas fa-microchip"></i>
+                    </div>
+                    <div class="health-metric-title">
+                        <h3>CPU Usage</h3>
+                        <p>${cpu.cores} Core${cpu.cores > 1 ? 's' : ''}</p>
+                    </div>
+                </div>
+                <div class="health-metric-value" style="color: ${usageColor}">
+                    ${cpu.usage.toFixed(1)}%
+                </div>
+                <div class="health-metric-progress">
+                    <div class="health-metric-progress-bar" style="width: ${cpu.usage}%; background: ${usageColor}"></div>
+                </div>
+                <div class="health-metric-details">
+                    ${cpu.temperature > 0 ? `<div><i class="fas fa-thermometer-half"></i> ${cpu.temperature.toFixed(1)}°C</div>` : ''}
+                    ${cpu.loadAvg1 > 0 ? `<div><i class="fas fa-chart-line"></i> Load: ${cpu.loadAvg1.toFixed(2)}, ${cpu.loadAvg5.toFixed(2)}, ${cpu.loadAvg15.toFixed(2)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    renderMemoryMetrics() {
+        if (!this.systemMetrics || !this.systemMetrics.memory) return '';
+
+        const mem = this.systemMetrics.memory;
+        const usageColor = mem.usedPercent > 80 ? '#ef4444' : mem.usedPercent > 60 ? '#f59e0b' : '#10b981';
+
+        return `
+            <div class="health-metric-card">
+                <div class="health-metric-header">
+                    <div class="health-metric-icon" style="background: ${usageColor}20; color: ${usageColor}">
+                        <i class="fas fa-memory"></i>
+                    </div>
+                    <div class="health-metric-title">
+                        <h3>Memory Usage</h3>
+                        <p>${this.formatBytes(mem.total)} Total</p>
+                    </div>
+                </div>
+                <div class="health-metric-value" style="color: ${usageColor}">
+                    ${mem.usedPercent.toFixed(1)}%
+                </div>
+                <div class="health-metric-progress">
+                    <div class="health-metric-progress-bar" style="width: ${mem.usedPercent}%; background: ${usageColor}"></div>
+                </div>
+                <div class="health-metric-details">
+                    <div><i class="fas fa-arrow-up"></i> Used: ${this.formatBytes(mem.used)}</div>
+                    <div><i class="fas fa-arrow-down"></i> Free: ${this.formatBytes(mem.free)}</div>
+                    ${mem.swapTotal > 0 ? `<div><i class="fas fa-exchange-alt"></i> Swap: ${this.formatBytes(mem.swapUsed)} / ${this.formatBytes(mem.swapTotal)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    renderDiskMetrics() {
+        if (!this.systemMetrics || !this.systemMetrics.disk || this.systemMetrics.disk.length === 0) return '';
+
+        // Show primary disk (usually first one)
+        const disk = this.systemMetrics.disk[0];
+        const usageColor = disk.usedPercent > 80 ? '#ef4444' : disk.usedPercent > 60 ? '#f59e0b' : '#10b981';
+
+        return `
+            <div class="health-metric-card">
+                <div class="health-metric-header">
+                    <div class="health-metric-icon" style="background: ${usageColor}20; color: ${usageColor}">
+                        <i class="fas fa-hdd"></i>
+                    </div>
+                    <div class="health-metric-title">
+                        <h3>Disk Usage</h3>
+                        <p>${disk.mountPoint}</p>
+                    </div>
+                </div>
+                <div class="health-metric-value" style="color: ${usageColor}">
+                    ${disk.usedPercent.toFixed(1)}%
+                </div>
+                <div class="health-metric-progress">
+                    <div class="health-metric-progress-bar" style="width: ${disk.usedPercent}%; background: ${usageColor}"></div>
+                </div>
+                <div class="health-metric-details">
+                    <div><i class="fas fa-database"></i> Total: ${this.formatBytes(disk.total)}</div>
+                    <div><i class="fas fa-arrow-up"></i> Used: ${this.formatBytes(disk.used)}</div>
+                    <div><i class="fas fa-arrow-down"></i> Free: ${this.formatBytes(disk.free)}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    renderNetworkLatency() {
+        if (!this.systemMetrics || !this.systemMetrics.network) return '';
+
+        const network = this.systemMetrics.network;
+        const latencies = network.latency || {};
+        const avgLatency = Object.values(latencies).filter(l => l > 0).reduce((a, b) => a + b, 0) / Object.values(latencies).filter(l => l > 0).length || 0;
+        const latencyColor = avgLatency > 100 ? '#ef4444' : avgLatency > 50 ? '#f59e0b' : '#10b981';
+
+        return `
+            <div class="health-metric-card">
+                <div class="health-metric-header">
+                    <div class="health-metric-icon" style="background: ${latencyColor}20; color: ${latencyColor}">
+                        <i class="fas fa-network-wired"></i>
+                    </div>
+                    <div class="health-metric-title">
+                        <h3>Network Latency</h3>
+                        <p>Ping Response</p>
+                    </div>
+                </div>
+                <div class="health-metric-value" style="color: ${latencyColor}">
+                    ${avgLatency > 0 ? avgLatency.toFixed(0) + ' ms' : 'N/A'}
+                </div>
+                <div class="health-metric-details">
+                    ${Object.entries(latencies).map(([host, latency]) => `
+                        <div><i class="fas fa-globe"></i> ${host}: ${latency > 0 ? latency + ' ms' : 'Timeout'}</div>
+                    `).join('')}
+                    ${network.rxBytes > 0 ? `<div><i class="fas fa-download"></i> RX: ${this.formatBytes(network.rxBytes)}</div>` : ''}
+                    ${network.txBytes > 0 ? `<div><i class="fas fa-upload"></i> TX: ${this.formatBytes(network.txBytes)}</div>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    renderSystemServices() {
+        if (!this.systemMetrics || !this.systemMetrics.services || this.systemMetrics.services.length === 0) return '';
+
+        return `
+            <div class="health-services-list">
+                <h3><i class="fas fa-cogs"></i> System Services</h3>
+                <div class="health-services-grid-compact">
+                    ${this.systemMetrics.services.map(service => `
+                        <div class="health-service-compact ${service.status}">
+                            <div class="service-status-icon">
+                                <i class="fas ${service.status === 'running' ? 'fa-check-circle' : 'fa-times-circle'}"></i>
+                            </div>
+                            <div class="service-info">
+                                <h4>${service.name}</h4>
+                                <p class="service-status">${service.status}</p>
+                            </div>
+                            ${service.enabled ? '<span class="service-badge">Auto-start</span>' : ''}
+                        </div>
+                    `).join('')}
                 </div>
             </div>
         `;
@@ -379,6 +554,9 @@ export class HealthMonitorPage {
             }
             this.healthData = await response.json();
             
+            // Load system metrics
+            await this.loadSystemMetrics();
+            
             // Load active tasks after health data is loaded
             await this.loadActiveTasks();
         } catch (error) {
@@ -389,6 +567,19 @@ export class HealthMonitorPage {
                 systemInfo: {},
                 uptime: 0
             };
+        }
+    }
+
+    async loadSystemMetrics() {
+        try {
+            const response = await fetch('/api/system/metrics');
+            if (!response.ok) {
+                throw new Error('Failed to fetch system metrics');
+            }
+            this.systemMetrics = await response.json();
+        } catch (error) {
+            console.error('Error loading system metrics:', error);
+            this.systemMetrics = null;
         }
     }
 

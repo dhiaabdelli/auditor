@@ -110,14 +110,18 @@ export class PageNavbar {
                 ]
             },
             'ping-tracer': {
-                showTitle: true,
-                titleIcon: 'fa-chart-line',
+                showTitle: false,
                 items: []
             },
             'ip-scanner': {
-                showTitle: true,
-                titleIcon: 'fa-search-location',
+                showTitle: false,
                 items: []
+            },
+            'hyperv': {
+                showTitle: false,
+                items: [
+                    { id: 'refresh', label: 'Refresh', icon: 'fa-sync-alt', action: 'loadReports' }
+                ]
             }
         };
 
@@ -135,12 +139,12 @@ export class PageNavbar {
         if (pageId === 'ip-scanner') {
             return 'IP Scanner';
         }
-        
+
         let pageInstance = null;
-        
+
         // Normalize pageId (handle both with and without -details)
         const normalizedPageId = pageId.replace('-details', '');
-        
+
         if ((pageId === 'veeam-auditor' || pageId === 'veeam-auditor-details') && window.veeamAuditorInstance) {
             pageInstance = window.veeamAuditorInstance;
         } else if ((pageId === 'windows-server-auditor' || pageId === 'windows-server-auditor-details') && window.windowsServerAuditorInstance) {
@@ -150,7 +154,7 @@ export class PageNavbar {
         } else if ((pageId === 'hyperv-auditor' || pageId === 'hyperv-auditor-details') && window.hyperVAuditorInstance) {
             pageInstance = window.hyperVAuditorInstance;
         }
-        
+
         if (pageInstance && pageInstance.reportData) {
             const data = pageInstance.reportData;
             if (normalizedPageId === 'veeam-auditor') {
@@ -163,20 +167,23 @@ export class PageNavbar {
                 return data.serverName || data.name || data.selectedReport?.name || 'Hyper-V';
             }
         }
-        
+
         // For Hyper-V, try selectedReport if reportData is not available
         if (normalizedPageId === 'hyperv-auditor' && pageInstance && pageInstance.selectedReport) {
             return pageInstance.selectedReport.name || 'Hyper-V';
         }
-        
+
         // Default titles
         const defaultTitles = {
             'veeam-auditor': 'Veeam Backup & Replication',
             'windows-server-auditor': 'Windows Server',
             'file-share-auditor': 'File Share',
-            'hyperv-auditor': 'Hyper-V'
+            'hyperv-auditor': 'Hyper-V',
+            'hyperv': 'Hyper-V Manager',
+            'wifi-manager': 'WiFi Manager',
+            'network-interfaces': 'Network Interfaces'
         };
-        
+
         return defaultTitles[normalizedPageId] || '';
     }
 
@@ -185,7 +192,7 @@ export class PageNavbar {
      */
     render(pageId) {
         const config = this.getPageNavbarConfig(pageId);
-        
+
         if (!config) {
             return '';
         }
@@ -194,10 +201,8 @@ export class PageNavbar {
         const titleIcon = config.titleIcon || '';
         const showBackButton = config.showTitle && pageId !== 'ping-tracer' && pageId !== 'ip-scanner'; // Show back button only on detail pages (pages with title), but not for ping-tracer or ip-scanner
 
-        // Check if this is an auditor detail page that needs sidebar toggle
-        const auditorDetailPages = ['windows-server-auditor', 'windows-server-auditor-details', 'linux-server-auditor', 'linux-server-auditor-details', 'file-share-auditor', 'file-share-auditor-details', 'veeam-auditor', 'veeam-auditor-details'];
-        const needsSidebarToggle = auditorDetailPages.includes(pageId);
-        
+
+
         // Don't render page navbar for ping-tracer and ip-scanner (they use modern-header toggle)
         if (pageId === 'ping-tracer' || pageId === 'ip-scanner') {
             return '';
@@ -207,11 +212,7 @@ export class PageNavbar {
             <div class="page-navbar" data-page="${pageId}">
                 <div class="page-navbar-container">
                     <div class="page-navbar-left-group">
-                        ${needsSidebarToggle ? `
-                            <button class="page-navbar-sidebar-toggle" id="page-navbar-sidebar-toggle" onclick="pageNavbarInstance.toggleAuditorSidebar()" title="Toggle Navigation">
-                                <i class="fas fa-bars"></i>
-                            </button>
-                        ` : ''}
+
                         ${showBackButton ? `
                             <div class="page-navbar-left">
                                 <button class="page-navbar-back" onclick="pageNavbarInstance.goBack()" title="Go back">
@@ -233,11 +234,11 @@ export class PageNavbar {
                     </div>
                     <div class="page-navbar-items" id="page-navbar-items-container">
                         ${config.items.map((item, index) => {
-                            const actionParams = item.actionParams ? JSON.stringify(item.actionParams) : null;
-                            const colorClass = item.color ? `page-navbar-item-${item.color}` : '';
-                            // For data attribute, escape quotes properly
-                            const actionParamsEscaped = actionParams ? actionParams.replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
-                            return `
+            const actionParams = item.actionParams ? JSON.stringify(item.actionParams) : null;
+            const colorClass = item.color ? `page-navbar-item-${item.color}` : '';
+            // For data attribute, escape quotes properly
+            const actionParamsEscaped = actionParams ? actionParams.replace(/"/g, '&quot;').replace(/'/g, '&#39;') : '';
+            return `
                             <button 
                                 class="page-navbar-item ${colorClass}" 
                                 data-action="${item.action}"
@@ -248,7 +249,7 @@ export class PageNavbar {
                                 <span>${item.label}</span>
                             </button>
                         `;
-                        }).join('')}
+        }).join('')}
                     </div>
                 </div>
             </div>
@@ -262,7 +263,7 @@ export class PageNavbar {
         // Find the appropriate auditor instance based on current page
         const pageId = document.querySelector('.page-navbar')?.getAttribute('data-page') || '';
         let pageInstance = null;
-        
+
         if (pageId === 'ping-tracer' && window.pingTracerInstance) {
             pageInstance = window.pingTracerInstance;
             if (typeof pageInstance.toggleConfigSidebar === 'function') {
@@ -270,7 +271,7 @@ export class PageNavbar {
             }
             return;
         }
-        
+
         if (pageId === 'ip-scanner' && window.ipScannerInstance) {
             pageInstance = window.ipScannerInstance;
             if (typeof pageInstance.toggleConfigSidebar === 'function') {
@@ -278,7 +279,7 @@ export class PageNavbar {
             }
             return;
         }
-        
+
         if ((pageId === 'veeam-auditor' || pageId === 'veeam-auditor-details') && window.veeamAuditorInstance) {
             pageInstance = window.veeamAuditorInstance;
         } else if ((pageId === 'windows-server-auditor' || pageId === 'windows-server-auditor-details') && window.windowsServerAuditorInstance) {
@@ -288,7 +289,7 @@ export class PageNavbar {
         } else if ((pageId === 'linux-server-auditor' || pageId === 'linux-server-auditor-details') && window.linuxServerAuditorInstance) {
             pageInstance = window.linuxServerAuditorInstance;
         }
-        
+
         if (pageInstance && typeof pageInstance.toggleSidebar === 'function') {
             pageInstance.toggleSidebar();
         }
@@ -304,16 +305,16 @@ export class PageNavbar {
             // Remove old listeners by cloning
             const newContainer = container.cloneNode(true);
             container.parentNode.replaceChild(newContainer, container);
-            
+
             // Attach click event listener using delegation
             newContainer.addEventListener('click', (e) => {
                 const button = e.target.closest('.page-navbar-item');
                 if (!button) return;
-                
+
                 const action = button.getAttribute('data-action');
                 const actionParamsStr = button.getAttribute('data-action-params');
                 let actionParams = null;
-                
+
                 if (actionParamsStr) {
                     try {
                         // Unescape HTML entities and parse JSON
@@ -323,7 +324,7 @@ export class PageNavbar {
                         console.error('Failed to parse action params:', e, actionParamsStr);
                     }
                 }
-                
+
                 if (action) {
                     this.handleAction(action, actionParams);
                 }
@@ -342,7 +343,7 @@ export class PageNavbar {
             // If no history, navigate to the list page based on current page
             const pageId = window.location.hash.split('?')[0].replace('#', '');
             const normalizedPageId = pageId.replace('-details', '').replace('-auditor', '');
-            
+
             // Navigate to the corresponding list page
             if (normalizedPageId === 'veeam') {
                 window.location.hash = '#veeam-auditor-list';
@@ -365,11 +366,11 @@ export class PageNavbar {
     updateTitle() {
         const pageId = window.location.hash.split('?')[0].replace('#', '');
         const config = this.getPageNavbarConfig(pageId);
-        
+
         if (!config || !config.showTitle) {
             return;
         }
-        
+
         const titleElement = document.querySelector('.page-navbar-title span');
         if (titleElement) {
             const newTitle = this.getTitle(pageId);
@@ -395,10 +396,10 @@ export class PageNavbar {
     handleAction(action, actionParams = null) {
         // Find the current page instance and call the action
         const pageId = window.location.hash.split('?')[0].replace('#', '');
-        
+
         // Try to find the page instance
         let pageInstance = null;
-        
+
         if (pageId === 'veeam-auditor-list' && window.veeamAuditorListInstance) {
             pageInstance = window.veeamAuditorListInstance;
         } else if (pageId === 'windows-server-auditor-list' && window.windowsServerAuditorListInstance) {
@@ -415,8 +416,15 @@ export class PageNavbar {
             pageInstance = window.fileShareAuditorInstance;
         } else if ((pageId === 'hyperv-auditor' || pageId === 'hyperv-auditor-details') && window.hyperVAuditorInstance) {
             pageInstance = window.hyperVAuditorInstance;
+        } else if (pageId === 'wifi-manager' && window.wifiManagerInstance) {
+            pageInstance = window.wifiManagerInstance;
+        } else if (pageId === 'hyperv' && window.hyperVInstance) {
+            pageInstance = window.hyperVInstance;
+        } else if (pageId === 'network-interfaces' && window.networkInterfacesInstance) {
+            pageInstance = window.networkInterfacesInstance;
         }
-        
+
+
         // Handle refresh action with animation
         if (action === 'loadReports' || action === 'loadReport') {
             const refreshButton = document.querySelector(`.page-navbar-item[data-action="${action}"]`);
@@ -424,7 +432,7 @@ export class PageNavbar {
                 refreshButton.classList.add('refreshing');
                 refreshButton.disabled = true;
             }
-            
+
             const executeRefresh = async () => {
                 try {
                     if (pageInstance && typeof pageInstance[action] === 'function') {
@@ -441,11 +449,11 @@ export class PageNavbar {
                     }
                 }
             };
-            
+
             executeRefresh();
             return;
         }
-        
+
         if (pageInstance && typeof pageInstance[action] === 'function') {
             if (actionParams) {
                 pageInstance[action](actionParams);

@@ -449,14 +449,6 @@ export class WindowsServerAuditorPage {
                             <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.adapters || []).length})</span>
                         </div>
                         ` : ''}
-                        ${(network?.routingTable || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'routing-table' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('routing-table')">
-                            <i class="fas fa-route"></i>
-                            <span>Routing Table</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.routingTable || []).length})</span>
-                        </div>
-                        ` : ''}
                         ${(network?.persistentRoutes || []).length > 0 ? `
                         <div class="file-share-auditor-nav-item ${this.activeView === 'persistent-routes' ? 'active' : ''}" 
                              onclick="windowsServerAuditorInstance.switchView('persistent-routes')">
@@ -510,28 +502,27 @@ export class WindowsServerAuditorPage {
                 </div>
                 <!-- Main Content -->
                 <div class="file-share-auditor-main">
-                    ${this.activeView === 'drivers' ? this.renderDriversView(drivers) : 
-                      this.activeView === 'devices' ? this.renderDevicesView(data.devices) :
-                      this.activeView === 'minifilters' ? this.renderMinifiltersView(data.minifilters || []) :
-                      this.activeView === 'applications' ? this.renderApplicationsView(software) : 
-                      this.activeView === 'users' ? this.renderUsersView(localUsersSummary) : 
-                      this.activeView === 'groups' ? this.renderGroupsView(localGroups) : 
-                      this.activeView === 'services' ? this.renderServicesView(services) : 
-                      this.activeView === 'scheduled-tasks' ? this.renderScheduledTasksView(scheduledTasks) : 
-                      this.activeView === 'installed-updates' ? this.renderInstalledUpdatesView(windowsUpdates, windowsUpdatesSummary) : 
-                      this.activeView === 'missing-updates' ? this.renderMissingUpdatesView(missingUpdates, windowsUpdatesSummary) : 
-                      this.activeView === 'roles' ? this.renderRolesView(rolesAndFeatures) : 
-                      this.activeView === 'features' ? this.renderFeaturesView(rolesAndFeatures) : 
-                      this.activeView === 'event-log' ? this.renderEventLogView(eventLogOverview) : 
-                      this.activeView === 'process' ? this.renderProcessView(processTree) : 
-                      this.activeView === 'network-adapters' ? this.renderNetworkAdaptersView(network?.adapters || []) : 
-                      this.activeView === 'routing-table' ? this.renderRoutingTableView(network?.routingTable || []) : 
-                      this.activeView === 'persistent-routes' ? this.renderPersistentRoutesView(network?.persistentRoutes || []) : 
-                      this.activeView === 'arp-table' ? this.renderARPTableView(network?.arpTable || []) : 
-                      this.activeView === 'firewall-rules' ? this.renderFirewallRulesView(data.firewallRules || []) :
-                      this.activeView === 'listening-ports' ? this.renderListeningPortsView(data.listeningPorts || {}) :
-                      this.activeView === 'certificates' ? this.renderCertificatesView(data?.certificates) : 
-                      this.renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers)}
+                    ${this.activeView === 'drivers' ? this.renderDriversView(drivers) :
+                this.activeView === 'devices' ? this.renderDevicesView(data.devices) :
+                    this.activeView === 'minifilters' ? this.renderMinifiltersView(data.minifilters || []) :
+                        this.activeView === 'applications' ? this.renderApplicationsView(software) :
+                            this.activeView === 'users' ? this.renderUsersView(localUsersSummary) :
+                                this.activeView === 'groups' ? this.renderGroupsView(localGroups) :
+                                    this.activeView === 'services' ? this.renderServicesView(services) :
+                                        this.activeView === 'scheduled-tasks' ? this.renderScheduledTasksView(scheduledTasks) :
+                                            this.activeView === 'installed-updates' ? this.renderInstalledUpdatesView(windowsUpdates, windowsUpdatesSummary) :
+                                                this.activeView === 'missing-updates' ? this.renderMissingUpdatesView(missingUpdates, windowsUpdatesSummary) :
+                                                    this.activeView === 'roles' ? this.renderRolesView(rolesAndFeatures) :
+                                                        this.activeView === 'features' ? this.renderFeaturesView(rolesAndFeatures) :
+                                                            this.activeView === 'event-log' ? this.renderEventLogView(eventLogOverview) :
+                                                                this.activeView === 'process' ? this.renderProcessView(processTree) :
+                                                                    this.activeView === 'network-adapters' ? this.renderNetworkAdaptersView(network?.adapters || []) :
+                                                                            this.activeView === 'persistent-routes' ? this.renderPersistentRoutesView(network?.persistentRoutes || []) :
+                                                                                this.activeView === 'arp-table' ? this.renderARPTableView(network?.arpTable || []) :
+                                                                                    this.activeView === 'firewall-rules' ? this.renderFirewallRulesView(data.firewallRules || []) :
+                                                                                        this.activeView === 'listening-ports' ? this.renderListeningPortsView(data.listeningPorts || {}) :
+                                                                                            this.activeView === 'certificates' ? this.renderCertificatesView(data?.certificates) :
+                                                                                                this.renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers)}
                 </div>
             </div>
             ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
@@ -558,7 +549,7 @@ export class WindowsServerAuditorPage {
 
     renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers) {
         return `
-            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 1.5rem;">
                     <!-- Dashboard Header: Host Overview -->
                     <div class="audit-dashboard-header">
                         <div class="dashboard-hero-icon">
@@ -587,16 +578,16 @@ export class WindowsServerAuditorPage {
                             <div class="hero-stat-item">
                                 <span class="hero-stat-label">Last Reboot</span>
                                 <span class="hero-stat-value">${(() => {
-                                    try {
-                                        let dateStr = systemInfo.lastBootTime;
-                                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                            return new Date(timestamp).toLocaleDateString();
-                                        }
-                                        const date = new Date(dateStr);
-                                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                    } catch (e) { return 'N/A'; }
-                                })()}</span>
+                    try {
+                        let dateStr = systemInfo.lastBootTime;
+                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                            return new Date(timestamp).toLocaleDateString();
+                        }
+                        const date = new Date(dateStr);
+                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                    } catch (e) { return 'N/A'; }
+                })()}</span>
                             </div>
                             ` : ''}
                         </div>
@@ -662,11 +653,11 @@ export class WindowsServerAuditorPage {
                                     </div>
                                     <div style="text-align: right;">
                                         ${(() => {
-                                            const totalGB = systemInfo.totalPhysicalMemory || 0;
-                                            const usagePercent = systemInfo.memoryUsagePercent !== undefined && systemInfo.memoryUsagePercent !== null ? systemInfo.memoryUsagePercent : 0;
-                                            const usedGB = (totalGB * usagePercent / 100).toFixed(2);
-                                            const freeGB = (totalGB - parseFloat(usedGB)).toFixed(2);
-                                            return `
+                    const totalGB = systemInfo.totalPhysicalMemory || 0;
+                    const usagePercent = systemInfo.memoryUsagePercent !== undefined && systemInfo.memoryUsagePercent !== null ? systemInfo.memoryUsagePercent : 0;
+                    const usedGB = (totalGB * usagePercent / 100).toFixed(2);
+                    const freeGB = (totalGB - parseFloat(usedGB)).toFixed(2);
+                    return `
                                             <div class="data-value">${totalGB} GB</div>
                                             <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 2px;">
                                                 Free: ${freeGB} GB | Used: ${usedGB} GB | ${usagePercent.toFixed(1)}%
@@ -682,7 +673,7 @@ export class WindowsServerAuditorPage {
                                             </div>
                                             ` : ''}
                                             `;
-                                        })()}
+                })()}
                                     </div>
                                 </div>
                                 ` : ''}
@@ -801,16 +792,16 @@ export class WindowsServerAuditorPage {
                                         <span class="data-label">Install Date</span>
                                     </div>
                                     <span class="data-value">${(() => {
-                                        try {
-                                            let dateStr = systemInfo.installDate;
-                                            if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                return new Date(timestamp).toLocaleDateString();
-                                            }
-                                            const date = new Date(dateStr);
-                                            return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                        } catch (e) { return systemInfo.installDate; }
-                                    })()}</span>
+                    try {
+                        let dateStr = systemInfo.installDate;
+                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                            return new Date(timestamp).toLocaleDateString();
+                        }
+                        const date = new Date(dateStr);
+                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                    } catch (e) { return systemInfo.installDate; }
+                })()}</span>
                                 </div>
                                 ` : ''}
                                 ${systemInfo.timezone ? `
@@ -903,19 +894,19 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${volumes.map(volume => {
-                                        const size = volume.size || 0;
-                                        const sizeRemaining = volume.sizeRemaining || 0;
-                                        const used = size - sizeRemaining;
-                                        const freeSpacePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : '0.0';
-                                        const isLowSpace = parseFloat(freeSpacePercent) < 15;
-                                        let bitLockerStatus = 'N/A';
-                                        if (volume.bitLockerStatus && volume.bitLockerStatus !== 'N/A') {
-                                            bitLockerStatus = volume.bitLockerStatus;
-                                        } else if (volume.driveLetter) {
-                                            // If drive letter exists but BitLocker status is N/A, it might not be encrypted or BitLocker not available
-                                            bitLockerStatus = 'Not Encrypted';
-                                        }
-                                        return `
+                    const size = volume.size || 0;
+                    const sizeRemaining = volume.sizeRemaining || 0;
+                    const used = size - sizeRemaining;
+                    const freeSpacePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : '0.0';
+                    const isLowSpace = parseFloat(freeSpacePercent) < 15;
+                    let bitLockerStatus = 'N/A';
+                    if (volume.bitLockerStatus && volume.bitLockerStatus !== 'N/A') {
+                        bitLockerStatus = volume.bitLockerStatus;
+                    } else if (volume.driveLetter) {
+                        // If drive letter exists but BitLocker status is N/A, it might not be encrypted or BitLocker not available
+                        bitLockerStatus = 'Not Encrypted';
+                    }
+                    return `
                                         <tr class="${isLowSpace ? 'low-space-row' : ''}">
                                             <td>
                                                 ${volume.driveLetter ? `${volume.driveLetter}:` : (volume.fileSystemLabel || 'N/A')}
@@ -937,7 +928,7 @@ export class WindowsServerAuditorPage {
                                             <td>${bitLockerStatus}</td>
                                         </tr>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -964,9 +955,9 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${raidControllers.map(controller => {
-                                        const isHealthy = controller.status === 'OK' || controller.operationalStatus === 'OK' || controller.status === 'Degraded' || controller.operationalStatus === 'Degraded';
-                                        const status = controller.operationalStatus || controller.status || 'N/A';
-                                        return `
+                    const isHealthy = controller.status === 'OK' || controller.operationalStatus === 'OK' || controller.status === 'Degraded' || controller.operationalStatus === 'Degraded';
+                    const status = controller.operationalStatus || controller.status || 'N/A';
+                    return `
                                         <tr>
                                             <td>${controller.name || 'N/A'}</td>
                                             <td style="color: #94a3b8;">${controller.description || 'N/A'}</td>
@@ -983,7 +974,7 @@ export class WindowsServerAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -1013,21 +1004,21 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${physicalDisks.map(disk => {
-                                        const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
-                                        // Handle allocatedSize - it might be missing in older imports
-                                        let allocatedGB = 0;
-                                        if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
-                                            allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
-                                        }
-                                        const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
-                                        const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
-                                        const diskId = disk.uniqueId || disk.serialNumber || 'N/A';
-                                        const smartStatus = disk.smartStatus || disk.healthStatus || 'N/A';
-                                        const isHealthy = smartStatus === 'Healthy' || smartStatus === 'OK';
-                                        const temperature = disk.temperature || 'N/A';
-                                        const tempValue = typeof temperature === 'number' ? temperature : (typeof temperature === 'string' && temperature !== 'N/A' ? parseFloat(temperature) : null);
-                                        const tempColor = tempValue !== null && tempValue > 0 ? (tempValue > 70 ? '#ef4444' : tempValue > 50 ? '#f59e0b' : '#10b981') : '#94a3b8';
-                                        return `
+                    const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
+                    // Handle allocatedSize - it might be missing in older imports
+                    let allocatedGB = 0;
+                    if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
+                        allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
+                    }
+                    const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
+                    const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
+                    const diskId = disk.uniqueId || disk.serialNumber || 'N/A';
+                    const smartStatus = disk.smartStatus || disk.healthStatus || 'N/A';
+                    const isHealthy = smartStatus === 'Healthy' || smartStatus === 'OK';
+                    const temperature = disk.temperature || 'N/A';
+                    const tempValue = typeof temperature === 'number' ? temperature : (typeof temperature === 'string' && temperature !== 'N/A' ? parseFloat(temperature) : null);
+                    const tempColor = tempValue !== null && tempValue > 0 ? (tempValue > 70 ? '#ef4444' : tempValue > 50 ? '#f59e0b' : '#10b981') : '#94a3b8';
+                    return `
                                         <tr>
                                             <td>${diskName}</td>
                                             <td>${diskId}</td>
@@ -1045,7 +1036,7 @@ export class WindowsServerAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -1307,13 +1298,13 @@ export class WindowsServerAuditorPage {
                         <h4 class="section-subtitle-modern">
                             <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Crash & BSOD Analysis
                             ${(() => {
-                                const realCrashes = (crashAnalysis.crashes || []).filter(c => c.type !== 'CleanReboot').length;
-                                const cleanReboots = (crashAnalysis.crashes || []).filter(c => c.type === 'CleanReboot').length;
-                                return `
+                    const realCrashes = (crashAnalysis.crashes || []).filter(c => c.type !== 'CleanReboot').length;
+                    const cleanReboots = (crashAnalysis.crashes || []).filter(c => c.type === 'CleanReboot').length;
+                    return `
                                 <span class="update-count-pill" style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">${realCrashes} real crashes</span>
                                 ${cleanReboots > 0 ? `<span class="update-count-pill" style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); margin-left: 0.5rem;">${cleanReboots} clean reboots</span>` : ''}
                                 `;
-                            })()}
+                })()}
                         </h4>
                         
                         <!-- Crash Type Summary -->
@@ -1407,8 +1398,8 @@ export class WindowsServerAuditorPage {
 
                         <!-- Real Crashes Table -->
                         ${(() => {
-                            const realCrashes = (crashAnalysis.crashes || []).filter(c => c.type !== 'CleanReboot');
-                            return realCrashes.length > 0 ? `
+                    const realCrashes = (crashAnalysis.crashes || []).filter(c => c.type !== 'CleanReboot');
+                    return realCrashes.length > 0 ? `
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Real Crashes (${realCrashes.length})
@@ -1427,8 +1418,8 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${realCrashes.slice(0, 20).map(crash => {
-                                            const typeColor = crash.type === 'BSOD' || crash.type === 'KernelHang' || crash.type === 'WatchdogReset' ? '#ef4444' : '#f59e0b';
-                                            return `
+                        const typeColor = crash.type === 'BSOD' || crash.type === 'KernelHang' || crash.type === 'WatchdogReset' ? '#ef4444' : '#f59e0b';
+                        return `
                                             <tr>
                                                 <td>${crash.time || 'N/A'}</td>
                                                 <td><span style="color: ${typeColor}; font-weight: 600;">${crash.type || 'Unknown'}</span></td>
@@ -1438,18 +1429,18 @@ export class WindowsServerAuditorPage {
                                                 <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(crash.message || '').replace(/"/g, '&quot;')}">${crash.message || 'N/A'}</td>
                                             </tr>
                                         `;
-                                        }).join('')}
+                    }).join('')}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                         ` : '';
-                        })()}
+                })()}
 
                         <!-- Clean Reboots Table -->
                         ${(() => {
-                            const cleanReboots = (crashAnalysis.crashes || []).filter(c => c.type === 'CleanReboot');
-                            return cleanReboots.length > 0 ? `
+                    const cleanReboots = (crashAnalysis.crashes || []).filter(c => c.type === 'CleanReboot');
+                    return cleanReboots.length > 0 ? `
                         <div style="margin-bottom: 1.5rem;">
                             <h5 style="color: #e2e8f0; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
                                 <i class="fas fa-power-off" style="color: #10b981;"></i> Clean Reboots (${cleanReboots.length}) - Normal Operations
@@ -1466,16 +1457,16 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${cleanReboots.slice(0, 10).map(crash => {
-                                            // Extract reason from message
-                                            let reason = 'N/A';
-                                            let user = 'N/A';
-                                            if (crash.message) {
-                                                const reasonMatch = crash.message.match(/raison suivante[^:]*:\s*([^C]+?)\s*Code/);
-                                                if (reasonMatch) reason = reasonMatch[1].trim();
-                                                const userMatch = crash.message.match(/utilisateur\s+([^\\s]+)/);
-                                                if (userMatch) user = userMatch[1];
-                                            }
-                                            return `
+                        // Extract reason from message
+                        let reason = 'N/A';
+                        let user = 'N/A';
+                        if (crash.message) {
+                            const reasonMatch = crash.message.match(/raison suivante[^:]*:\s*([^C]+?)\s*Code/);
+                            if (reasonMatch) reason = reasonMatch[1].trim();
+                            const userMatch = crash.message.match(/utilisateur\s+([^\\s]+)/);
+                            if (userMatch) user = userMatch[1];
+                        }
+                        return `
                                             <tr>
                                                 <td>${crash.time || 'N/A'}</td>
                                                 <td style="color: #10b981;">${reason}</td>
@@ -1483,13 +1474,13 @@ export class WindowsServerAuditorPage {
                                                 <td style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(crash.message || '').replace(/"/g, '&quot;')}">${crash.message || 'N/A'}</td>
                                             </tr>
                                         `;
-                                        }).join('')}
+                    }).join('')}
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                         ` : '';
-                        })()}
+                })()}
 
                         <!-- WHEA Events -->
                         <div style="margin-bottom: 1.5rem;">
@@ -2304,14 +2295,14 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${iscsiDisks.map(disk => {
-                                            const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
-                                            let allocatedGB = 0;
-                                            if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
-                                                allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
-                                            }
-                                            const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
-                                            const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
-                                            return `
+                    const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
+                    let allocatedGB = 0;
+                    if (disk.allocatedSize !== null && disk.allocatedSize !== undefined) {
+                        allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
+                    }
+                    const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
+                    const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
+                    return `
                                             <tr>
                                                 <td>${diskName}</td>
                                                 <td>${disk.model || 'N/A'}</td>
@@ -2326,7 +2317,7 @@ export class WindowsServerAuditorPage {
                                                 </td>
                                             </tr>
                                             `;
-                                        }).join('')}
+                }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -2511,13 +2502,13 @@ export class WindowsServerAuditorPage {
             const gateway = (adapter.gateway || '').toLowerCase();
             const dnsServers = adapter.dnsServers && Array.isArray(adapter.dnsServers) ? adapter.dnsServers : (adapter.dnsServers ? [adapter.dnsServers] : []);
             const dnsString = dnsServers.join(' ').toLowerCase();
-            return name.includes(searchLower) || 
-                   description.includes(searchLower) || 
-                   macAddress.includes(searchLower) || 
-                   status.includes(searchLower) ||
-                   ipString.includes(searchLower) ||
-                   gateway.includes(searchLower) ||
-                   dnsString.includes(searchLower);
+            return name.includes(searchLower) ||
+                description.includes(searchLower) ||
+                macAddress.includes(searchLower) ||
+                status.includes(searchLower) ||
+                ipString.includes(searchLower) ||
+                gateway.includes(searchLower) ||
+                dnsString.includes(searchLower);
         }) : adapters;
 
         tbody.innerHTML = this.renderNetworkAdaptersRows(filteredAdapters);
@@ -2599,11 +2590,11 @@ export class WindowsServerAuditorPage {
             const interfaceAlias = (route.interfaceAlias || '').toLowerCase();
             const protocol = (route.protocol || '').toLowerCase();
             const metric = (route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric.toString() : '').toLowerCase();
-            return destination.includes(searchLower) || 
-                   nextHop.includes(searchLower) || 
-                   interfaceAlias.includes(searchLower) || 
-                   protocol.includes(searchLower) ||
-                   metric.includes(searchLower);
+            return destination.includes(searchLower) ||
+                nextHop.includes(searchLower) ||
+                interfaceAlias.includes(searchLower) ||
+                protocol.includes(searchLower) ||
+                metric.includes(searchLower);
         }) : routes;
 
         tbody.innerHTML = this.renderRoutingTableRows(filteredRoutes);
@@ -2685,11 +2676,11 @@ export class WindowsServerAuditorPage {
             const interfaceAlias = (route.interfaceAlias || '').toLowerCase();
             const protocol = (route.protocol || '').toLowerCase();
             const metric = (route.routeMetric !== null && route.routeMetric !== undefined ? route.routeMetric.toString() : '').toLowerCase();
-            return destination.includes(searchLower) || 
-                   nextHop.includes(searchLower) || 
-                   interfaceAlias.includes(searchLower) || 
-                   protocol.includes(searchLower) ||
-                   metric.includes(searchLower);
+            return destination.includes(searchLower) ||
+                nextHop.includes(searchLower) ||
+                interfaceAlias.includes(searchLower) ||
+                protocol.includes(searchLower) ||
+                metric.includes(searchLower);
         }) : routes;
 
         tbody.innerHTML = this.renderPersistentRoutesRows(filteredRoutes);
@@ -2771,11 +2762,11 @@ export class WindowsServerAuditorPage {
             const interfaceAlias = (arp.interfaceAlias || '').toLowerCase();
             const state = (arp.state || '').toLowerCase();
             const addressFamily = (arp.addressFamily || '').toLowerCase();
-            return ipAddress.includes(searchLower) || 
-                   macAddress.includes(searchLower) || 
-                   interfaceAlias.includes(searchLower) || 
-                   state.includes(searchLower) ||
-                   addressFamily.includes(searchLower);
+            return ipAddress.includes(searchLower) ||
+                macAddress.includes(searchLower) ||
+                interfaceAlias.includes(searchLower) ||
+                state.includes(searchLower) ||
+                addressFamily.includes(searchLower);
         }) : arpEntries;
 
         tbody.innerHTML = this.renderARPTableRows(filteredEntries);
@@ -2872,15 +2863,15 @@ export class WindowsServerAuditorPage {
             return '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No certificates found in this category.</div>';
         }
 
-        const searchPlaceholder = tableId === 'expired-certificates' 
+        const searchPlaceholder = tableId === 'expired-certificates'
             ? 'Search expired certificates by subject, issuer, thumbprint...'
             : tableId === 'user-certificates'
-            ? 'Search user certificates by subject, issuer, thumbprint...'
-            : tableId === 'trusted-root-certificates'
-            ? 'Search trusted root certificates by subject, issuer, thumbprint...'
-            : tableId === 'intermediate-cas'
-            ? 'Search intermediate CAs by subject, issuer, thumbprint...'
-            : 'Search certificates by subject, issuer, thumbprint, serial number...';
+                ? 'Search user certificates by subject, issuer, thumbprint...'
+                : tableId === 'trusted-root-certificates'
+                    ? 'Search trusted root certificates by subject, issuer, thumbprint...'
+                    : tableId === 'intermediate-cas'
+                        ? 'Search intermediate CAs by subject, issuer, thumbprint...'
+                        : 'Search certificates by subject, issuer, thumbprint, serial number...';
 
         return `
             <div style="margin-bottom: 1rem; flex-shrink: 0;">
@@ -2921,7 +2912,7 @@ export class WindowsServerAuditorPage {
 
     switchCertificateTab(tab) {
         this.currentCertificateTab = tab;
-        
+
         // Reset all tab buttons
         const allTabs = document.querySelectorAll('[id^="certificate-tab-"]');
         allTabs.forEach(tabBtn => {
@@ -2929,7 +2920,7 @@ export class WindowsServerAuditorPage {
             tabBtn.style.borderColor = '#334155';
             tabBtn.style.color = '#94a3b8';
         });
-        
+
         // Highlight selected tab
         const tabIdMap = {
             'all': 'all',
@@ -2947,9 +2938,9 @@ export class WindowsServerAuditorPage {
                 selectedTab.style.color = '#60a5fa';
             }
         }
-        
+
         this.updateDisplay();
-        
+
         // Re-apply styles after re-render (in case updateDisplay re-rendered)
         setTimeout(() => {
             allTabs.forEach(tabBtn => {
@@ -3000,13 +2991,13 @@ export class WindowsServerAuditorPage {
             const storeLocation = (cert.storeLocation || '').toLowerCase();
             const storeName = (cert.storeName || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   storeLocation.includes(searchLower) ||
-                   storeName.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                storeLocation.includes(searchLower) ||
+                storeName.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderCertificatesRows(filteredCertificates);
@@ -3050,13 +3041,13 @@ export class WindowsServerAuditorPage {
             const storeLocation = (cert.storeLocation || '').toLowerCase();
             const storeName = (cert.storeName || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   storeLocation.includes(searchLower) ||
-                   storeName.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                storeLocation.includes(searchLower) ||
+                storeName.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderCertificatesRows(filteredCertificates);
@@ -3149,11 +3140,11 @@ export class WindowsServerAuditorPage {
             const thumbprint = (cert.thumbprint || '').toLowerCase();
             const serialNumber = (cert.serialNumber || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderUserCertificatesRows(filteredCertificates);
@@ -3240,11 +3231,11 @@ export class WindowsServerAuditorPage {
             const thumbprint = (cert.thumbprint || '').toLowerCase();
             const serialNumber = (cert.serialNumber || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderTrustedRootCertificatesRows(filteredCertificates);
@@ -3331,11 +3322,11 @@ export class WindowsServerAuditorPage {
             const thumbprint = (cert.thumbprint || '').toLowerCase();
             const serialNumber = (cert.serialNumber || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderIntermediateCAsRows(filteredCertificates);
@@ -3429,13 +3420,13 @@ export class WindowsServerAuditorPage {
             const storeLocation = (cert.storeLocation || '').toLowerCase();
             const storeName = (cert.storeName || '').toLowerCase();
             const friendlyName = (cert.friendlyName || '').toLowerCase();
-            return subject.includes(searchLower) || 
-                   issuer.includes(searchLower) || 
-                   thumbprint.includes(searchLower) ||
-                   serialNumber.includes(searchLower) ||
-                   storeLocation.includes(searchLower) ||
-                   storeName.includes(searchLower) ||
-                   friendlyName.includes(searchLower);
+            return subject.includes(searchLower) ||
+                issuer.includes(searchLower) ||
+                thumbprint.includes(searchLower) ||
+                serialNumber.includes(searchLower) ||
+                storeLocation.includes(searchLower) ||
+                storeName.includes(searchLower) ||
+                friendlyName.includes(searchLower);
         }) : certificates;
 
         tbody.innerHTML = this.renderExpiredCertificatesRows(filteredCertificates);
@@ -3481,15 +3472,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="services-modal-body">
                                     ${pageItems.map(service => {
-                                        const isRunning = service.status === 'Running' || service.status === 'running';
-                                        const isStopped = service.status === 'Stopped' || service.status === 'stopped';
-                                        const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
-                                        const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
-                                        
-                                        // Flag only: Automatic + Stopped OR Disabled + Running
-                                        const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
-                                        
-                                        return `
+            const isRunning = service.status === 'Running' || service.status === 'running';
+            const isStopped = service.status === 'Stopped' || service.status === 'stopped';
+            const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
+            const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
+
+            // Flag only: Automatic + Stopped OR Disabled + Running
+            const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
+
+            return `
                                         <tr class="${shouldFlag ? 'flagged-service-row' : ''}">
                                             <td>
                                                 ${service.displayName || service.name || 'N/A'}
@@ -3503,7 +3494,7 @@ export class WindowsServerAuditorPage {
                                             <td><span class="status-badge status-${isRunning ? 'online' : isStopped ? 'offline' : 'warning'}">${service.status || 'Unknown'}</span></td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                     <tr>
                                         <td colspan="3" style="text-align:center; color:#64748b; font-style:italic;">No services to display</td>
@@ -3559,34 +3550,34 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="drivers-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                     ${drivers.map(driver => {
-                                        // Check if driver is older than 3 years
-                                        let isOldDriver = false;
-                                        let dateDisplay = 'N/A';
-                                        if (driver.versionDate && driver.versionDate !== 'N/A') {
-                                            try {
-                                                // Handle different date formats
-                                                let driverDate;
-                                                if (typeof driver.versionDate === 'string') {
-                                                    // Try parsing as ISO date or other formats
-                                                    driverDate = new Date(driver.versionDate);
-                                                } else if (driver.versionDate instanceof Date) {
-                                                    driverDate = driver.versionDate;
-                                                } else {
-                                                    driverDate = new Date(driver.versionDate);
-                                                }
-                                                
-                                                if (!isNaN(driverDate.getTime())) {
-                                                    const threeYearsAgo = new Date();
-                                                    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-                                                    isOldDriver = driverDate < threeYearsAgo;
-                                                    dateDisplay = driverDate.toLocaleDateString();
-                                                }
-                                            } catch (e) {
-                                                dateDisplay = driver.versionDate;
-                                            }
-                                        }
-                                        
-                                        return `
+            // Check if driver is older than 3 years
+            let isOldDriver = false;
+            let dateDisplay = 'N/A';
+            if (driver.versionDate && driver.versionDate !== 'N/A') {
+                try {
+                    // Handle different date formats
+                    let driverDate;
+                    if (typeof driver.versionDate === 'string') {
+                        // Try parsing as ISO date or other formats
+                        driverDate = new Date(driver.versionDate);
+                    } else if (driver.versionDate instanceof Date) {
+                        driverDate = driver.versionDate;
+                    } else {
+                        driverDate = new Date(driver.versionDate);
+                    }
+
+                    if (!isNaN(driverDate.getTime())) {
+                        const threeYearsAgo = new Date();
+                        threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+                        isOldDriver = driverDate < threeYearsAgo;
+                        dateDisplay = driverDate.toLocaleDateString();
+                    }
+                } catch (e) {
+                    dateDisplay = driver.versionDate;
+                }
+            }
+
+            return `
                                         <tr class="${isOldDriver ? 'old-driver-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
                                             <td>
                                                 ${driver.classDescription || driver.name || 'N/A'}
@@ -3598,7 +3589,7 @@ export class WindowsServerAuditorPage {
                                             <td><span class="status-badge status-${driver.status === 'OK' || driver.status === 'Running' ? 'online' : 'warning'}">${driver.status || 'Unknown'}</span></td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -3776,9 +3767,9 @@ export class WindowsServerAuditorPage {
             if (!classDevices || classDevices.length === 0) {
                 return '';
             }
-            
+
             const classId = `device-class-${deviceClass.replace(/[^a-zA-Z0-9]/g, '-')}`;
-            
+
             return `
                 <div class="device-class-group">
                     <div class="device-class-header" onclick="windowsServerAuditorInstance.toggleDeviceClass('${classId}')" id="${classId}-header">
@@ -3813,11 +3804,11 @@ export class WindowsServerAuditorPage {
         const header = document.getElementById(`${classId}-header`);
         const content = document.getElementById(`${classId}-content`);
         const icon = document.getElementById(`${classId}-icon`);
-        
+
         if (!header || !content || !icon) return;
 
         const isExpanded = content.classList.contains('expanded');
-        
+
         if (isExpanded) {
             content.classList.remove('expanded');
             header.classList.remove('expanded');
@@ -3835,9 +3826,9 @@ export class WindowsServerAuditorPage {
         }
 
         return devices.map(device => {
-            const statusColor = device.status === 'OK' ? 'online' : 
-                               device.status === 'Error' || device.status === 'Disabled' ? 'offline' : 
-                               'warning';
+            const statusColor = device.status === 'OK' ? 'online' :
+                device.status === 'Error' || device.status === 'Disabled' ? 'offline' :
+                    'warning';
 
             return `
                 <tr style="display: table; width: 100%; table-layout: fixed;">
@@ -3862,7 +3853,7 @@ export class WindowsServerAuditorPage {
         // Get devices for selected tab and re-group by class
         const allDevices = devices.allDevices || [];
         let devicesToShow = [];
-        switch(tab) {
+        switch (tab) {
             case 'all':
                 devicesToShow = devices.allDevices || [];
                 break;
@@ -3909,7 +3900,7 @@ export class WindowsServerAuditorPage {
         // Get current active tab
         const activeTab = document.querySelector('.device-tab-btn.active')?.getAttribute('data-tab') || 'all';
         let devicesToFilter = [];
-        switch(activeTab) {
+        switch (activeTab) {
             case 'all':
                 devicesToFilter = devices.allDevices || [];
                 break;
@@ -3934,7 +3925,7 @@ export class WindowsServerAuditorPage {
         if (!container) return;
 
         const searchLower = (searchTerm || '').toLowerCase().trim();
-        
+
         // Filter devices based on search term
         let filteredDevices = devicesToFilter;
         if (searchLower) {
@@ -3943,10 +3934,10 @@ export class WindowsServerAuditorPage {
                 const manufacturer = (device.manufacturer || '').toLowerCase();
                 const deviceClass = (device.class || '').toLowerCase();
                 const status = (device.status || '').toLowerCase();
-                return name.includes(searchLower) || 
-                       manufacturer.includes(searchLower) || 
-                       deviceClass.includes(searchLower) || 
-                       status.includes(searchLower);
+                return name.includes(searchLower) ||
+                    manufacturer.includes(searchLower) ||
+                    deviceClass.includes(searchLower) ||
+                    status.includes(searchLower);
             });
         }
 
@@ -3977,10 +3968,10 @@ export class WindowsServerAuditorPage {
             const provider = (driver.providerName || '').toLowerCase();
             const version = (driver.driverVersion || '').toLowerCase();
             const status = (driver.status || '').toLowerCase();
-            return className.includes(searchLower) || 
-                   provider.includes(searchLower) || 
-                   version.includes(searchLower) || 
-                   status.includes(searchLower);
+            return className.includes(searchLower) ||
+                provider.includes(searchLower) ||
+                version.includes(searchLower) ||
+                status.includes(searchLower);
         }) : drivers;
 
         if (countElement) {
@@ -4001,7 +3992,7 @@ export class WindowsServerAuditorPage {
                     } else {
                         driverDate = new Date(driver.versionDate);
                     }
-                    
+
                     if (!isNaN(driverDate.getTime())) {
                         const threeYearsAgo = new Date();
                         threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
@@ -4012,7 +4003,7 @@ export class WindowsServerAuditorPage {
                     dateDisplay = driver.versionDate;
                 }
             }
-            
+
             return `
             <tr class="${isOldDriver ? 'old-driver-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
                 <td>
@@ -4064,21 +4055,21 @@ export class WindowsServerAuditorPage {
                                         <td>${app.vendor || app.publisher || 'N/A'}</td>
                                         <td>${app.version || 'N/A'}</td>
                                         <td>${(() => {
-                                            if (!app.installDate) return 'N/A';
-                                            try {
-                                                let dateStr = app.installDate;
-                                                // Handle .NET JSON date format: /Date(timestamp)/
-                                                if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                    const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                    const date = new Date(timestamp);
-                                                    return date.toLocaleDateString();
-                                                }
-                                                const date = new Date(dateStr);
-                                                return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                            } catch (e) {
-                                                return app.installDate;
-                                            }
-                                        })()}</td>
+                if (!app.installDate) return 'N/A';
+                try {
+                    let dateStr = app.installDate;
+                    // Handle .NET JSON date format: /Date(timestamp)/
+                    if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                        const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                        const date = new Date(timestamp);
+                        return date.toLocaleDateString();
+                    }
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                } catch (e) {
+                    return app.installDate;
+                }
+            })()}</td>
                                         <td>
                                             ${app.architecture && app.architecture !== 'N/A' ? `
                                             <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
@@ -4114,9 +4105,9 @@ export class WindowsServerAuditorPage {
             const name = (app.name || '').toLowerCase();
             const publisher = ((app.vendor || app.publisher) || '').toLowerCase();
             const version = (app.version || '').toLowerCase();
-            return name.includes(searchLower) || 
-                   publisher.includes(searchLower) || 
-                   version.includes(searchLower);
+            return name.includes(searchLower) ||
+                publisher.includes(searchLower) ||
+                version.includes(searchLower);
         }) : applications;
 
         if (countElement) {
@@ -4129,21 +4120,21 @@ export class WindowsServerAuditorPage {
                 <td>${app.vendor || app.publisher || 'N/A'}</td>
                 <td>${app.version || 'N/A'}</td>
                 <td>${(() => {
-                    if (!app.installDate) return 'N/A';
-                    try {
-                        let dateStr = app.installDate;
-                        // Handle .NET JSON date format: /Date(timestamp)/
-                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                            const date = new Date(timestamp);
-                            return date.toLocaleDateString();
-                        }
-                        const date = new Date(dateStr);
-                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                    } catch (e) {
-                        return app.installDate;
+                if (!app.installDate) return 'N/A';
+                try {
+                    let dateStr = app.installDate;
+                    // Handle .NET JSON date format: /Date(timestamp)/
+                    if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                        const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                        const date = new Date(timestamp);
+                        return date.toLocaleDateString();
                     }
-                })()}</td>
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                } catch (e) {
+                    return app.installDate;
+                }
+            })()}</td>
                 <td>
                     ${app.architecture && app.architecture !== 'N/A' ? `
                     <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
@@ -4222,24 +4213,24 @@ export class WindowsServerAuditorPage {
                                                 </td>
                                                 <td>${user.lastLogon && user.lastLogon !== 'Never' ? user.lastLogon : 'Never'}</td>
                                                 <td>${(() => {
-                                                    try {
-                                                        const dateStr = user.passwordExpires;
-                                                        if (!dateStr || dateStr === 'N/A' || dateStr === 'Never') {
-                                                            return dateStr || 'Never';
-                                                        }
-                                                        // Handle .NET JSON date format: /Date(timestamp)/
-                                                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                            const date = new Date(timestamp);
-                                                            return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                                        }
-                                                        // Try parsing as regular date
-                                                        const date = new Date(dateStr);
-                                                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                                    } catch (e) {
-                                                        return user.passwordExpires || 'Never';
-                                                    }
-                                                })()}</td>
+                try {
+                    const dateStr = user.passwordExpires;
+                    if (!dateStr || dateStr === 'N/A' || dateStr === 'Never') {
+                        return dateStr || 'Never';
+                    }
+                    // Handle .NET JSON date format: /Date(timestamp)/
+                    if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                        const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                        const date = new Date(timestamp);
+                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                    }
+                    // Try parsing as regular date
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                } catch (e) {
+                    return user.passwordExpires || 'Never';
+                }
+            })()}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -4271,13 +4262,13 @@ export class WindowsServerAuditorPage {
             const fullName = (row.getAttribute('data-full-name') || '').toLowerCase();
             const description = (row.getAttribute('data-description') || '').toLowerCase();
             const status = (row.getAttribute('data-status') || '').toLowerCase();
-            
-            const matches = !searchLower || 
-                userName.includes(searchLower) || 
-                fullName.includes(searchLower) || 
-                description.includes(searchLower) || 
+
+            const matches = !searchLower ||
+                userName.includes(searchLower) ||
+                fullName.includes(searchLower) ||
+                description.includes(searchLower) ||
                 status.includes(searchLower);
-            
+
             row.style.display = matches ? 'table' : 'none';
         });
     }
@@ -4292,11 +4283,11 @@ export class WindowsServerAuditorPage {
         rows.forEach(row => {
             const groupName = (row.querySelector('td:first-child strong')?.textContent || '').toLowerCase();
             const description = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
-            
-            const matches = !searchLower || 
-                groupName.includes(searchLower) || 
+
+            const matches = !searchLower ||
+                groupName.includes(searchLower) ||
                 description.includes(searchLower);
-            
+
             row.style.display = matches ? 'table' : 'none';
         });
     }
@@ -4312,12 +4303,12 @@ export class WindowsServerAuditorPage {
             const serviceName = (row.querySelector('td:first-child')?.textContent || '').toLowerCase();
             const startType = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
             const status = (row.querySelector('td:nth-child(3)')?.textContent || '').toLowerCase();
-            
-            const matches = !searchLower || 
-                serviceName.includes(searchLower) || 
-                startType.includes(searchLower) || 
+
+            const matches = !searchLower ||
+                serviceName.includes(searchLower) ||
+                startType.includes(searchLower) ||
                 status.includes(searchLower);
-            
+
             row.style.display = matches ? 'table' : 'none';
         });
     }
@@ -4333,12 +4324,12 @@ export class WindowsServerAuditorPage {
             const taskName = (row.querySelector('td:first-child div[style*="font-weight: 600"]')?.textContent || '').toLowerCase();
             const state = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
             const lastResult = (row.querySelector('td:nth-child(4)')?.textContent || '').toLowerCase();
-            
-            const matches = !searchLower || 
-                taskName.includes(searchLower) || 
-                state.includes(searchLower) || 
+
+            const matches = !searchLower ||
+                taskName.includes(searchLower) ||
+                state.includes(searchLower) ||
                 lastResult.includes(searchLower);
-            
+
             row.style.display = matches ? 'table' : 'none';
         });
     }
@@ -4372,8 +4363,8 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody id="groups-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${localGroups.map((group, groupIndex) => {
-                                            const members = Array.isArray(group.members) ? group.members : [];
-                                            return `
+            const members = Array.isArray(group.members) ? group.members : [];
+            return `
                                             <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" onclick="windowsServerAuditorInstance.showGroupMembersModal('${(group.name || '').replace(/'/g, "\\'")}', ${JSON.stringify(members).replace(/"/g, '&quot;')}, '${(group.description || '').replace(/'/g, "\\'")}')">
                                                 <td style="width: 20%;"><strong>${group.name || 'N/A'}</strong></td>
                                                 <td style="width: 55%;">${group.description && group.description !== '-' ? group.description : '-'}</td>
@@ -4385,7 +4376,7 @@ export class WindowsServerAuditorPage {
                                                 </td>
                                             </tr>
                                             `;
-                                        }).join('')}
+        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -4461,32 +4452,32 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody id="services-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${(() => {
-                                            const sortedServices = [...servicesList].sort((a, b) => {
-                                                const aIsRunning = a.status === 'Running' || a.status === 'running';
-                                                const aIsStopped = a.status === 'Stopped' || a.status === 'stopped';
-                                                const aIsAutomatic = a.startType === 'Automatic' || a.startType === 'automatic';
-                                                const aIsDisabled = a.startType === 'Disabled' || a.startType === 'disabled';
-                                                const aShouldFlag = (aIsAutomatic && aIsStopped) || (aIsDisabled && aIsRunning);
-                                                
-                                                const bIsRunning = b.status === 'Running' || b.status === 'running';
-                                                const bIsStopped = b.status === 'Stopped' || b.status === 'stopped';
-                                                const bIsAutomatic = b.startType === 'Automatic' || b.startType === 'automatic';
-                                                const bIsDisabled = b.startType === 'Disabled' || b.startType === 'disabled';
-                                                const bShouldFlag = (bIsAutomatic && bIsStopped) || (bIsDisabled && bIsRunning);
-                                                
-                                                if (aShouldFlag && !bShouldFlag) return -1;
-                                                if (!aShouldFlag && bShouldFlag) return 1;
-                                                return 0;
-                                            });
-                                            
-                                            return sortedServices.map(service => {
-                                                const isRunning = service.status === 'Running' || service.status === 'running';
-                                                const isStopped = service.status === 'Stopped' || service.status === 'stopped';
-                                                const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
-                                                const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
-                                                const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
-                                                
-                                                return `
+                    const sortedServices = [...servicesList].sort((a, b) => {
+                        const aIsRunning = a.status === 'Running' || a.status === 'running';
+                        const aIsStopped = a.status === 'Stopped' || a.status === 'stopped';
+                        const aIsAutomatic = a.startType === 'Automatic' || a.startType === 'automatic';
+                        const aIsDisabled = a.startType === 'Disabled' || a.startType === 'disabled';
+                        const aShouldFlag = (aIsAutomatic && aIsStopped) || (aIsDisabled && aIsRunning);
+
+                        const bIsRunning = b.status === 'Running' || b.status === 'running';
+                        const bIsStopped = b.status === 'Stopped' || b.status === 'stopped';
+                        const bIsAutomatic = b.startType === 'Automatic' || b.startType === 'automatic';
+                        const bIsDisabled = b.startType === 'Disabled' || b.startType === 'disabled';
+                        const bShouldFlag = (bIsAutomatic && bIsStopped) || (bIsDisabled && bIsRunning);
+
+                        if (aShouldFlag && !bShouldFlag) return -1;
+                        if (!aShouldFlag && bShouldFlag) return 1;
+                        return 0;
+                    });
+
+                    return sortedServices.map(service => {
+                        const isRunning = service.status === 'Running' || service.status === 'running';
+                        const isStopped = service.status === 'Stopped' || service.status === 'stopped';
+                        const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
+                        const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
+                        const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
+
+                        return `
                                                 <tr class="${shouldFlag ? 'flagged-service-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
                                                     <td>
                                                         ${service.displayName || service.name || 'N/A'}
@@ -4500,8 +4491,8 @@ export class WindowsServerAuditorPage {
                                                     <td><span class="status-badge status-${isRunning ? 'online' : isStopped ? 'offline' : 'warning'}">${service.status || 'Unknown'}</span></td>
                                                 </tr>
                                                 `;
-                                            }).join('');
-                                        })()}
+                    }).join('');
+                })()}
                                     </tbody>
                                 </table>
                             </div>
@@ -4590,17 +4581,17 @@ export class WindowsServerAuditorPage {
                                     </thead>
                                     <tbody id="scheduled-tasks-table-body" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${allTasks.map(task => {
-                                            const flags = [];
-                                            if (task.runsAsSystem) {
-                                                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
-                                            }
-                                            if (task.runsPowerShellOrCmd) {
-                                                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
-                                            }
-                                            if (task.hasStoredCredentials) {
-                                                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
-                                            }
-                                            return `
+            const flags = [];
+            if (task.runsAsSystem) {
+                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
+            }
+            if (task.runsPowerShellOrCmd) {
+                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
+            }
+            if (task.hasStoredCredentials) {
+                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
+            }
+            return `
                                             <tr style="display: table; width: 100%; table-layout: fixed;">
                                                 <td style="width: 35%;">
                                                     <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
@@ -4652,7 +4643,7 @@ export class WindowsServerAuditorPage {
                                                 </td>
                                             </tr>
                                             `;
-                                        }).join('')}
+        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -4795,15 +4786,15 @@ export class WindowsServerAuditorPage {
                             </thead>
                             <tbody id="roles-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                 ${allRoles.map(role => {
-                                    const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
-                                    const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
-                                    return `
+            const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
+            const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
+            return `
                                 <tr style="display: table; width: 100%; table-layout: fixed;">
                                     <td>${roleName}</td>
                                     <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
                                 </tr>
                                 `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -4846,15 +4837,15 @@ export class WindowsServerAuditorPage {
                             </thead>
                             <tbody id="features-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                 ${allFeatures.map(feature => {
-                                    const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
-                                    const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
-                                    return `
+            const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
+            const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
+            return `
                                 <tr style="display: table; width: 100%; table-layout: fixed;">
                                     <td>${featureName}</td>
                                     <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
                                 </tr>
                                 `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -4989,15 +4980,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="system-errors-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                     ${systemErrors.map((error, index) => {
-                                        const errorData = {
-                                            time: error.time || 'N/A',
-                                            source: error.source || 'N/A',
-                                            level: error.level || 'Error',
-                                            id: error.id || 'N/A',
-                                            message: error.message || 'N/A'
-                                        };
-                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                        return `
+            const errorData = {
+                time: error.time || 'N/A',
+                source: error.source || 'N/A',
+                level: error.level || 'Error',
+                id: error.id || 'N/A',
+                message: error.message || 'N/A'
+            };
+            const errorJson = encodeURIComponent(JSON.stringify(errorData));
+            return `
                                         <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'system'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
                                             <td style="width: 10%;">${error.time || 'N/A'}</td>
                                             <td style="width: 18%;">${error.source || 'N/A'}</td>
@@ -5006,7 +4997,7 @@ export class WindowsServerAuditorPage {
                                             <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
                                         </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -5027,15 +5018,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="app-errors-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                     ${appErrors.map((error, index) => {
-                                        const errorData = {
-                                            time: error.time || 'N/A',
-                                            source: error.source || 'N/A',
-                                            level: error.level || 'Error',
-                                            id: error.id || 'N/A',
-                                            message: error.message || 'N/A'
-                                        };
-                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                        return `
+            const errorData = {
+                time: error.time || 'N/A',
+                source: error.source || 'N/A',
+                level: error.level || 'Error',
+                id: error.id || 'N/A',
+                message: error.message || 'N/A'
+            };
+            const errorJson = encodeURIComponent(JSON.stringify(errorData));
+            return `
                                         <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'application'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
                                             <td style="width: 10%;">${error.time || 'N/A'}</td>
                                             <td style="width: 18%;">${error.source || 'N/A'}</td>
@@ -5044,7 +5035,7 @@ export class WindowsServerAuditorPage {
                                             <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
                                         </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -5065,15 +5056,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="critical-events-tbody" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                     ${criticalEvents.map((error, index) => {
-                                        const errorData = {
-                                            time: error.time || 'N/A',
-                                            source: error.source || 'N/A',
-                                            level: error.level || 'Critical',
-                                            id: error.id || 'N/A',
-                                            message: error.message || 'N/A'
-                                        };
-                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                        return `
+            const errorData = {
+                time: error.time || 'N/A',
+                source: error.source || 'N/A',
+                level: error.level || 'Critical',
+                id: error.id || 'N/A',
+                message: error.message || 'N/A'
+            };
+            const errorJson = encodeURIComponent(JSON.stringify(errorData));
+            return `
                                         <tr onclick="(function() { const instance = window.windowsServerAuditorInstance; if(instance) { instance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), 'critical'); } })();" style="display: table; width: 100%; table-layout: fixed; cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
                                             <td style="width: 10%;">${error.time || 'N/A'}</td>
                                             <td style="width: 18%;">${error.source || 'N/A'}</td>
@@ -5082,7 +5073,7 @@ export class WindowsServerAuditorPage {
                                             <td style="width: 56%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
                                         </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -5320,21 +5311,21 @@ export class WindowsServerAuditorPage {
                                         <td>${app.vendor || app.publisher || 'N/A'}</td>
                                         <td>${app.version || 'N/A'}</td>
                                         <td>${(() => {
-                                            if (!app.installDate) return 'N/A';
-                                            try {
-                                                let dateStr = app.installDate;
-                                                // Handle .NET JSON date format: /Date(timestamp)/
-                                                if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                    const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                    const date = new Date(timestamp);
-                                                    return date.toLocaleDateString();
-                                                }
-                                                const date = new Date(dateStr);
-                                                return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                            } catch (e) {
-                                                return app.installDate;
-                                            }
-                                        })()}</td>
+                if (!app.installDate) return 'N/A';
+                try {
+                    let dateStr = app.installDate;
+                    // Handle .NET JSON date format: /Date(timestamp)/
+                    if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                        const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                        const date = new Date(timestamp);
+                        return date.toLocaleDateString();
+                    }
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                } catch (e) {
+                    return app.installDate;
+                }
+            })()}</td>
                                         <td>
                                             ${app.architecture && app.architecture !== 'N/A' ? `
                                             <span class="status-badge" style="background: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${app.architecture === '64-bit' ? '#34d399' : '#60a5fa'}; border-color: ${app.architecture === '64-bit' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">
@@ -5410,34 +5401,34 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="drivers-modal-body">
                                     ${pageItems.map(driver => {
-                                        // Check if driver is older than 3 years
-                                        let isOldDriver = false;
-                                        let dateDisplay = 'N/A';
-                                        if (driver.versionDate && driver.versionDate !== 'N/A') {
-                                            try {
-                                                // Handle different date formats
-                                                let driverDate;
-                                                if (typeof driver.versionDate === 'string') {
-                                                    // Try parsing as ISO date or other formats
-                                                    driverDate = new Date(driver.versionDate);
-                                                } else if (driver.versionDate instanceof Date) {
-                                                    driverDate = driver.versionDate;
-                                                } else {
-                                                    driverDate = new Date(driver.versionDate);
-                                                }
-                                                
-                                                if (!isNaN(driverDate.getTime())) {
-                                                    const threeYearsAgo = new Date();
-                                                    threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
-                                                    isOldDriver = driverDate < threeYearsAgo;
-                                                    dateDisplay = driverDate.toLocaleDateString();
-                                                }
-                                            } catch (e) {
-                                                dateDisplay = driver.versionDate;
-                                            }
-                                        }
-                                        
-                                        return `
+            // Check if driver is older than 3 years
+            let isOldDriver = false;
+            let dateDisplay = 'N/A';
+            if (driver.versionDate && driver.versionDate !== 'N/A') {
+                try {
+                    // Handle different date formats
+                    let driverDate;
+                    if (typeof driver.versionDate === 'string') {
+                        // Try parsing as ISO date or other formats
+                        driverDate = new Date(driver.versionDate);
+                    } else if (driver.versionDate instanceof Date) {
+                        driverDate = driver.versionDate;
+                    } else {
+                        driverDate = new Date(driver.versionDate);
+                    }
+
+                    if (!isNaN(driverDate.getTime())) {
+                        const threeYearsAgo = new Date();
+                        threeYearsAgo.setFullYear(threeYearsAgo.getFullYear() - 3);
+                        isOldDriver = driverDate < threeYearsAgo;
+                        dateDisplay = driverDate.toLocaleDateString();
+                    }
+                } catch (e) {
+                    dateDisplay = driver.versionDate;
+                }
+            }
+
+            return `
                                         <tr class="${isOldDriver ? 'old-driver-row' : ''}">
                                             <td>
                                                 ${driver.classDescription || driver.name || 'N/A'}
@@ -5449,7 +5440,7 @@ export class WindowsServerAuditorPage {
                                             <td><span class="status-badge status-${driver.status === 'OK' || driver.status === 'Running' ? 'online' : 'warning'}">${driver.status || 'Unknown'}</span></td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                     <tr>
                                         <td colspan="5" style="text-align:center; color:#64748b; font-style:italic;">No drivers to display</td>
@@ -5525,9 +5516,9 @@ export class WindowsServerAuditorPage {
             });
 
             if (!response.ok) throw new Error('Failed to generate script');
-            
+
             const data = await response.json();
-            
+
             // Create a blob and download
             const blob = new Blob([data.script], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
@@ -5590,7 +5581,7 @@ export class WindowsServerAuditorPage {
 
             const result = await response.json();
             this.showMessage('Report imported successfully!', 'success');
-            
+
             // Reload the report data
             await this.loadReport();
         } catch (error) {
@@ -5657,7 +5648,7 @@ export class WindowsServerAuditorPage {
 
     updateServicesModalPage() {
         if (!this.selectedServicesModal) return;
-        
+
         // Sort services: flagged first, then others
         const allServices = [...(this.reportData?.services?.services || [])];
         const sortedServices = allServices.sort((a, b) => {
@@ -5666,19 +5657,19 @@ export class WindowsServerAuditorPage {
             const aIsAutomatic = a.startType === 'Automatic' || a.startType === 'automatic';
             const aIsDisabled = a.startType === 'Disabled' || a.startType === 'disabled';
             const aShouldFlag = (aIsAutomatic && aIsStopped) || (aIsDisabled && aIsRunning);
-            
+
             const bIsRunning = b.status === 'Running' || b.status === 'running';
             const bIsStopped = b.status === 'Stopped' || b.status === 'stopped';
             const bIsAutomatic = b.startType === 'Automatic' || b.startType === 'automatic';
             const bIsDisabled = b.startType === 'Disabled' || b.startType === 'disabled';
             const bShouldFlag = (bIsAutomatic && bIsStopped) || (bIsDisabled && bIsRunning);
-            
+
             // Flagged services come first
             if (aShouldFlag && !bShouldFlag) return -1;
             if (!aShouldFlag && bShouldFlag) return 1;
             return 0;
         });
-        
+
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(sortedServices.length / pageSize));
         const currentPage = Math.min(Math.max(this.selectedServicesModal.page || 0, 0), totalPages - 1);
@@ -5700,10 +5691,10 @@ export class WindowsServerAuditorPage {
             const isStopped = service.status === 'Stopped' || service.status === 'stopped';
             const isAutomatic = service.startType === 'Automatic' || service.startType === 'automatic';
             const isDisabled = service.startType === 'Disabled' || service.startType === 'disabled';
-            
+
             // Flag only: Automatic + Stopped OR Disabled + Running
             const shouldFlag = (isAutomatic && isStopped) || (isDisabled && isRunning);
-            
+
             return `
             <tr class="${shouldFlag ? 'flagged-service-row' : ''}">
                 <td>
@@ -5785,21 +5776,21 @@ export class WindowsServerAuditorPage {
                 <td>${app.vendor || app.publisher || 'N/A'}</td>
                 <td>${app.version || 'N/A'}</td>
                 <td>${(() => {
-                    if (!app.installDate) return 'N/A';
-                    try {
-                        let dateStr = app.installDate;
-                        // Handle .NET JSON date format: /Date(timestamp)/
-                        if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                            const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                            const date = new Date(timestamp);
-                            return date.toLocaleDateString();
-                        }
-                        const date = new Date(dateStr);
-                        return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                    } catch (e) {
-                        return app.installDate;
+                if (!app.installDate) return 'N/A';
+                try {
+                    let dateStr = app.installDate;
+                    // Handle .NET JSON date format: /Date(timestamp)/
+                    if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                        const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                        const date = new Date(timestamp);
+                        return date.toLocaleDateString();
                     }
-                })()}</td>
+                    const date = new Date(dateStr);
+                    return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                } catch (e) {
+                    return app.installDate;
+                }
+            })()}</td>
             </tr>
         `).join('') + (pageItems.length === 0 ? `
             <tr>
@@ -6116,15 +6107,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="roles-modal-body">
                                     ${pageItems.map(role => {
-                                        const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
-                                        const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
-                                        return `
+            const roleName = typeof role === 'string' ? role : (role.name || role.displayName || 'Unknown');
+            const isInstalled = typeof role === 'object' ? (role.installed !== false) : true;
+            return `
                                         <tr>
                                             <td>${roleName}</td>
                                             <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                     <tr>
                                         <td colspan="2" style="text-align:center; color:#64748b; font-style:italic;">No roles to display</td>
@@ -6188,15 +6179,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="features-modal-body">
                                     ${pageItems.map(feature => {
-                                        const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
-                                        const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
-                                        return `
+            const featureName = typeof feature === 'string' ? feature : (feature.name || feature.displayName || 'Unknown');
+            const isInstalled = typeof feature === 'object' ? (feature.installed !== false) : true;
+            return `
                                         <tr>
                                             <td>${featureName}</td>
                                             <td><span class="status-badge status-${isInstalled ? 'online' : 'offline'}">${isInstalled ? 'Yes' : 'No'}</span></td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                     <tr>
                                         <td colspan="2" style="text-align:center; color:#64748b; font-style:italic;">No features to display</td>
@@ -6433,9 +6424,9 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="missing-updates-modal-body">
                                     ${pageItems.map(update => {
-                                        const updateSource = update.updateSource || 'Microsoft';
-                                        const isWSUS = updateSource === 'WSUS';
-                                        return `
+            const updateSource = update.updateSource || 'Microsoft';
+            const isWSUS = updateSource === 'WSUS';
+            return `
                                     <tr>
                                         <td><strong>${update.kbNumber || 'N/A'}</strong></td>
                                         <td>${update.title || 'N/A'}</td>
@@ -6449,7 +6440,7 @@ export class WindowsServerAuditorPage {
                                         </td>
                                     </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -6470,7 +6461,7 @@ export class WindowsServerAuditorPage {
 
     translateStatus(value) {
         if (!value && value !== 0) return 'N/A';
-        
+
         // Handle numeric cluster resource states
         const numericStateMap = {
             0: 'Inherited',
@@ -6482,16 +6473,16 @@ export class WindowsServerAuditorPage {
             6: 'Online Pending',
             7: 'Offline Pending'
         };
-        
+
         // Check if it's a numeric state
         const numValue = parseInt(value);
         if (!isNaN(numValue) && numericStateMap[numValue]) {
             value = numericStateMap[numValue];
         }
-        
+
         // Convert to string and normalize
         const strValue = String(value).trim();
-        
+
         // Common status mappings
         const statusMap = {
             'online': 'Online',
@@ -6511,14 +6502,14 @@ export class WindowsServerAuditorPage {
             'up': 'Up',
             'down': 'Down'
         };
-        
+
         const lowerValue = strValue.toLowerCase();
         if (statusMap[lowerValue]) {
             return statusMap[lowerValue];
         }
-        
+
         // Capitalize first letter of each word
-        return strValue.split(' ').map(word => 
+        return strValue.split(' ').map(word =>
             word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
         ).join(' ');
     }
@@ -6594,17 +6585,17 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${pageItems.map(task => {
-                                        const flags = [];
-                                        if (task.runsAsSystem) {
-                                            flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
-                                        }
-                                        if (task.runsPowerShellOrCmd) {
-                                            flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
-                                        }
-                                        if (task.hasStoredCredentials) {
-                                            flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
-                                        }
-                                        return `
+            const flags = [];
+            if (task.runsAsSystem) {
+                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
+            }
+            if (task.runsPowerShellOrCmd) {
+                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
+            }
+            if (task.hasStoredCredentials) {
+                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
+            }
+            return `
                                         <tr>
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
@@ -6656,7 +6647,7 @@ export class WindowsServerAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                         <tr>
                                             <td colspan="6" style="text-align: center; color: #64748b; font-style: italic; padding: 2rem;">No tasks to display</td>
@@ -6751,17 +6742,17 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${pageItems.map(task => {
-                                        const flags = [];
-                                        if (task.runsAsSystem) {
-                                            flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
-                                        }
-                                        if (task.runsPowerShellOrCmd) {
-                                            flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
-                                        }
-                                        if (task.hasStoredCredentials) {
-                                            flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
-                                        }
-                                        return `
+            const flags = [];
+            if (task.runsAsSystem) {
+                flags.push({ icon: 'fa-shield-alt', color: '#3b82f6', tooltip: 'Runs as SYSTEM' });
+            }
+            if (task.runsPowerShellOrCmd) {
+                flags.push({ icon: task.actionType === 'PowerShell' ? 'fa-terminal' : 'fa-window-maximize', color: '#f59e0b', tooltip: `Runs ${task.actionType || 'PowerShell/CMD'}` });
+            }
+            if (task.hasStoredCredentials) {
+                flags.push({ icon: 'fa-key', color: '#ef4444', tooltip: `Stored credentials: ${task.storedUserName || 'N/A'}` });
+            }
+            return `
                                         <tr>
                                             <td>
                                                 <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.25rem;">
@@ -6807,7 +6798,7 @@ export class WindowsServerAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                     ${pageItems.length === 0 ? `
                                         <tr>
                                             <td colspan="6" style="text-align: center; color: #64748b; font-style: italic; padding: 2rem;">No failed tasks to display</td>
@@ -7230,7 +7221,7 @@ export class WindowsServerAuditorPage {
 
     renderGroupMembersModal() {
         if (!this.showGroupMembersModalFlag || !this.selectedGroupModal) return '';
-        
+
         const { name, members, description } = this.selectedGroupModal;
         const membersArray = Array.isArray(members) ? members : [];
         const pageSize = 50;
@@ -7238,7 +7229,7 @@ export class WindowsServerAuditorPage {
         const currentPage = Math.min(Math.max(this.selectedGroupModal.page || 0, 0), totalPages - 1);
         const start = currentPage * pageSize;
         const pageItems = membersArray.slice(start, start + pageSize);
-        
+
         return `
             <div class="modal-overlay" onclick="windowsServerAuditorInstance.closeGroupMembersModal()">
                 <div class="modal-container modal-wide" onclick="event.stopPropagation()">
@@ -7336,27 +7327,27 @@ export class WindowsServerAuditorPage {
     changeEventLogPage(delta) {
         if (!this.selectedEventLogModal) return;
         const eventLogOverview = this.reportData?.eventLogOverview || {};
-        const allEvents = this.eventLogModalType === 'system' 
+        const allEvents = this.eventLogModalType === 'system'
             ? (eventLogOverview.systemErrors || [])
             : (eventLogOverview.appErrors || []);
-        
+
         // Filter events based on selected period
         let filteredEvents = allEvents;
         const now = new Date();
-        
+
         if (this.eventLogFilter !== 'all') {
-            const hours = this.eventLogFilter === '24h' ? 24 : 
-                         this.eventLogFilter === '7d' ? 24 * 7 :
-                         this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
+            const hours = this.eventLogFilter === '24h' ? 24 :
+                this.eventLogFilter === '7d' ? 24 * 7 :
+                    this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
             const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
-            
+
             filteredEvents = allEvents.filter(event => {
                 if (!event.time) return false;
                 const eventTime = new Date(event.time);
                 return eventTime >= cutoffTime;
             });
         }
-        
+
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
         let page = this.selectedEventLogModal.page || 0;
@@ -7367,48 +7358,48 @@ export class WindowsServerAuditorPage {
 
     updateEventLogModalPage() {
         if (!this.selectedEventLogModal || !this.eventLogModalType) return;
-        
+
         const eventLogOverview = this.reportData?.eventLogOverview || {};
-        const allEvents = this.eventLogModalType === 'system' 
+        const allEvents = this.eventLogModalType === 'system'
             ? (eventLogOverview.systemErrors || [])
             : (eventLogOverview.appErrors || []);
-        
+
         // Filter events based on selected period
         let filteredEvents = allEvents;
         const now = new Date();
-        
+
         if (this.eventLogFilter !== 'all') {
-            const hours = this.eventLogFilter === '24h' ? 24 : 
-                         this.eventLogFilter === '7d' ? 24 * 7 :
-                         this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
+            const hours = this.eventLogFilter === '24h' ? 24 :
+                this.eventLogFilter === '7d' ? 24 * 7 :
+                    this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
             const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
-            
+
             filteredEvents = allEvents.filter(event => {
                 if (!event.time) return false;
                 const eventTime = new Date(event.time);
                 return eventTime >= cutoffTime;
             });
         }
-        
+
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(filteredEvents.length / pageSize));
         const currentPage = Math.min(Math.max(this.selectedEventLogModal.page || 0, 0), totalPages - 1);
         const start = currentPage * pageSize;
         const pageItems = filteredEvents.slice(start, start + pageSize);
-        
+
         const eventColor = this.eventLogModalType === 'system' ? '#ef4444' : '#f59e0b';
-        
+
         const tbody = document.getElementById('event-log-modal-body');
         const pageInfo = document.getElementById('event-log-modal-page-info');
         const prevBtn = document.getElementById('event-log-prev-btn');
         const nextBtn = document.getElementById('event-log-next-btn');
         const paginationContainer = document.getElementById('event-log-pagination');
-        
+
         if (!tbody) {
             this.updateDisplay();
             return;
         }
-        
+
         // Update table body
         if (pageItems.length > 0) {
             tbody.innerHTML = pageItems.map((error, index) => {
@@ -7433,20 +7424,20 @@ export class WindowsServerAuditorPage {
         } else {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748b; font-style: italic; padding: 2rem;">No events found for the selected period</td></tr>';
         }
-        
+
         // Update pagination
         if (pageInfo) {
             pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages}`;
         }
-        
+
         if (prevBtn) {
             prevBtn.disabled = currentPage === 0;
         }
-        
+
         if (nextBtn) {
             nextBtn.disabled = currentPage === totalPages - 1;
         }
-        
+
         // Show/hide pagination
         if (paginationContainer) {
             if (totalPages > 1) {
@@ -7455,7 +7446,7 @@ export class WindowsServerAuditorPage {
                 paginationContainer.style.display = 'none';
             }
         }
-        
+
         // Update modal description
         const modalDescription = document.querySelector('.modal-description');
         if (modalDescription) {
@@ -7467,20 +7458,20 @@ export class WindowsServerAuditorPage {
         if (!this.showEventLogModalFlag || !this.eventLogModalType) return '';
 
         const eventLogOverview = this.reportData?.eventLogOverview || {};
-        const allEvents = this.eventLogModalType === 'system' 
+        const allEvents = this.eventLogModalType === 'system'
             ? (eventLogOverview.systemErrors || [])
             : (eventLogOverview.appErrors || []);
 
         // Filter events based on selected period
         let filteredEvents = allEvents;
         const now = new Date();
-        
+
         if (this.eventLogFilter !== 'all') {
-            const hours = this.eventLogFilter === '24h' ? 24 : 
-                         this.eventLogFilter === '7d' ? 24 * 7 :
-                         this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
+            const hours = this.eventLogFilter === '24h' ? 24 :
+                this.eventLogFilter === '7d' ? 24 * 7 :
+                    this.eventLogFilter === '15d' ? 24 * 15 : 24 * 30;
             const cutoffTime = new Date(now.getTime() - hours * 60 * 60 * 1000);
-            
+
             filteredEvents = allEvents.filter(event => {
                 if (!event.time) return false;
                 const eventTime = new Date(event.time);
@@ -7575,15 +7566,15 @@ export class WindowsServerAuditorPage {
                                 </thead>
                                 <tbody id="event-log-modal-body">
                                     ${pageItems.length > 0 ? pageItems.map(error => {
-                                        const errorData = {
-                                            time: error.time || 'N/A',
-                                            source: error.source || 'N/A',
-                                            level: error.level || 'Error',
-                                            id: error.id || 'N/A',
-                                            message: error.message || 'N/A'
-                                        };
-                                        const errorJson = encodeURIComponent(JSON.stringify(errorData));
-                                        return `
+            const errorData = {
+                time: error.time || 'N/A',
+                source: error.source || 'N/A',
+                level: error.level || 'Error',
+                id: error.id || 'N/A',
+                message: error.message || 'N/A'
+            };
+            const errorJson = encodeURIComponent(JSON.stringify(errorData));
+            return `
                                         <tr onclick="windowsServerAuditorInstance.openEventDetailsModalFromString(decodeURIComponent('${errorJson}'), '${this.eventLogModalType}')" style="cursor: pointer; transition: background-color 0.2s;" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor='transparent'">
                                             <td>${error.time || 'N/A'}</td>
                                             <td>${error.source || 'N/A'}</td>
@@ -7592,7 +7583,7 @@ export class WindowsServerAuditorPage {
                                             <td style="max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${(error.message || '').replace(/"/g, '&quot;')}">${error.message || 'N/A'}</td>
                                         </tr>
                                     `;
-                                    }).join('') : `
+        }).join('') : `
                                         <tr>
                                             <td colspan="5" style="text-align: center; color: #64748b; font-style: italic; padding: 2rem;">No events found for the selected period</td>
                                         </tr>
@@ -7634,7 +7625,7 @@ export class WindowsServerAuditorPage {
         // Close the Event Log modal when opening details
         this.showEventLogModalFlag = false;
         console.log('showEventDetailsModalFlag set to:', this.showEventDetailsModalFlag);
-        
+
         // Instead of calling updateDisplay which replaces all HTML,
         // directly append the modal to the page content
         const content = document.getElementById('page-content');
@@ -7746,7 +7737,7 @@ export class WindowsServerAuditorPage {
             const isLast = index === processes.length - 1;
             const hasChildren = proc.children && proc.children.length > 0;
             const currentPath = [...parentPath, index];
-            
+
             // Build tree connector
             let treeConnector = '';
             for (let i = 0; i < depth; i++) {
@@ -7760,20 +7751,20 @@ export class WindowsServerAuditorPage {
                     treeConnector += parentIsLast ? '   ' : '│  ';
                 }
             }
-            
+
             // Color coding
             const cpuColor = proc.cpuPercent > 50 ? '#ef4444' : proc.cpuPercent > 20 ? '#f59e0b' : proc.cpuPercent > 5 ? '#3b82f6' : '#10b981';
             const memoryColor = proc.workingSetMB > 1000 ? '#ef4444' : proc.workingSetMB > 500 ? '#f59e0b' : '#10b981';
-            
+
             // Format memory
-            const memoryDisplay = proc.workingSetMB >= 1024 
-                ? `${(proc.workingSetMB / 1024).toFixed(2)} GB` 
+            const memoryDisplay = proc.workingSetMB >= 1024
+                ? `${(proc.workingSetMB / 1024).toFixed(2)} GB`
                 : `${(proc.workingSetMB || 0).toFixed(2)} MB`;
-            
+
             // Format username (extract from owner if needed)
             const username = proc.username && proc.username !== 'N/A' ? proc.username : (proc.owner && proc.owner !== 'N/A' ? proc.owner.split('\\').pop() : '-');
             const isElevated = proc.isElevated === true || proc.isElevated === 'True';
-            
+
             // Determine status color based on status
             let statusColor = '#10b981'; // Default green
             if (proc.status === 'Suspended') {
@@ -7783,7 +7774,7 @@ export class WindowsServerAuditorPage {
             } else if (proc.status === 'Running') {
                 statusColor = '#10b981'; // Green for running
             }
-            
+
             const procData = JSON.stringify(proc).replace(/'/g, "\\'").replace(/"/g, '&quot;');
             html += `
                 <tr class="process-tree-row" data-pid="${proc.id}" data-depth="${depth}" style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" onclick="windowsServerAuditorInstance.showProcessDetailsModalFromData('${procData}')">
@@ -7812,7 +7803,7 @@ export class WindowsServerAuditorPage {
                     <td style="width: 3%; color: #64748b; font-size: 0.75rem;">${proc.priority || 'N/A'}</td>
                 </tr>
             `;
-            
+
             // Render children recursively
             if (hasChildren && depth < maxDepth) {
                 html += this.renderProcessTree(proc.children, depth + 1, currentPath);
@@ -7868,16 +7859,16 @@ export class WindowsServerAuditorPage {
         if (!this.showProcessDetailsModalFlag || !this.selectedProcessDetails) return '';
 
         const proc = this.selectedProcessDetails;
-        
+
         // Format memory
-        const memoryDisplay = proc.workingSetMB >= 1024 
-            ? `${(proc.workingSetMB / 1024).toFixed(2)} GB` 
+        const memoryDisplay = proc.workingSetMB >= 1024
+            ? `${(proc.workingSetMB / 1024).toFixed(2)} GB`
             : `${(proc.workingSetMB || 0).toFixed(2)} MB`;
-        
+
         // Format username
         const username = proc.username && proc.username !== 'N/A' ? proc.username : (proc.owner && proc.owner !== 'N/A' ? proc.owner : '-');
         const isElevated = proc.isElevated === true || proc.isElevated === 'True';
-        
+
         // Determine status color
         let statusColor = '#10b981';
         if (proc.status === 'Suspended') {
@@ -7887,10 +7878,10 @@ export class WindowsServerAuditorPage {
         } else if (proc.status === 'Running') {
             statusColor = '#10b981';
         }
-        
+
         // CPU color
         const cpuColor = proc.cpuPercent > 50 ? '#ef4444' : proc.cpuPercent > 20 ? '#f59e0b' : proc.cpuPercent > 5 ? '#3b82f6' : '#10b981';
-        
+
         // Memory color
         const memoryColor = proc.workingSetMB > 1000 ? '#ef4444' : proc.workingSetMB > 500 ? '#f59e0b' : '#10b981';
 
@@ -8010,7 +8001,7 @@ export class WindowsServerAuditorPage {
             const prevBtn = document.getElementById('process-tree-prev-btn');
             const nextBtn = document.getElementById('process-tree-next-btn');
             const pageInfo = document.getElementById('process-tree-modal-page-info');
-            
+
             if (prevBtn) prevBtn.disabled = currentPage === 0;
             if (nextBtn) nextBtn.disabled = currentPage === totalPages - 1;
             if (pageInfo) pageInfo.textContent = `Page ${currentPage + 1} of ${totalPages}`;
@@ -8113,7 +8104,7 @@ export class WindowsServerAuditorPage {
             }
 
             this.showMessage('Report deleted successfully!', 'success');
-            
+
             // Navigate back to list page
             setTimeout(() => {
                 if (window.appInstance) {
@@ -8206,7 +8197,7 @@ export class WindowsServerAuditorPage {
         if (!tbody) return;
         const rows = tbody.querySelectorAll('tr');
         const term = (searchTerm || '').toLowerCase();
-        
+
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
             row.style.display = text.includes(term) ? 'table-row' : 'none';
@@ -8309,8 +8300,8 @@ export class WindowsServerAuditorPage {
                             <div style="color: #e2e8f0; font-size: 0.6875rem; font-family: 'Consolas', 'Monaco', monospace; word-break: break-all;">${filter.driverPath || 'N/A'}</div>
                         </div>
                         ${(() => {
-                            const instanceDetails = Array.isArray(filter.instanceDetails) ? filter.instanceDetails : [];
-                            return instanceDetails.length > 0 ? `
+                const instanceDetails = Array.isArray(filter.instanceDetails) ? filter.instanceDetails : [];
+                return instanceDetails.length > 0 ? `
                         <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem; margin-bottom: 0.5rem;">
                             <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.375rem; text-transform: uppercase; letter-spacing: 0.5px;">Instances (${instanceDetails.length})</div>
                             <div class="table-container-modern" style="max-height: 150px; overflow-y: auto;">
@@ -8333,49 +8324,49 @@ export class WindowsServerAuditorPage {
                             </div>
                         </div>
                         ` : '';
-                        })()}
+            })()}
                         ${(() => {
-                            const volumeList = Array.isArray(filter.volumeList) ? filter.volumeList : (filter.volumeList ? [filter.volumeList] : []);
-                            // Filter and convert all volumes to strings, logging objects for debugging
-                            const processedVolumes = volumeList
-                                .map((volume, index) => {
-                                    if (typeof volume === 'string' && volume.trim() !== '') {
-                                        return volume.trim();
-                                    } else if (typeof volume === 'object' && volume !== null) {
-                                        // Log the object for debugging
-                                        console.log(`[Minifilter Debug] Volume ${index} is an object:`, volume);
-                                        console.log(`[Minifilter Debug] Volume ${index} keys:`, Object.keys(volume));
-                                        console.log(`[Minifilter Debug] Volume ${index} stringified:`, JSON.stringify(volume));
-                                        console.log(`[Minifilter Debug] Volume ${index} constructor:`, volume.constructor?.name);
-                                        
-                                        // Try to extract a meaningful string from the object
-                                        if (volume.name && typeof volume.name === 'string') return volume.name;
-                                        if (volume.volumeName && typeof volume.volumeName === 'string') return volume.volumeName;
-                                        if (volume.volume && typeof volume.volume === 'string') return volume.volume;
-                                        if (volume.toString && typeof volume.toString === 'function') {
-                                            try {
-                                                const str = volume.toString();
-                                                if (str && str !== '[object Object]') return str;
-                                            } catch (e) {
-                                                console.error(`[Minifilter Debug] Error calling toString on volume ${index}:`, e);
-                                            }
-                                        }
-                                        // Skip empty objects
-                                        if (Object.keys(volume).length === 0) {
-                                            console.log(`[Minifilter Debug] Volume ${index} is an empty object, skipping`);
-                                            return null;
-                                        }
-                                        // Fallback: show object structure
-                                        return `[Object: ${JSON.stringify(volume)}]`;
-                                    } else if (volume !== null && volume !== undefined) {
-                                        const str = String(volume);
-                                        return str && str.trim() !== '' ? str.trim() : null;
-                                    }
-                                    return null;
-                                })
-                                .filter(volume => volume !== null && volume !== undefined && volume !== '');
-                            
-                            return processedVolumes.length > 0 ? `
+                const volumeList = Array.isArray(filter.volumeList) ? filter.volumeList : (filter.volumeList ? [filter.volumeList] : []);
+                // Filter and convert all volumes to strings, logging objects for debugging
+                const processedVolumes = volumeList
+                    .map((volume, index) => {
+                        if (typeof volume === 'string' && volume.trim() !== '') {
+                            return volume.trim();
+                        } else if (typeof volume === 'object' && volume !== null) {
+                            // Log the object for debugging
+                            console.log(`[Minifilter Debug] Volume ${index} is an object:`, volume);
+                            console.log(`[Minifilter Debug] Volume ${index} keys:`, Object.keys(volume));
+                            console.log(`[Minifilter Debug] Volume ${index} stringified:`, JSON.stringify(volume));
+                            console.log(`[Minifilter Debug] Volume ${index} constructor:`, volume.constructor?.name);
+
+                            // Try to extract a meaningful string from the object
+                            if (volume.name && typeof volume.name === 'string') return volume.name;
+                            if (volume.volumeName && typeof volume.volumeName === 'string') return volume.volumeName;
+                            if (volume.volume && typeof volume.volume === 'string') return volume.volume;
+                            if (volume.toString && typeof volume.toString === 'function') {
+                                try {
+                                    const str = volume.toString();
+                                    if (str && str !== '[object Object]') return str;
+                                } catch (e) {
+                                    console.error(`[Minifilter Debug] Error calling toString on volume ${index}:`, e);
+                                }
+                            }
+                            // Skip empty objects
+                            if (Object.keys(volume).length === 0) {
+                                console.log(`[Minifilter Debug] Volume ${index} is an empty object, skipping`);
+                                return null;
+                            }
+                            // Fallback: show object structure
+                            return `[Object: ${JSON.stringify(volume)}]`;
+                        } else if (volume !== null && volume !== undefined) {
+                            const str = String(volume);
+                            return str && str.trim() !== '' ? str.trim() : null;
+                        }
+                        return null;
+                    })
+                    .filter(volume => volume !== null && volume !== undefined && volume !== '');
+
+                return processedVolumes.length > 0 ? `
                         <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid #334155; border-radius: 0.25rem; padding: 0.375rem;">
                             <div style="color: #94a3b8; font-size: 0.5625rem; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Attached Volumes (${processedVolumes.length})</div>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
@@ -8385,7 +8376,7 @@ export class WindowsServerAuditorPage {
                             </div>
                         </div>
                         ` : '';
-                        })()}
+            })()}
                     </div>
                 </div>
             </div>
@@ -8454,13 +8445,13 @@ export class WindowsServerAuditorPage {
 
         return firewallRules.map((rule, index) => {
             const enabled = rule.enabled === true || rule.enabled === 'True' || rule.enabled === 'true';
-            const enabledBadge = enabled 
+            const enabledBadge = enabled
                 ? '<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">Yes</span>'
                 : '<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">No</span>';
-            
+
             const directionColor = rule.direction === 'Inbound' ? '#3b82f6' : '#10b981';
             const actionColor = rule.action === 'Allow' ? '#10b981' : '#ef4444';
-            
+
             return `
                 <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
                     onclick="windowsServerAuditorInstance.showFirewallRuleDetailsModalByIndex(${index})"
@@ -8496,7 +8487,7 @@ export class WindowsServerAuditorPage {
         const firewallRules = this.reportData?.firewallRules || [];
         rows.forEach((row, index) => {
             if (index >= firewallRules.length) return;
-            
+
             const rule = firewallRules[index];
             const searchableText = [
                 rule.name || '',
@@ -8542,7 +8533,7 @@ export class WindowsServerAuditorPage {
 
         const rule = this.selectedFirewallRuleDetails;
         const enabled = rule.enabled === true || rule.enabled === 'True' || rule.enabled === 'true';
-        const enabledBadge = enabled 
+        const enabledBadge = enabled
             ? '<span style="background: rgba(16, 185, 129, 0.15); color: #34d399; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">Yes</span>'
             : '<span style="background: rgba(239, 68, 68, 0.15); color: #f87171; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 500;">No</span>';
 
@@ -8743,7 +8734,7 @@ export class WindowsServerAuditorPage {
         return listeners.map((listener, index) => {
             const protocolColor = listener.protocol === 'TCP' ? '#3b82f6' : '#10b981';
             const stateColor = listener.state === 'Listen' ? '#10b981' : '#94a3b8';
-            
+
             // Risk level colors
             let riskColor = '#94a3b8'; // Low (gray)
             let riskBadge = '';
@@ -8756,11 +8747,11 @@ export class WindowsServerAuditorPage {
             } else {
                 riskBadge = '<span style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; padding: 0.125rem 0.25rem; border-radius: 0.125rem; font-size: 0.625rem; font-weight: 500;">Low</span>';
             }
-            
+
             // Service name display
             const serviceName = listener.serviceName && listener.serviceName !== 'N/A' ? listener.serviceName : '-';
             const serviceColor = listener.isSystemService ? '#60a5fa' : '#94a3b8';
-            
+
             return `
                 <tr style="display: table; width: 100%; table-layout: fixed; cursor: pointer;" 
                     onclick="windowsServerAuditorInstance.showListeningPortDetailsModalByIndex(${index})"
@@ -8796,10 +8787,10 @@ export class WindowsServerAuditorPage {
 
         const listeningPorts = this.reportData?.listeningPorts || {};
         const allListeners = [...(listeningPorts.tcpListeners || []), ...(listeningPorts.udpListeners || [])];
-        
+
         rows.forEach((row, index) => {
             if (index >= allListeners.length) return;
-            
+
             const listener = allListeners[index];
             const searchableText = [
                 listener.protocol || '',

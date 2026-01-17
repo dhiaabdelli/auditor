@@ -43,12 +43,14 @@ import { AutomationPage } from './pages/AutomationPage.js';
 import { HealthMonitorPage } from './pages/HealthMonitor.js';
 import { ActivityLogPage } from './pages/ActivityLog.js';
 import { SettingsPage } from './pages/Settings.js';
+import { WifiManagerPage } from './pages/WifiManager.js';
+import { OverviewPage } from './pages/Controller.js';
 
 class App {
     constructor() {
         // Track page load time for race condition detection
         window.pageLoadTime = Date.now();
-        
+
         // Get page from URL hash or default to apps
         this.urlParams = new URLSearchParams();
         this.authenticated = false;
@@ -57,8 +59,8 @@ class App {
         this.visibilityListenerSetup = false; // Prevent multiple visibility listeners
         this.skipTokenValidation = false; // Flag to skip token validation (e.g., right after login)
         // Don't set currentPage yet - wait until we check authentication
-        this.currentPage = 'apps'; // Default
-        
+        this.currentPage = 'controller'; // Default to Controller instead of Apps
+
         // IMMEDIATELY validate token on construction (before any rendering)
         // This catches expired tokens on page reload
         const tokenValid = this.validateTokenSync();
@@ -66,10 +68,10 @@ class App {
             // Token is invalid/expired - clear auth immediately
             this.setAuthenticated(false);
         }
-        
+
         this.init();
     }
-    
+
     /**
      * Synchronous token validation for immediate check on page load
      * This runs before any async operations
@@ -79,17 +81,17 @@ class App {
         logger.debug('[Token Validation] Starting synchronous validation in constructor...');
         // Check token immediately without async operations
         let token = localStorage.getItem('jwt_token');
-        
+
         if (!token || token.length === 0) {
             logger.debug('[Token Validation] No token found in localStorage');
             return false;
         }
-        
+
         logger.debug('[Token Validation] Token found');
-        
+
         // Extract JWT token (handles cases with extra characters)
         const jwtToken = this.extractJWTToken(token);
-        
+
         if (jwtToken) {
             logger.debug('[Token Validation] Extracted JWT token');
             // Basic format check - full validation will happen in async validateToken()
@@ -98,17 +100,17 @@ class App {
                 const exp = payload.exp * 1000; // Convert to milliseconds
                 const now = Date.now();
                 const timeUntilExpiry = exp - now;
-                
+
                 logger.debug('[Token Validation] JWT token detected');
                 logger.debug('[Token Validation] Token expires at:', new Date(exp).toISOString());
                 logger.debug('[Token Validation] Time until expiry:', Math.round(timeUntilExpiry / 1000), 'seconds');
-                
+
                 // Check if expired (with 1 minute buffer for clock skew)
                 if (exp < (now + 60000)) {
                     logger.debug('[Token Validation] Token expired - will validate with API');
                     return false;
                 }
-                
+
                 logger.debug('[Token Validation] Token format valid');
                 return true;
             } catch (e) {
@@ -116,21 +118,21 @@ class App {
                 return false;
             }
         }
-        
+
         // Legacy API key - format check only, full validation in async
         logger.debug('[Token Validation] Legacy API key found - format valid');
         return true;
     }
-    
+
     /**
      * Extracts JWT token from string, handling cases where token might have extra characters
      */
     extractJWTToken(token) {
         if (!token) return null;
-        
+
         // Trim whitespace
         token = token.trim();
-        
+
         // Try to find JWT token (starts with "eyJ")
         const eyJIndex = token.indexOf('eyJ');
         if (eyJIndex >= 0) {
@@ -143,28 +145,28 @@ class App {
                 return parts.slice(0, 3).join('.');
             }
         }
-        
+
         // If no "eyJ" found, check if it's already a valid JWT format (3 parts)
         const parts = token.split('.');
         if (parts.length === 3) {
             return token;
         }
-        
+
         return null;
     }
-    
+
     /**
      * Validates token with backend API
      */
     async validateTokenWithAPI(token) {
         try {
             logger.debug('[Token Validation] Validating token with backend API...');
-            
+
             // Create timeout controller
             let timeoutId;
             const controller = new AbortController();
             const timeout = 5000; // 5 second timeout
-            
+
             if (AbortSignal.timeout) {
                 // Use native timeout if available
                 var response = await fetch('/api/auth/validate', {
@@ -188,21 +190,21 @@ class App {
                 });
                 clearTimeout(timeoutId);
             }
-            
+
             if (response.status === 200 || response.status === 401) {
                 const isValid = response.status === 200;
                 logger.debug('[Token Validation] Backend validation result:', isValid ? 'VALID' : 'INVALID');
                 return isValid;
             }
-            
+
             // If we get here, something unexpected happened
             logger.warn('[Token Validation] Unexpected response status:', response.status);
             // On unexpected status, assume valid to prevent false logout (could be server issue)
             return true;
         } catch (error) {
             // Network errors or timeouts - don't treat as auth failure
-            if (error.name === 'AbortError' || error.name === 'TypeError' || 
-                error.message?.includes('Failed to fetch') || 
+            if (error.name === 'AbortError' || error.name === 'TypeError' ||
+                error.message?.includes('Failed to fetch') ||
                 error.message?.includes('NetworkError') ||
                 error.message?.includes('Network request failed') ||
                 error.message?.includes('ERR_')) {
@@ -211,13 +213,13 @@ class App {
                 // The token will be validated again on the next request
                 return true;
             }
-            
+
             // Other errors - log but assume valid to prevent false logout
             logger.warn('[Token Validation] Error during validation - assuming valid to prevent false logout:', error.message);
             return true; // Changed from false to true to prevent false logout
         }
     }
-    
+
     /**
      * Validates the JWT token and returns true if valid, false otherwise
      * Also clears authentication if token is expired/invalid
@@ -230,7 +232,7 @@ class App {
         // First, check if token exists
         let token = localStorage.getItem('jwt_token');
         console.log('[Token Validation] Token exists:', !!token, 'Length:', token ? token.length : 0);
-        
+
         // No token at all - clear auth and return false
         if (!token || token.length === 0) {
             console.log('[Token Validation] No token found - clearing authentication');
@@ -238,60 +240,60 @@ class App {
             this.setAuthenticated(false);
             return false;
         }
-        
+
         console.log('[Token Validation] Token found');
         logger.debug('[Token Validation] Token found');
-        
+
         // Extract JWT token (handles cases with extra characters like "eeyJ...")
         const jwtToken = this.extractJWTToken(token);
         console.log('[Token Validation] Extracted JWT token:', !!jwtToken);
-        
+
         if (jwtToken) {
             console.log('[Token Validation] JWT token detected, validating with backend API...');
             logger.debug('[Token Validation] Extracted JWT token');
-            
+
             // Validate with backend API
             const isValid = await this.validateTokenWithAPI(jwtToken);
             console.log('[Token Validation] API validation result:', isValid);
-            
+
             if (!isValid) {
                 console.log('[Token Validation] Token validation failed - clearing authentication');
                 logger.debug('[Token Validation] Token validation failed - clearing authentication');
                 this.setAuthenticated(false);
                 return false;
             }
-            
+
             // Update stored token to clean version if it was modified
             if (jwtToken !== token) {
                 console.log('[Token Validation] Cleaning token in localStorage...');
                 logger.debug('[Token Validation] Cleaning token in localStorage...');
                 localStorage.setItem('jwt_token', jwtToken);
             }
-            
+
             console.log('[Token Validation] Token is valid - setting authenticated flag');
             logger.debug('[Token Validation] Token is valid - setting authenticated flag');
             // Token is valid - ensure authenticated flag is set
             return true;
         }
-        
+
         // Legacy API key - validate with backend
         console.log('[Token Validation] Legacy API key detected - validating with backend...');
         logger.debug('[Token Validation] Legacy API key detected - validating with backend...');
         const isValid = await this.validateTokenWithAPI(token);
         console.log('[Token Validation] Legacy API key validation result:', isValid);
-        
+
         if (!isValid) {
             console.log('[Token Validation] Legacy API key validation failed - clearing authentication');
             logger.debug('[Token Validation] Legacy API key validation failed - clearing authentication');
             this.setAuthenticated(false);
             return false;
         }
-        
+
         console.log('[Token Validation] Legacy API key is valid - setting authenticated flag');
         logger.debug('[Token Validation] Legacy API key is valid - setting authenticated flag');
         return true;
     }
-    
+
     /**
      * Checks if user is authenticated (wrapper for validateToken)
      * NOTE: This is now async, but we keep it for backward compatibility
@@ -300,7 +302,7 @@ class App {
     async isAuthenticated() {
         return await this.validateToken();
     }
-    
+
     setAuthenticated(value) {
         this.authenticated = value;
         if (!value) {
@@ -316,7 +318,7 @@ class App {
         if (!this.authenticated) {
             return 'login';
         }
-        
+
         const hash = window.location.hash.slice(1);
         const [page, queryString] = hash.split('?');
         const validPages = [
@@ -324,7 +326,7 @@ class App {
             // Virtualization
             'hyperv', 'vmware-vsphere', 'vmware-esxi', 'kvm', 'proxmox', 'xen', 'virtualbox',
             // Auditor
-            'hyperv-auditor', 'hyperv-auditor-list', 'hyperv-auditor-details', 'esxi-auditor', 'vsphere-auditor', 'windows-auditor', 'windows-server-auditor-list', 'windows-server-auditor-details', 'file-share-auditor', 'file-share-auditor-list', 'file-share-auditor-details', 'veeam-auditor-list', 'veeam-auditor-details', 'active-directory-auditor',
+            'hyperv-auditor', 'hyperv-auditor-list', 'hyperv-auditor-details', 'esxi-auditor', 'vsphere-auditor', 'windows-auditor', 'windows-server-auditor-list', 'windows-server-auditor-details', 'linux-auditor', 'linux-server-auditor-list', 'linux-server-auditor-details', 'file-share-auditor', 'file-share-auditor-list', 'file-share-auditor-details', 'veeam-auditor-list', 'veeam-auditor-details', 'active-directory-auditor',
             // Script Tools
             'documentation', 'todo',
             // Diagram Tools
@@ -347,38 +349,47 @@ class App {
             'web-tools',
             // Development Tools
             'development-tools',
-            // Health Monitor
-            'health-monitor'
+            // Controller (includes network-overview, wifi-manager, health-monitor, and network-interfaces)
+            'controller', 'network-overview', 'wifi-manager', 'health-monitor', 'network-interfaces',
+            // Activity Log
+            'activity-log', 'activity-log-sessions',
+            // Settings
+            'settings'
         ];
-        
+
         // Check if page matches exactly
         if (validPages.includes(page)) {
             this.urlParams = new URLSearchParams(queryString || '');
             return page;
         }
-        
+
         // Check for sub-routes (e.g., automation/workflow/...)
         if (page.startsWith('automation/')) {
             this.urlParams = new URLSearchParams(queryString || '');
             return 'automation';
         }
-        
-        // If no hash or invalid page, default to apps
-        // But check if we're authenticated first
-        if (this.isAuthenticated()) {
-            return 'apps';
+
+        // If no hash or invalid page, default to controller
+        // Check if hash is empty or just "/"
+        if (page === '' || page === '/') {
+            return 'controller';
         }
-        return 'apps';
+
+        // If authenticated and no hash or invalid, default to controller
+        if (this.authenticated) {
+            return 'controller';
+        }
+        return 'controller';
     }
 
     async init() {
         logger.debug('[App Init] Starting initialization...');
-        
+
         // First, load token into API utility
         window.api = api;
         logger.debug('[App Init] Step 1: Loading API key into utility...');
         await api.loadAPIKey(true);
-        
+
         // Check if we have a token in localStorage
         const token = localStorage.getItem('jwt_token');
         if (!token || token.length === 0) {
@@ -388,7 +399,7 @@ class App {
             await this.showLogin();
             return;
         }
-        
+
         // Check token format synchronously first
         logger.debug('[App Init] Step 2: Checking token format...');
         const tokenValidSync = this.validateTokenSync();
@@ -399,13 +410,13 @@ class App {
             await this.showLogin();
             return;
         }
-        
+
         // If we have a token and it looks valid, set authenticated immediately
         // We'll validate with API in the background, but don't block on it
         logger.debug('[App Init] Token format valid - setting authenticated flag');
         this.authenticated = true;
         this.setAuthenticated(true);
-        
+
         // Validate with API in background (non-blocking) - but only once
         // DISABLED: This was causing infinite loops. Token validation happens on-demand instead.
         // if (!this.backgroundValidationRunning) {
@@ -426,11 +437,11 @@ class App {
         //         });
         //     }, 5000); // Wait 5 seconds before validating
         // }
-        
+
         // Token is valid - proceed with app initialization
         // Get current page from URL
         this.currentPage = this.getPageFromURL();
-        
+
         // Show header and footer
         const header = document.getElementById('header');
         const footer = document.querySelector('.app-footer');
@@ -454,7 +465,7 @@ class App {
                 await this.renderPage(true); // Skip validation to avoid loops
                 return;
             }
-            
+
             // Only validate if not authenticated
             if (!this.authenticated) {
                 const isValid = await this.validateToken();
@@ -469,7 +480,7 @@ class App {
                 // If validation passed, set authenticated
                 this.authenticated = true;
             }
-            
+
             this.currentPage = event.state?.page || this.getPageFromURL();
             // Re-parse URL params on popstate
             this.urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
@@ -478,7 +489,7 @@ class App {
             }
             await this.renderPage(true); // Skip validation since we just validated
         });
-        
+
         // Prevent hash changes when on login page
         window.addEventListener('hashchange', (event) => {
             if (!this.authenticated && this.showingLogin) {
@@ -505,10 +516,10 @@ class App {
                 this.currentPage = this.getPageFromURL();
             }
         } else {
-            // If authenticated and no hash, default to apps
+            // If authenticated and no hash, default to controller
             if (this.authenticated) {
-                url = '#apps';
-                this.currentPage = 'apps';
+                url = '#/';
+                this.currentPage = 'controller';
             } else {
                 // Default to login if not authenticated
                 url = '#login';
@@ -522,28 +533,28 @@ class App {
 
         // Set global instance early so pages can use it
         window.appInstance = this;
-        
+
         // Only render header and page if authenticated
         if (this.authenticated) {
             this.renderHeader();
             // Skip validation on initial render to avoid loops
             await this.renderPage(true);
-            
+
             // Initialize modal
             window.modalInstance = new Modal();
-            
+
             // Set up periodic token validation (check every 30 seconds) - but start after delay
             setTimeout(() => {
                 if (this.authenticated && !this.tokenValidationInterval) {
                     this.startTokenValidationInterval();
                 }
             }, 10000); // Start after 10 seconds to avoid immediate validation
-            
+
             // Validate token when user returns to the tab/window
             this.setupVisibilityChangeListener();
         }
     }
-    
+
     /**
      * Sets up a listener to validate token when user returns to the tab
      */
@@ -553,7 +564,7 @@ class App {
             return;
         }
         this.visibilityListenerSetup = true;
-        
+
         document.addEventListener('visibilitychange', async () => {
             // When user returns to the tab (page becomes visible)
             if (!document.hidden && this.authenticated && !this.showingLogin) {
@@ -581,25 +592,25 @@ class App {
             }
         });
     }
-    
+
     /**
      * Starts a periodic token validation check
      */
     startTokenValidationInterval() {
         // Clear any existing interval first
         this.stopTokenValidationInterval();
-        
+
         // DISABLED: Periodic validation was causing infinite loops and memory issues
         // Token validation now happens on-demand (when making API calls or navigating)
         // This prevents memory issues and infinite loops
         logger.debug('[Token Validation] Periodic validation disabled to prevent loops');
-        
+
         // Token will be validated:
         // 1. When making API calls (via setupSecureFetch)
         // 2. When navigating to a new page (via renderPage)
         // 3. When user returns to tab (via visibility change listener)
     }
-    
+
     /**
      * Stops the periodic token validation
      */
@@ -613,12 +624,12 @@ class App {
     setupSecureFetch() {
         // Store original fetch
         const originalFetch = window.fetch;
-        
+
         // Override fetch to automatically include API key
         window.fetch = async (url, options = {}) => {
             // Skip API key for static files and security/auth endpoints (but NOT /api/health - it needs auth)
             if (typeof url === 'string' && (
-                url.startsWith('/static/') || 
+                url.startsWith('/static/') ||
                 url.startsWith('/health') || // Only /health (not /api/health)
                 url.startsWith('/api/security/api-key') ||
                 url.startsWith('/api/security/validate-key') ||
@@ -634,7 +645,7 @@ class App {
             // Skip validation if flag is set (e.g., right after login) OR if already authenticated
             // Also skip if we're in MFA flow (checking for temp token)
             const isMFAFlow = localStorage.getItem('mfa_temp_token') !== null;
-            
+
             if (!this.skipTokenValidation && !this.authenticated && !isMFAFlow) {
                 // Only validate if not authenticated to avoid loops
                 // But don't validate for /api/auth/validate itself to avoid recursion
@@ -661,7 +672,7 @@ class App {
                         });
                     }
                 }
-                
+
                 // Ensure JWT token is loaded (but not during MFA flow)
                 if (!api.apiKey && !isMFAFlow) {
                     await api.loadAPIKey(true);
@@ -675,12 +686,12 @@ class App {
 
             // Add JWT token to Authorization header
             const headers = new Headers(options.headers || {});
-            
+
             // Don't set Content-Type for FormData - browser will set it with boundary automatically
             if (options.body instanceof FormData && headers.has('Content-Type')) {
                 headers.delete('Content-Type');
             }
-            
+
             // Add session ID from JWT token if available
             if (api.apiKey) {
                 const sessionId = api.getSessionIdFromToken(api.apiKey);
@@ -691,7 +702,7 @@ class App {
             if (api.apiKey && !headers.has('Authorization')) {
                 // Extract clean JWT token (handles cases with extra characters)
                 const cleanToken = this.extractJWTToken(api.apiKey) || api.apiKey;
-                
+
                 // Check if it's a JWT token (starts with eyJ) or legacy API key
                 if (cleanToken.startsWith('eyJ')) {
                     headers.set('Authorization', `Bearer ${cleanToken}`);
@@ -709,7 +720,7 @@ class App {
 
             try {
                 const response = await originalFetch(url, secureOptions);
-                
+
                 // Handle 401 Unauthorized - token is invalid/expired, disconnect user
                 if (response.status === 401) {
                     console.log('[Secure Fetch] Received 401 Unauthorized - token invalid, disconnecting user');
@@ -717,16 +728,16 @@ class App {
                     this.setAuthenticated(false);
                     api.apiKey = null;
                     localStorage.removeItem('jwt_token');
-                    
+
                     // Show login page (but only if not already showing to avoid loops)
                     if (!this.showingLogin) {
                         await this.showLogin();
                     }
-                    
+
                     // Return the 401 response so caller can handle it
                     return response;
                 }
-                
+
                 return response;
             } catch (error) {
                 logger.error('Fetch error');
@@ -739,28 +750,28 @@ class App {
         this.header = new Header(this.currentPage);
         const headerElement = document.getElementById('header');
         headerElement.innerHTML = this.header.render();
-        
+
         // Set global instance for onclick handlers
         window.headerInstance = this.header;
-        
+
         // Mount header (this will also initialize sub-navbar)
         this.header.mount();
-        
+
         // Initialize sidebar
         if (!window.sidebarInstance) {
             window.sidebarInstance = new Sidebar();
             window.sidebarInstance.mount();
         }
-        
+
         // Mount header
         if (this.header.mount) {
             this.header.mount();
         }
-        
+
         // Initialize footer
         this.renderFooter();
     }
-    
+
     renderFooter() {
         if (!window.footerInstance) {
             window.footerInstance = new Footer();
@@ -771,13 +782,13 @@ class App {
             window.footerInstance.mount();
         }
     }
-    
+
     async showLogin() {
         // Don't show login if user is already authenticated
         if (this.authenticated) {
-            logger.debug('[Show Login] User is already authenticated, redirecting to apps');
-            this.currentPage = 'apps';
-            window.location.hash = '#apps';
+            logger.debug('[Show Login] User is already authenticated, redirecting to controller');
+            this.currentPage = 'controller';
+            window.location.hash = '#/';
             // Use setTimeout to break potential loops
             setTimeout(() => {
                 if (this.authenticated) {
@@ -786,32 +797,32 @@ class App {
             }, 100);
             return;
         }
-        
+
         // Prevent multiple simultaneous calls to showLogin
         if (this.showingLogin) {
             logger.debug('[Show Login] Already showing login, skipping...');
             return;
         }
         this.showingLogin = true;
-        
+
         // Force URL to #login when showing login page
         if (window.location.hash !== '#login') {
             window.history.replaceState({ page: 'login' }, '', '#login');
         }
-        
+
         try {
             // Stop token validation interval when showing login
             this.stopTokenValidationInterval();
-            
+
             // Hide header and footer for login page
             const header = document.getElementById('header');
             const footer = document.querySelector('.app-footer');
             if (header) header.style.display = 'none';
             if (footer) footer.style.display = 'none';
-            
+
             // Adjust body padding for login page
             document.body.style.paddingTop = '0';
-            
+
             // Show login page - only if still not authenticated
             if (!this.authenticated) {
                 const content = document.getElementById('page-content');
@@ -844,7 +855,7 @@ class App {
     async renderPage(skipValidation = false) {
         console.log('[Render Page] START - page:', this.currentPage, 'skipValidation:', skipValidation, 'skipTokenValidation:', this.skipTokenValidation, 'authenticated:', this.authenticated);
         logger.debug('[Render Page] Rendering page:', this.currentPage, 'skipValidation:', skipValidation, 'skipTokenValidation:', this.skipTokenValidation, 'authenticated:', this.authenticated);
-        
+
         // If not authenticated, force #login and show login page
         if (!this.authenticated) {
             if (window.location.hash !== '#login') {
@@ -857,12 +868,12 @@ class App {
             }
             return;
         }
-        
+
         // Validate token before rendering any page (unless explicitly skipped)
         if (!skipValidation && !this.skipTokenValidation) {
             console.log('[Render Page] Need to validate token...');
             logger.debug('[Render Page] Validating token with API before rendering...');
-            
+
             // If already authenticated, skip validation
             if (this.authenticated) {
                 console.log('[Render Page] Already authenticated, skipping validation');
@@ -891,16 +902,16 @@ class App {
             // Don't clear the skip flag here - let it be cleared by the login handler after a delay
             // This ensures API calls during page rendering also skip validation
         }
-        
+
         // Scroll to top when navigating to a new page
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         const content = document.getElementById('page-content');
         if (!content) {
             logger.error('page-content element not found');
             return;
         }
-        
+
         content.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
 
         // Cleanup previous page if it has cleanup or unmount method
@@ -1076,6 +1087,14 @@ class App {
                 // Set instance immediately so onclick handlers work
                 window.healthMonitorInstance = page;
                 break;
+            case 'controller':
+            case 'network-overview':
+            case 'wifi-manager':
+            case 'network-interfaces':
+                page = new OverviewPage();
+                // Set instance immediately so onclick handlers work
+                window.overviewInstance = page;
+                break;
             case 'activity-log':
             case 'activity-log-sessions':
                 page = new ActivityLogPage();
@@ -1096,7 +1115,7 @@ class App {
         console.log('[Render Page] Rendering page content...');
         content.innerHTML = await page.render();
         console.log('[Render Page] Page content rendered');
-        
+
         // Only mount if page has mount method, and load data if needed
         if (page.mount) {
             console.log('[Render Page] Calling page.mount()...');
@@ -1105,20 +1124,20 @@ class App {
         } else {
             console.log('[Render Page] Page has no mount method');
         }
-        
+
         console.log('[Render Page] END - page rendered successfully');
     }
 
     async navigateTo(page) {
         logger.debug('[Navigation] Navigating to:', page);
-        
+
         // If not authenticated, don't allow navigation - force login
         if (!this.authenticated) {
             logger.debug('[Navigation] Not authenticated - redirecting to login');
             await this.showLogin();
             return;
         }
-        
+
         // Validate token before every navigation
         logger.debug('[Navigation] Validating token with API before navigation...');
         if (!(await this.validateToken())) {
@@ -1128,34 +1147,34 @@ class App {
             return;
         }
         logger.debug('[Navigation] Token valid - proceeding with navigation');
-        
+
         // Handle query parameters in page string (e.g., "hyperv-auditor-details?id=2")
         const [pageName, queryString] = page.split('?');
-        
+
         // Don't navigate if we're already on this page (unless we're coming from login)
         if (this.currentPage === pageName && this.currentPage !== 'apps') {
             return;
         }
-        
+
         this.currentPage = pageName;
-        
+
         // Update URL without reloading the page (always use hash for consistency)
         const url = `#${page}`;
         window.history.pushState({ page: pageName }, '', url);
-        
+
         // Update URL params if query string exists
         if (queryString) {
             this.urlParams = new URLSearchParams(queryString);
         }
-        
+
         // Update header page name
         if (this.header) {
             this.header.updatePageName(pageName);
         }
-        
+
         // Scroll to top immediately when navigating
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        
+
         // Render the new page (await to ensure it completes)
         await this.renderPage();
     }

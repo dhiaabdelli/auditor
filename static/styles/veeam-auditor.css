@@ -68,7 +68,7 @@
 }
 
 /* Ensure all sections use full width */
-.audit-content > div {
+.audit-content>div {
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -79,6 +79,5 @@
     width: 100%;
     max-width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 1.5rem;
 }
-

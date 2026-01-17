@@ -27,10 +27,7 @@ var (
 
 // HandlePowerShellWebSocket handles WebSocket connections for PowerShell console
 func HandlePowerShellWebSocket(w http.ResponseWriter, r *http.Request) {
-	if runtime.GOOS != "windows" {
-		http.Error(w, "PowerShell console is only available on Windows", http.StatusNotImplemented)
-		return
-	}
+	// OS check removed to allow Linux support
 
 	conn, err := shared.Upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -154,10 +151,20 @@ func HandlePowerShellWebSocket(w http.ResponseWriter, r *http.Request) {
 		log.Printf("PowerShell client disconnected. Total clients: %d", len(powershellClients))
 	}()
 
+	// Determine shell name for welcome message
+	shellName := "PowerShell"
+	if runtime.GOOS != "windows" {
+		if _, err := exec.LookPath("pwsh"); err == nil {
+			shellName = "PowerShell Core (pwsh)"
+		} else {
+			shellName = "System Shell (bash/sh)"
+		}
+	}
+
 	// Send welcome message
 	welcomeMsg := map[string]interface{}{
 		"type":    "output",
-		"content": "PowerShell Console Ready",
+		"content": fmt.Sprintf("%s Console Ready", shellName),
 		"time":    time.Now().Format("15:04:05"),
 	}
 	safeWriteJSON(conn, welcomeMsg)
@@ -255,20 +262,35 @@ func safeWriteJSON(conn *websocket.Conn, v interface{}) error {
 
 // executePowerShellCommand executes a PowerShell command and streams output
 func executePowerShellCommand(conn *websocket.Conn, command string) {
-	if runtime.GOOS != "windows" {
-		errorMsg := map[string]interface{}{
-			"type":    "error",
-			"content": "PowerShell commands are only available on Windows",
-			"time":    time.Now().Format("15:04:05"),
+	// OS check removed
+
+	// Determine command execution based on OS
+	var cmd *exec.Cmd
+	var shellPrompt string
+
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command)
+		shellPrompt = "PS> "
+	} else {
+		// Check for pwsh (PowerShell Core)
+		if _, err := exec.LookPath("pwsh"); err == nil {
+			cmd = exec.Command("pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command)
+			shellPrompt = "PS> "
+		} else {
+			// Fallback to bash/sh
+			shell := "/bin/bash"
+			if _, err := exec.LookPath("/bin/bash"); err != nil {
+				shell = "/bin/sh"
+			}
+			cmd = exec.Command(shell, "-c", command)
+			shellPrompt = "$ "
 		}
-		safeWriteJSON(conn, errorMsg)
-		return
 	}
 
 	// Send command echo with command type for colorization
 	echoMsg := map[string]interface{}{
 		"type":    "command",
-		"content": fmt.Sprintf("PS> %s", command),
+		"content": fmt.Sprintf("%s%s", shellPrompt, command),
 		"time":    time.Now().Format("15:04:05"),
 	}
 	safeWriteJSON(conn, echoMsg)
@@ -277,8 +299,8 @@ func executePowerShellCommand(conn *websocket.Conn, command string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Execute PowerShell command
-	cmd := exec.CommandContext(ctx, "powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", command)
+	// Assign context to command
+	cmd = exec.CommandContext(ctx, cmd.Path, cmd.Args[1:]...)
 
 	// Get stdout and stderr pipes
 	stdout, err := cmd.StdoutPipe()
@@ -380,19 +402,49 @@ func executePowerShellCommand(conn *websocket.Conn, command string) {
 
 // getPowerShellPrompt returns the current PowerShell prompt
 func getPowerShellPrompt() string {
-	if runtime.GOOS != "windows" {
-		return "PS> "
+	if runtime.GOOS == "windows" {
+		// Get current directory
+		cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Get-Location | Select-Object -ExpandProperty Path")
+		output, err := cmd.Output()
+		if err != nil {
+			return "PS> "
+		}
+		path := strings.TrimSpace(string(output))
+		// Extract just the directory name
+		parts := strings.Split(path, "\\")
+		dirName := parts[len(parts)-1]
+		return fmt.Sprintf("PS %s> ", dirName)
 	}
-	// Get current directory
-	cmd := exec.Command("powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Get-Location | Select-Object -ExpandProperty Path")
+
+	// Linux/Mac implementation
+	// Check for pwsh
+	if _, err := exec.LookPath("pwsh"); err == nil {
+		cmd := exec.Command("pwsh", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", "Get-Location | Select-Object -ExpandProperty Path")
+		output, err := cmd.Output()
+		if err != nil {
+			return "PS> "
+		}
+		path := strings.TrimSpace(string(output))
+		parts := strings.Split(path, "/")
+		dirName := parts[len(parts)-1]
+		if dirName == "" {
+			dirName = "/"
+		}
+		return fmt.Sprintf("PS %s> ", dirName)
+	}
+
+	// Fallback to basic prompt for bash
+	cmd := exec.Command("pwd")
 	output, err := cmd.Output()
 	if err != nil {
-		return "PS> "
+		return "$ "
 	}
 	path := strings.TrimSpace(string(output))
-	// Extract just the directory name
-	parts := strings.Split(path, "\\")
+	parts := strings.Split(path, "/")
 	dirName := parts[len(parts)-1]
-	return fmt.Sprintf("PS %s> ", dirName)
+	if dirName == "" {
+		dirName = "/"
+	}
+	return fmt.Sprintf("%s $ ", dirName)
 }
 

@@ -2,17 +2,19 @@ import { SubNavbar } from './SubNavbar.js';
 import { PageNavbar } from './PageNavbar.js';
 
 export class Header {
-    constructor(currentPage = 'apps') {
+    constructor(currentPage = 'controller') {
         this.currentPage = currentPage;
         this.subNavbar = new SubNavbar();
         this.pageNavbar = new PageNavbar();
+        this.isDarkMode = localStorage.getItem('theme') !== 'light';
     }
 
     getPageName(pageId) {
         const pageNames = {
-                'apps': 'Applications',
-                // Virtualization
-                // Manager
+            'apps': 'Applications',
+            'controller': 'Overview',
+            // Virtualization
+            // Manager
             'hyperv': 'Manager',
             'vmware-vsphere': 'Manager',
             'vmware-esxi': 'Manager',
@@ -20,18 +22,21 @@ export class Header {
             'proxmox': 'Manager',
             'xen': 'Manager',
             'virtualbox': 'Manager',
-                'hyperv-auditor': 'Auditor',
-                'hyperv-auditor-list': 'Auditor',
-                'hyperv-auditor-details': 'Auditor',
-                'esxi-auditor': 'Auditor',
-                'vsphere-auditor': 'Auditor',
-                'windows-auditor': 'Auditor',
-                'windows-server-auditor-list': 'Auditor',
-                'windows-server-auditor-details': 'Auditor',
-                'file-share-auditor': 'Auditor',
-                'file-share-auditor-list': 'Auditor',
-                'file-share-auditor-details': 'Auditor',
-                'active-directory-auditor': 'Auditor',
+            'hyperv-auditor': 'Auditor',
+            'hyperv-auditor-list': 'Auditor',
+            'hyperv-auditor-details': 'Auditor',
+            'esxi-auditor': 'Auditor',
+            'vsphere-auditor': 'Auditor',
+            'windows-auditor': 'Auditor',
+            'windows-server-auditor-list': 'Auditor',
+            'windows-server-auditor-details': 'Auditor',
+            'linux-auditor': 'Auditor',
+            'linux-server-auditor-list': 'Auditor',
+            'linux-server-auditor-details': 'Auditor',
+            'file-share-auditor': 'Auditor',
+            'file-share-auditor-list': 'Auditor',
+            'file-share-auditor-details': 'Auditor',
+            'active-directory-auditor': 'Auditor',
             // Productivity
             'documentation': 'Productivity',
             'todo': 'To-Do Manager',
@@ -75,27 +80,82 @@ export class Header {
             'activity-log': 'Activity Log',
             'activity-log-sessions': 'Activity Log',
             // Settings
-            'settings': 'Settings'
+            'settings': 'Settings',
+            // WiFi Manager
+            'wifi-manager': 'WiFi Manager'
         };
         return pageNames[pageId] || 'Applications';
     }
-    
+
     async openApps() {
         if (window.appInstance) {
             await window.appInstance.navigateTo('apps');
         }
     }
 
-    async openSettings() {
+    async openOverview() {
+        if (window.appInstance) {
+            await window.appInstance.navigateTo('controller');
+        }
+    }
+
+    async openAdministration() {
+        if (window.appInstance) {
+            // Default administration page is WiFi Manager
+            await window.appInstance.navigateTo('wifi-manager');
+        }
+    }
+
+    async openMonitor() {
+        if (window.appInstance) {
+            await window.appInstance.navigateTo('health-monitor');
+        }
+    }
+
+    async openChangePassword() {
         // Close menu
         const dropdown = document.getElementById('userMenuDropdown');
         if (dropdown) {
             dropdown.style.display = 'none';
         }
-        
-        // Navigate to settings
+
+        // Navigate to change password if implemented
         if (window.appInstance) {
-            await window.appInstance.navigateTo('settings');
+            await window.appInstance.navigateTo('settings'); // Fallback to settings or specific tab
+        }
+    }
+
+    async openUserPreference() {
+        // Close menu
+        const dropdown = document.getElementById('userMenuDropdown');
+        if (dropdown) {
+            dropdown.style.display = 'none';
+        }
+
+        // Navigate to user preference
+        if (window.appInstance) {
+            await window.appInstance.navigateTo('settings'); // Fallback
+        }
+    }
+
+    toggleTheme() {
+        this.isDarkMode = !this.isDarkMode;
+        const theme = this.isDarkMode ? 'dark' : 'light';
+        localStorage.setItem('theme', theme);
+        this.applyTheme();
+
+        // Update toggle icon
+        const icon = document.querySelector('#theme-toggle i');
+        if (icon) {
+            icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
+        }
+    }
+
+    applyTheme() {
+        if (!this.isDarkMode) {
+            document.body.classList.add('light-mode');
+        } else {
+            document.body.classList.remove('light-mode');
         }
     }
 
@@ -103,7 +163,17 @@ export class Header {
     render() {
         const pageName = this.getPageName(this.currentPage);
         const isAppsPage = this.currentPage === 'apps';
-        const needsConfigToggle = this.currentPage === 'ping-tracer' || this.currentPage === 'ip-scanner';
+        const needsConfigToggle =
+            this.currentPage === 'ping-tracer' ||
+            this.currentPage === 'ip-scanner' ||
+            this.currentPage === 'veeam-auditor' ||
+            this.currentPage === 'veeam-auditor-details' ||
+            this.currentPage === 'windows-server-auditor' ||
+            this.currentPage === 'windows-server-auditor-details' ||
+            this.currentPage === 'file-share-auditor' ||
+            this.currentPage === 'file-share-auditor-details' ||
+            this.currentPage === 'linux-server-auditor' ||
+            this.currentPage === 'linux-server-auditor-details';
 
         return `
             <div class="modern-header">
@@ -117,32 +187,50 @@ export class Header {
                             <i class="fas fa-bars"></i>
                         </button>
                     `}
-                    <div class="header-brand">
-                        <div class="brand-text">
-                            ${isAppsPage ? 
-                                `<span class="header-page-name">Applications</span>` :
-                                `<span class="header-breadcrumb">
-                                    <span class="breadcrumb-item breadcrumb-link" onclick="headerInstance.openApps()">Applications</span>
-                                    <i class="fas fa-chevron-right breadcrumb-separator"></i>
-                                    <span class="breadcrumb-item">${pageName}</span>
-                                </span>`
-                            }
-                        </div>
+                    <div class="header-brand-logo" onclick="headerInstance.openOverview()">
+                        DCT
+                    </div>
+                    <div class="header-nav">
+                        <button class="nav-item ${['controller', 'network-overview'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openOverview()">
+                            Overview
+                        </button>
+                        <button class="nav-item ${this.currentPage === 'apps' ? 'active' : ''}" onclick="headerInstance.openApps()">
+                            Applications
+                        </button>
+                        <button class="nav-item ${['wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openAdministration()">
+                            Administration
+                        </button>
+                        <button class="nav-item ${this.currentPage === 'health-monitor' ? 'active' : ''}" onclick="headerInstance.openMonitor()">
+                            Monitor
+                        </button>
                     </div>
                 </div>
                 
                 <div class="header-right">
                     <div class="header-actions">
+                        <button class="theme-toggle" id="theme-toggle" onclick="headerInstance.toggleTheme()" title="Toggle Theme">
+                            <i class="fas ${this.isDarkMode ? 'fa-moon' : 'fa-sun'}"></i>
+                        </button>
                         <div class="user-menu-container">
-                            <button class="header-btn user-btn" onclick="headerInstance.toggleUserMenu()" title="User">
-                                <i class="fas fa-user"></i>
-                            </button>
+                            <div class="user-profile" onclick="headerInstance.toggleUserMenu()">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div class="user-info">
+                                    <span class="user-name">Admin</span>
+                                    <i class="fas fa-chevron-down user-chevron"></i>
+                                </div>
+                            </div>
                             <div class="user-menu-dropdown" id="userMenuDropdown">
-                                <button class="user-menu-item" onclick="headerInstance.openSettings()">
-                                    <i class="fas fa-cog"></i>
-                                    <span>Settings</span>
+                                <button class="user-menu-item" onclick="headerInstance.openChangePassword()">
+                                    <i class="fas fa-key"></i>
+                                    <span>Change Password</span>
                                 </button>
-                                <button class="user-menu-item" onclick="headerInstance.logout()">
+                                <button class="user-menu-item" onclick="headerInstance.openUserPreference()">
+                                    <i class="fas fa-user-edit"></i>
+                                    <span>User Preference</span>
+                                </button>
+                                <button class="user-menu-item logout-item" onclick="headerInstance.logout()">
                                     <i class="fas fa-sign-out-alt"></i>
                                     <span>Logout</span>
                                 </button>
@@ -157,10 +245,13 @@ export class Header {
     mount() {
         // Set global sub-navbar instance
         window.subNavbarInstance = this.subNavbar;
-        
+
+        // Apply saved theme
+        this.applyTheme();
+
         // Initialize sub-navbar for current page
         this.updateSubNavbar(this.currentPage);
-        
+
         // Close user menu when clicking outside
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.user-menu-container')) {
@@ -176,26 +267,45 @@ export class Header {
         this.currentPage = pageId;
         const pageName = this.getPageName(pageId);
         const isAppsPage = pageId === 'apps';
-        const needsConfigToggle = pageId === 'ping-tracer' || pageId === 'ip-scanner';
-        
+        const needsConfigToggle =
+            pageId === 'ping-tracer' ||
+            pageId === 'ip-scanner' ||
+            pageId === 'veeam-auditor' ||
+            pageId === 'veeam-auditor-details' ||
+            pageId === 'windows-server-auditor' ||
+            pageId === 'windows-server-auditor-details' ||
+            pageId === 'file-share-auditor' ||
+            pageId === 'file-share-auditor-details' ||
+            pageId === 'linux-server-auditor' ||
+            pageId === 'linux-server-auditor-details';
+
         // Update the header-left section to show the correct button
+        // Update the header-left section to show the correct menu active state
         const headerLeft = document.querySelector('.header-left');
         if (headerLeft) {
-            const brandText = headerLeft.querySelector('.brand-text');
-            if (brandText) {
-                if (isAppsPage) {
-                    brandText.innerHTML = `<span class="header-page-name">Applications</span>`;
-                } else {
-                    brandText.innerHTML = `
-                        <span class="header-breadcrumb">
-                            <span class="breadcrumb-item breadcrumb-link" onclick="headerInstance.openApps()">Applications</span>
-                            <i class="fas fa-chevron-right breadcrumb-separator"></i>
-                            <span class="breadcrumb-item">${pageName}</span>
-                        </span>
-                    `;
-                }
+            const headerNav = headerLeft.querySelector('.header-nav');
+            if (headerNav) {
+                const isOverview = ['controller', 'network-overview'].includes(pageId);
+                const isAdministration = ['wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(pageId);
+                const isMonitor = pageId === 'health-monitor';
+                const isApplications = !isOverview && !isAdministration && !isMonitor && pageId !== 'login';
+
+                headerNav.innerHTML = `
+                    <button class="nav-item ${isOverview ? 'active' : ''}" onclick="headerInstance.openOverview()">
+                        Overview
+                    </button>
+                    <button class="nav-item ${isApplications ? 'active' : ''}" onclick="headerInstance.openApps()">
+                        Applications
+                    </button>
+                    <button class="nav-item ${isAdministration ? 'active' : ''}" onclick="headerInstance.openAdministration()">
+                        Administration
+                    </button>
+                    <button class="nav-item ${isMonitor ? 'active' : ''}" onclick="headerInstance.openMonitor()">
+                        Monitor
+                    </button>
+                `;
             }
-            
+
             // Update the toggle button
             const existingToggle = headerLeft.querySelector('.apps-toggle-btn, .header-config-toggle');
             if (existingToggle) {
@@ -231,7 +341,7 @@ export class Header {
                 }
             }
         }
-        
+
         // Update sub-navbar
         this.updateSubNavbar(pageId);
     }
@@ -261,7 +371,7 @@ export class Header {
                 this.subNavbar.attachEventListeners();
                 // Add class to body to adjust padding
                 document.body.classList.add('has-sub-navbar');
-                
+
                 // Render page navbar after sub-navbar (skip for ping-tracer and ip-scanner)
                 if (pageId !== 'ping-tracer' && pageId !== 'ip-scanner') {
                     const pageNavbarHTML = this.pageNavbar.render(pageId);
@@ -325,23 +435,28 @@ export class Header {
             }
         }
     }
-    
+
     toggleConfigSidebar() {
         // Toggle config sidebar for ping-tracer or ip-scanner
         const pageId = this.currentPage;
-        
+
         if (pageId === 'ping-tracer' && window.pingTracerInstance) {
             if (typeof window.pingTracerInstance.toggleConfigSidebar === 'function') {
                 window.pingTracerInstance.toggleConfigSidebar();
             }
             return;
         }
-        
+
         if (pageId === 'ip-scanner' && window.ipScannerInstance) {
             if (typeof window.ipScannerInstance.toggleConfigSidebar === 'function') {
                 window.ipScannerInstance.toggleConfigSidebar();
             }
             return;
+        }
+
+        // Handle auditor pages
+        if (window.pageNavbarInstance && typeof window.pageNavbarInstance.toggleAuditorSidebar === 'function') {
+            window.pageNavbarInstance.toggleAuditorSidebar();
         }
     }
 
@@ -361,7 +476,7 @@ export class Header {
                 if (sessionId) {
                     headers['X-Session-ID'] = sessionId;
                 }
-                
+
                 await fetch('/api/logout', {
                     method: 'POST',
                     headers: headers
@@ -374,13 +489,13 @@ export class Header {
             if (window.appInstance) {
                 // Clear authentication state (this also clears session_id)
                 window.appInstance.setAuthenticated(false);
-                
+
                 // Hide header and footer immediately
                 const header = document.getElementById('header');
                 const footer = document.querySelector('.app-footer');
                 if (header) header.style.display = 'none';
                 if (footer) footer.style.display = 'none';
-                
+
                 // Show login page
                 window.appInstance.showLogin();
             }
@@ -393,7 +508,7 @@ export class Header {
         if (dropdown) {
             const isVisible = dropdown.style.display === 'block';
             dropdown.style.display = isVisible ? 'none' : 'block';
-            
+
             // Close dropdown when clicking outside
             if (!isVisible) {
                 const closeMenu = (e) => {
@@ -408,17 +523,25 @@ export class Header {
             }
         }
     }
-    
-    openSettings() {
-        // Close menu
+
+    openChangePassword() {
+        this.closeUserMenu();
+        if (window.appInstance) {
+            window.appInstance.navigateTo('settings');
+        }
+    }
+
+    openUserPreference() {
+        this.closeUserMenu();
+        if (window.appInstance) {
+            window.appInstance.navigateTo('settings');
+        }
+    }
+
+    closeUserMenu() {
         const dropdown = document.getElementById('userMenuDropdown');
         if (dropdown) {
             dropdown.style.display = 'none';
-        }
-        
-        // Navigate to settings
-        if (window.appInstance) {
-            window.appInstance.navigateTo('settings');
         }
     }
 }

@@ -157,7 +157,7 @@ export class AppsPage {
                 color: '#3b82f6',
                 section: 'reporting'
             },
-            
+
             // Automation Section - SECOND
             {
                 id: 'automation',
@@ -167,7 +167,7 @@ export class AppsPage {
                 color: '#ec4899',
                 section: 'productivity'
             },
-            
+
             // Reporting & Analysis Section - THIRD
             {
                 id: 'reports',
@@ -185,7 +185,7 @@ export class AppsPage {
                 color: '#10b981',
                 section: 'reporting'
             },
-            
+
             // Manager Section (consolidated - use sub-navbar to switch between platforms)
             {
                 id: 'hyperv',
@@ -195,7 +195,7 @@ export class AppsPage {
                 color: '#3b82f6',
                 section: 'infrastructure'
             },
-            
+
             // Infrastructure Diagram Section
             {
                 id: 'infrastructure-diagram',
@@ -205,7 +205,7 @@ export class AppsPage {
                 color: '#06b6d4',
                 section: 'infrastructure'
             },
-            
+
             // Network & Connectivity Section
             {
                 id: 'ip-scanner',
@@ -247,7 +247,7 @@ export class AppsPage {
                 color: '#ec4899',
                 section: 'networking'
             },
-            
+
             // Remote Section (consolidated - use sub-navbar to switch between SSH and SFTP)
             {
                 id: 'remote',
@@ -257,7 +257,7 @@ export class AppsPage {
                 color: '#10b981',
                 section: 'remote'
             },
-            
+
             // Tools Section (consolidated - use sub-navbar to switch between tools)
             {
                 id: 'subnet-calculator',
@@ -267,7 +267,7 @@ export class AppsPage {
                 color: '#6366f1',
                 section: 'tools'
             },
-            
+
             // Documentation Section
             {
                 id: 'documentation',
@@ -277,7 +277,7 @@ export class AppsPage {
                 color: '#8b5cf6',
                 section: 'documentation'
             },
-            
+
             // To-Do Manager Section
             {
                 id: 'todo',
@@ -287,17 +287,7 @@ export class AppsPage {
                 color: '#f59e0b',
                 section: 'productivity'
             },
-            
-            // Health Monitor
-            {
-                id: 'health-monitor',
-                icon: 'fa-heartbeat',
-                title: this.t('healthMonitor'),
-                description: this.t('healthMonitorDesc'),
-                color: '#ef4444',
-                section: 'monitoring'
-            },
-            
+
             // Activity Log
             {
                 id: 'activity-log',
@@ -334,7 +324,7 @@ export class AppsPage {
     async mount() {
         // Set global instance
         window.appsPageInstance = this;
-        
+
         // Set up click handlers
         document.querySelectorAll('.app-card').forEach(card => {
             card.addEventListener('click', (e) => {
@@ -344,7 +334,7 @@ export class AppsPage {
                 }
             });
         });
-        
+
     }
 
     navigateTo(appId) {

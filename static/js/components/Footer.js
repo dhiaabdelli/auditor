@@ -7,23 +7,23 @@ export class Footer {
         this.backgroundTasks = []; // Background tasks with progress
         this.workflows = []; // Running workflows
         this.connections = [];
-        this.powershellWS = null;
+        this.consoleWS = null;
         this.workflowWS = null; // WebSocket for workflow updates
         this.isConnected = false;
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 3000;
-        this.currentPrompt = 'PS> ';
+        this.currentPrompt = '> ';
         this.isResizing = false;
         this.startY = 0;
         this.startHeight = 300;
         this.currentHeight = 300;
-        
+
         // Bind methods for event listeners
         this.boundResize = this.resize.bind(this);
         this.boundStopResize = this.stopResize.bind(this);
-        
+
         // Connect to workflow WebSocket
         this.connectWorkflowWebSocket();
     }
@@ -31,7 +31,7 @@ export class Footer {
     render() {
         // Only show active tab when footer is expanded
         const showActive = this.isExpanded;
-        
+
         return `
             <footer class="app-footer" style="height: auto">
                 <div class="footer-resize-handle" onmousedown="footerInstance.startResize(event)"></div>
@@ -66,7 +66,7 @@ export class Footer {
 
     renderConsole() {
         if (this.activeTab !== 'console') return '';
-        
+
         return `
             <div class="footer-console">
                 <div class="console-header">
@@ -85,7 +85,7 @@ export class Footer {
                         </div>
                     ` : this.consoleMessages.map(msg => `
                         <div class="console-message ${msg.type || 'info'}">
-                            <span class="console-content">${this.colorizePowerShellOutput(msg.content, msg.type)}</span>
+                            <span class="console-content">${this.colorizeConsoleOutput(msg.content, msg.type)}</span>
                         </div>
                     `).join('')}
                 </div>
@@ -95,7 +95,7 @@ export class Footer {
                         type="text" 
                         class="console-input" 
                         id="console-input"
-                        placeholder="Type a PowerShell command..."
+                        placeholder="Type a terminal command..."
                         onkeydown="footerInstance.handleConsoleInput(event)"
                     />
                     <button class="console-send-btn" onclick="footerInstance.sendConsoleMessage()" title="Send command">
@@ -111,7 +111,7 @@ export class Footer {
 
     renderTasks() {
         if (this.activeTab !== 'tasks') return '';
-        
+
         return `
             <div class="footer-tasks">
                 <div class="tasks-header">
@@ -212,7 +212,7 @@ export class Footer {
 
     renderConnections() {
         if (this.activeTab !== 'connections') return '';
-        
+
         return `
             <div class="footer-connections">
                 <div class="connections-header">
@@ -254,28 +254,28 @@ export class Footer {
         const wasConsole = this.activeTab === 'console';
         const wasExpanded = this.isExpanded;
         const wasSameTab = this.activeTab === tab;
-        
+
         // Always expand footer when clicking a tab (if not already expanded)
         if (!this.isExpanded) {
             this.isExpanded = true;
         }
-        
+
         // Switch to the clicked tab
         this.activeTab = tab;
-        
-        // Connect to PowerShell when switching to console tab
+
+        // Connect to Console when switching to console tab
         if (tab === 'console' && !wasConsole) {
-            this.connectPowerShell();
+            this.connectConsole();
         }
         // Disconnect when switching away from console tab
         else if (wasConsole && tab !== 'console') {
-            if (this.powershellWS) {
-                this.powershellWS.close();
-                this.powershellWS = null;
+            if (this.consoleWS) {
+                this.consoleWS.close();
+                this.consoleWS = null;
                 this.isConnected = false;
             }
         }
-        
+
         // Update body padding if expansion state changed
         if (this.isExpanded !== wasExpanded) {
             if (this.isExpanded) {
@@ -285,47 +285,47 @@ export class Footer {
                 document.body.style.paddingBottom = '50px';
             }
         }
-        
+
         this.update();
     }
 
     toggleExpand() {
         this.isExpanded = !this.isExpanded;
-        
-        // When collapsing, disconnect PowerShell if console was active
+
+        // When collapsing, disconnect Console if console was active
         if (!this.isExpanded && this.activeTab === 'console') {
-            if (this.powershellWS) {
-                this.powershellWS.close();
-                this.powershellWS = null;
+            if (this.consoleWS) {
+                this.consoleWS.close();
+                this.consoleWS = null;
                 this.isConnected = false;
             }
         }
-        
+
         this.update();
         // Adjust body padding when footer expands/collapses
         if (this.isExpanded) {
             const footerHeight = this.currentHeight + 50; // approx tabs + padding
             document.body.style.paddingBottom = (footerHeight + 50) + 'px';
-            
-            // Reconnect PowerShell if console tab is active
+
+            // Reconnect Console if console tab is active
             if (this.activeTab === 'console') {
-                this.connectPowerShell();
+                this.connectConsole();
             }
         } else {
             document.body.style.paddingBottom = '50px';
         }
     }
 
-    colorizePowerShellOutput(text, type) {
+    colorizeConsoleOutput(text, type) {
         if (!text) return '';
-        
+
         let html = this.escapeHtml(text);
         const replacements = [];
         const pushReplacement = (str) => {
             replacements.push(str);
             return `__R${replacements.length - 1}__`;
         };
-        
+
         // Colorize based on type first
         if (type === 'command') {
             // Command prompts - green color
@@ -358,27 +358,27 @@ export class Footer {
             html = html.replace(/([A-Z]:\\[^\s<>]+|\\\\[^\s<>]+)/gi, (match) => {
                 return pushReplacement(`<span style="color: #fbbf24;">${match}</span>`);
             });
-            
+
             // 2. Match URLs
             html = html.replace(/(https?:\/\/[^\s<>]+)/gi, (match) => {
                 return pushReplacement(`<span style="color: #60a5fa;">${match}</span>`);
             });
-            
+
             // 3. Match quoted strings
             html = html.replace(/(["'])((?:(?=(\\?))\3.)*?)\1/g, (match) => {
                 return pushReplacement(`<span style="color: #34d399;">${match}</span>`);
             });
-            
+
             // 4. Match PowerShell cmdlets
             html = html.replace(/([A-Z][a-z]+-[A-Z][a-zA-Z]+)/g, (match) => {
                 return pushReplacement(`<span style="color: #34d399; font-weight: 500;">${match}</span>`);
             });
-            
+
             // 5. Match PowerShell variables
             html = html.replace(/(\$[a-zA-Z_][a-zA-Z0-9_]*)/g, (match) => {
                 return pushReplacement(`<span style="color: #fbbf24;">${match}</span>`);
             });
-            
+
             // 6. Match Status
             html = html.replace(/\b(Success|OK|Completed|Running|Stopped|Enabled|Disabled)\b/gi, (match) => {
                 return pushReplacement(`<span style="color: #10b981; font-weight: 500;">${match}</span>`);
@@ -388,12 +388,12 @@ export class Footer {
             html = html.replace(/(?<!#)\b(\d+\.?\d*)\b/g, (match) => {
                 return pushReplacement(`<span style="color: #60a5fa;">${match}</span>`);
             });
-            
+
             // 8. Match Booleans
             html = html.replace(/\b(True|False|$true|$false)\b/gi, (match) => {
                 return pushReplacement(`<span style="color: #a78bfa;">${match}</span>`);
             });
-            
+
             // 9. Match Operators
             html = html.replace(/(\|\s*|&&|\|\||-eq|-ne|-lt|-gt|-le|-ge|-like|-notlike|-match|-notmatch|-contains|-notcontains|-and|-or|-not)/g, (match) => {
                 return pushReplacement(`<span style="color: #f59e0b;">${match}</span>`);
@@ -404,12 +404,12 @@ export class Footer {
                 return pushReplacement(`<span style="color: #fbbf24; font-weight: 600;">${match}</span>`);
             });
         }
-        
+
         // Restore replacements
         replacements.forEach((val, idx) => {
             html = html.replace(`__R${idx}__`, val);
         });
-        
+
         return html;
     }
 
@@ -423,22 +423,22 @@ export class Footer {
         if (this.consoleMessages.length > 100) {
             this.consoleMessages.shift();
         }
-        
+
         // Update DOM directly if possible to avoid full re-render
         const messagesContainer = document.getElementById('console-messages');
         if (messagesContainer) {
             const msg = this.consoleMessages[this.consoleMessages.length - 1];
             const msgDiv = document.createElement('div');
             msgDiv.className = `console-message ${msg.type || 'info'}`;
-            
+
             // Colorize the content
-            const colorizedContent = this.colorizePowerShellOutput(msg.content, msg.type);
-            
+            const colorizedContent = this.colorizeConsoleOutput(msg.content, msg.type);
+
             msgDiv.innerHTML = `
                 <span class="console-content">${colorizedContent}</span>
             `;
             messagesContainer.appendChild(msgDiv);
-            
+
             // Auto-scroll to bottom
             setTimeout(() => {
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -464,26 +464,26 @@ export class Footer {
     sendConsoleMessage() {
         const input = document.getElementById('console-input');
         if (!input) return;
-        
+
         const message = input.value.trim();
         if (!message) return;
-        
+
         // Clear input
         input.value = '';
-        
-        // Send command to PowerShell WebSocket
-        if (this.powershellWS && this.isConnected) {
-            this.powershellWS.send(JSON.stringify({
+
+        // Send command to Console WebSocket
+        if (this.consoleWS && this.isConnected) {
+            this.consoleWS.send(JSON.stringify({
                 type: 'command',
                 command: message
             }));
         } else {
-            this.addConsoleMessage('Not connected to PowerShell. Attempting to reconnect...', 'warning');
-            this.connectPowerShell();
+            this.addConsoleMessage('Not connected to Console. Attempting to reconnect...', 'warning');
+            this.connectConsole();
             // Try again after a short delay
             setTimeout(() => {
-                if (this.powershellWS && this.isConnected) {
-                    this.powershellWS.send(JSON.stringify({
+                if (this.consoleWS && this.isConnected) {
+                    this.consoleWS.send(JSON.stringify({
                         type: 'command',
                         command: message
                     }));
@@ -550,7 +550,7 @@ export class Footer {
         this.startY = e.clientY;
         const panel = document.querySelector('.footer-panel');
         this.startHeight = panel ? panel.offsetHeight : 300;
-        
+
         document.addEventListener('mousemove', this.boundResize);
         document.addEventListener('mouseup', this.boundStopResize);
         document.body.style.cursor = 'ns-resize';
@@ -559,28 +559,28 @@ export class Footer {
 
     resize(e) {
         if (!this.isResizing) return;
-        
+
         const deltaY = this.startY - e.clientY;
         let newHeight = this.startHeight + deltaY;
-        
+
         // Limits
         if (newHeight < 100) newHeight = 100;
         if (newHeight > window.innerHeight - 100) newHeight = window.innerHeight - 100;
-        
+
         this.currentHeight = newHeight;
-        
+
         const footer = document.querySelector('.app-footer');
         const panel = document.querySelector('.footer-panel');
         const consoleEl = document.querySelector('.footer-console');
         const tasksEl = document.querySelector('.footer-tasks');
         const connectionsEl = document.querySelector('.footer-connections');
-        
+
         if (footer) footer.style.height = 'auto'; // Let footer grow automatically
         if (panel) panel.style.height = newHeight + 'px';
         if (consoleEl) consoleEl.style.height = '100%';
         if (tasksEl) tasksEl.style.height = '100%';
         if (connectionsEl) connectionsEl.style.height = '100%';
-        
+
         // Adjust body padding
         // Calculate actual footer height or estimate
         const footerHeight = newHeight + 50; // approx tabs + padding
@@ -593,7 +593,7 @@ export class Footer {
         document.removeEventListener('mouseup', this.boundStopResize);
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
-        
+
         // Re-scroll console to bottom
         if (this.activeTab === 'console') {
             const messagesContainer = document.getElementById('console-messages');
@@ -604,11 +604,11 @@ export class Footer {
     }
 
     mount() {
-        // Connect to PowerShell WebSocket if console tab is active
+        // Connect to Console WebSocket if console tab is active
         if (this.activeTab === 'console') {
-            this.connectPowerShell();
+            this.connectConsole();
         }
-        
+
         // Focus console input if console tab is active
         if (this.activeTab === 'console' && this.isExpanded) {
             const input = document.getElementById('console-input');
@@ -618,16 +618,16 @@ export class Footer {
         }
     }
 
-    connectPowerShell() {
+    connectConsole() {
         // Prevent multiple simultaneous connection attempts or reconnecting if already connected
-        if (this.isConnecting || (this.powershellWS && (this.powershellWS.readyState === WebSocket.CONNECTING || this.powershellWS.readyState === WebSocket.OPEN))) {
+        if (this.isConnecting || (this.consoleWS && (this.consoleWS.readyState === WebSocket.CONNECTING || this.consoleWS.readyState === WebSocket.OPEN))) {
             return;
         }
 
         // Close existing connection if any (only if not OPEN/CONNECTING)
-        if (this.powershellWS) {
-            this.powershellWS.close();
-            this.powershellWS = null;
+        if (this.consoleWS) {
+            this.consoleWS.close();
+            this.consoleWS = null;
         }
 
         // Get authentication token
@@ -645,52 +645,52 @@ export class Footer {
         this.isConnected = false;
 
         try {
-            this.powershellWS = new WebSocket(wsUrl);
+            this.consoleWS = new WebSocket(wsUrl);
 
-            this.powershellWS.onopen = () => {
+            this.consoleWS.onopen = () => {
                 this.isConnecting = false;
                 this.reconnectAttempts = 0; // Reset reconnect attempts on successful connection
                 // Send authentication message
-                this.powershellWS.send(JSON.stringify({
+                this.consoleWS.send(JSON.stringify({
                     type: 'auth',
                     token: token
                 }));
             };
 
-            this.powershellWS.onmessage = (event) => {
+            this.consoleWS.onmessage = (event) => {
                 try {
                     const msg = JSON.parse(event.data);
-                    this.handlePowerShellMessage(msg);
+                    this.handleConsoleMessage(msg);
                 } catch (err) {
-                    console.error('Error parsing PowerShell message:', err);
+                    console.error('Error parsing Console message:', err);
                 }
             };
 
-            this.powershellWS.onerror = (error) => {
+            this.consoleWS.onerror = (error) => {
                 this.isConnecting = false;
-                console.error('PowerShell WebSocket error:', error);
+                console.error('Console WebSocket error:', error);
                 const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/powershell`;
                 console.error('WebSocket URL:', wsUrl);
-                console.error('WebSocket readyState:', this.powershellWS?.readyState);
+                console.error('WebSocket readyState:', this.consoleWS?.readyState);
                 // Only show error message once, not on every error event
                 if (!this.isConnected) {
-                    this.addConsoleMessage(`WebSocket connection error. Check if server is running and route /ws/powershell is registered.`, 'error');
+                    this.addConsoleMessage(`WebSocket connection error. Check if server is running.`, 'error');
                 }
                 this.isConnected = false;
             };
 
-            this.powershellWS.onclose = (event) => {
+            this.consoleWS.onclose = (event) => {
                 this.isConnecting = false;
                 const wasConnected = this.isConnected;
                 this.isConnected = false;
-                
+
                 if (this.activeTab === 'console') {
                     // Only show message if we were actually connected
                     if (wasConnected) {
                         const reason = event.code === 1006 ? 'Connection closed abnormally' : 'Connection closed';
-                        this.addConsoleMessage(`PowerShell connection closed: ${reason} (code: ${event.code})`, 'warning');
+                        this.addConsoleMessage(`Console connection closed: ${reason} (code: ${event.code})`, 'warning');
                     }
-                    
+
                     // Attempt to reconnect only if:
                     // 1. It wasn't a normal close (code 1000)
                     // 2. We haven't exceeded max reconnect attempts
@@ -701,7 +701,7 @@ export class Footer {
                         const delay = this.reconnectDelay * this.reconnectAttempts; // Exponential backoff
                         setTimeout(() => {
                             if (this.activeTab === 'console' && !this.isConnected && !this.isConnecting) {
-                                this.connectPowerShell();
+                                this.connectConsole();
                             }
                         }, delay);
                     } else if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -711,8 +711,8 @@ export class Footer {
             };
         } catch (err) {
             this.isConnecting = false;
-            console.error('Error creating PowerShell WebSocket:', err);
-            this.addConsoleMessage(`Error connecting to PowerShell console: ${err.message}`, 'error');
+            console.error('Error creating Console WebSocket:', err);
+            this.addConsoleMessage(`Error connecting to Console: ${err.message}`, 'error');
         }
     }
 
@@ -720,17 +720,17 @@ export class Footer {
         try {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = `${protocol}//${window.location.host}/ws/workflows`;
-            
+
             this.workflowWS = new WebSocket(wsUrl);
-            
+
             this.workflowWS.onopen = () => {
                 console.log('Workflow WebSocket connected');
             };
-            
+
             this.workflowWS.onmessage = (event) => {
                 try {
                     let messageData = event.data;
-                    
+
                     // Try to parse as single JSON object first
                     try {
                         const data = JSON.parse(messageData);
@@ -742,7 +742,7 @@ export class Footer {
                         let braceCount = 0;
                         let startIndex = -1;
                         let endIndex = -1;
-                        
+
                         for (let i = 0; i < messageData.length; i++) {
                             if (messageData[i] === '{') {
                                 if (startIndex === -1) {
@@ -757,7 +757,7 @@ export class Footer {
                                 }
                             }
                         }
-                        
+
                         if (startIndex !== -1 && endIndex !== -1) {
                             try {
                                 const jsonStr = messageData.substring(startIndex, endIndex + 1);
@@ -768,7 +768,7 @@ export class Footer {
                                 // Failed to parse extracted JSON
                             }
                         }
-                        
+
                         // If no valid JSON found, log and skip silently
                         // Don't spam console with warnings for malformed messages
                     }
@@ -776,11 +776,11 @@ export class Footer {
                     // Silent error handling - don't log to avoid console spam
                 }
             };
-            
+
             this.workflowWS.onerror = (error) => {
                 console.error('Workflow WebSocket error:', error);
             };
-            
+
             this.workflowWS.onclose = () => {
                 console.log('Workflow WebSocket closed, reconnecting...');
                 // Reconnect after delay
@@ -811,7 +811,7 @@ export class Footer {
 
     updateWorkflow(workflowData) {
         const index = this.workflows.findIndex(w => w.executionId === workflowData.executionId);
-        
+
         const workflow = {
             executionId: workflowData.executionId,
             workflowId: workflowData.workflowId,
@@ -823,20 +823,20 @@ export class Footer {
             startedAt: workflowData.startedAt,
             finishedAt: workflowData.finishedAt
         };
-        
+
         if (index >= 0) {
             this.workflows[index] = workflow;
         } else {
             this.workflows.push(workflow);
         }
-        
+
         // Remove if finished (after a delay)
         if (workflow.status === 'success' || workflow.status === 'error') {
             setTimeout(() => {
                 this.removeWorkflow(workflow.executionId);
             }, 5000); // Remove after 5 seconds
         }
-        
+
         this.update();
     }
 
@@ -847,7 +847,7 @@ export class Footer {
 
     updateBackgroundTask(taskData) {
         const index = this.backgroundTasks.findIndex(t => t.id === taskData.taskId);
-        
+
         const task = {
             id: taskData.taskId,
             name: taskData.name || 'Unknown Task',
@@ -862,22 +862,22 @@ export class Footer {
             metadata: taskData.metadata || {},
             removeTimeout: null // Store timeout ID to prevent duplicates
         };
-        
+
         // Check if task already exists and get its current state
         const existingTask = index >= 0 ? this.backgroundTasks[index] : null;
         const wasCompleted = existingTask && existingTask.status === 'completed';
         const isNowCompleted = task.status === 'completed';
-        
+
         // Clear existing timeout if task already exists
         if (existingTask && existingTask.removeTimeout) {
             clearTimeout(existingTask.removeTimeout);
         }
-        
+
         // Remove if finished (after a delay)
         // Speedtest tasks are removed immediately when completed
-        const isSpeedtestTask = (task.metadata && task.metadata.type === 'speedtest') || 
-                                (task.name && task.name.toLowerCase() === 'speedtest');
-        
+        const isSpeedtestTask = (task.metadata && task.metadata.type === 'speedtest') ||
+            (task.name && task.name.toLowerCase() === 'speedtest');
+
         // Debug: Log task info
         if (task.status === 'completed') {
             console.log('Task completed:', {
@@ -889,12 +889,12 @@ export class Footer {
                 isNowCompleted: isNowCompleted
             });
         }
-        
+
         // Only set timeout if task just became completed (not if it was already completed)
         const justBecameCompleted = isNowCompleted && !wasCompleted;
         const justBecameFailed = task.status === 'failed' && existingTask && existingTask.status !== 'failed';
         const justBecameCancelled = task.status === 'cancelled' && existingTask && existingTask.status !== 'cancelled';
-        
+
         // Always set timeout for completed tasks, but only once
         if (task.status === 'completed' && justBecameCompleted) {
             if (isSpeedtestTask) {
@@ -910,20 +910,20 @@ export class Footer {
                     this.removeBackgroundTask(task.id);
                 }, 5000);
             }
-        } else if ((task.status === 'failed' || task.status === 'cancelled') && 
-                   (justBecameFailed || justBecameCancelled)) {
+        } else if ((task.status === 'failed' || task.status === 'cancelled') &&
+            (justBecameFailed || justBecameCancelled)) {
             // Failed or cancelled tasks removed after 5 seconds
             task.removeTimeout = setTimeout(() => {
                 this.removeBackgroundTask(task.id);
             }, 5000);
         }
-        
+
         if (index >= 0) {
             this.backgroundTasks[index] = task;
         } else {
             this.backgroundTasks.push(task);
         }
-        
+
         this.update();
     }
 
@@ -961,7 +961,7 @@ export class Footer {
         }
     }
 
-    handlePowerShellMessage(msg) {
+    handleConsoleMessage(msg) {
         switch (msg.type) {
             case 'auth':
                 if (msg.status === 'success') {
@@ -993,7 +993,7 @@ export class Footer {
                 }
                 break;
             case 'prompt':
-                this.currentPrompt = msg.content || 'PS> ';
+                this.currentPrompt = msg.content || '> ';
                 // Update prompt in UI if console is visible
                 const promptEl = document.querySelector('.console-prompt');
                 if (promptEl) {

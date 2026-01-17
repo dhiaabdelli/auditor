@@ -43,6 +43,9 @@ func main() {
 	// Initialize automation schedulers after database is ready
 	handlers.InitSchedulers()
 
+	// Start system monitoring
+	handlers.StartSystemMonitoring()
+
 	defer func() {
 		// Stop cron schedulers first to prevent them from accessing the database
 		handlers.StopSchedulers()

@@ -120,6 +120,10 @@ func SetupRoutes(staticFS http.FileSystem) {
 
 	// Comprehensive health check endpoint (with authentication)
 	http.Handle("/api/health", secureAPIHandler(handlers.HandleGetHealth))
+	http.Handle("/api/system/metrics", secureAPIHandler(handlers.HandleGetSystemMetrics))
+
+	// System Metrics WebSocket
+	http.Handle("/ws/system/metrics", http.HandlerFunc(handlers.HandleSystemMetricsWebSocket))
 
 	// Documentation API endpoints
 	http.Handle("/api/docs/categories", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
@@ -623,6 +627,20 @@ func SetupRoutes(staticFS http.FileSystem) {
 	http.Handle("/api/packet-analyzer/start", secureAPIHandler(handlers.HandleStartCapture))
 	http.Handle("/api/packet-analyzer/stop", secureAPIHandler(handlers.HandleStopCapture))
 	http.Handle("/api/packet-analyzer/ws", http.HandlerFunc(handlers.HandlePacketCaptureWebSocket))
+
+	// WiFi Manager API endpoint
+	http.Handle("/api/wifi/status", secureAPIHandler(handlers.HandleWifiStatus))
+	http.Handle("/api/wifi/kick", secureAPIHandler(handlers.HandleWifiKickClient))
+	http.Handle("/api/wifi/block", secureAPIHandler(handlers.HandleWifiBlockClient))
+
+	// Network Interface Management API endpoints
+	http.Handle("/api/network/interfaces", secureAPIHandler(handlers.GetNetworkInterfacesHandler))
+	http.Handle("/api/network/interface/state", secureAPIHandler(handlers.SetInterfaceStateHandler))
+	http.Handle("/api/network/interface/config", secureAPIHandler(handlers.SetInterfaceConfigHandler))
+	http.Handle("/api/network/restart", secureAPIHandler(handlers.RestartNetworkStackHandler))
+	// Network Routing API endpoints (added)
+	http.Handle("/api/network/route/default", secureAPIHandler(handlers.SetDefaultRouteHandler))
+	http.Handle("/api/network/routing-table", secureAPIHandler(handlers.GetRoutingTableHandler))
 
 	// Report Templates handlers
 	reportTemplateHandler := secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {

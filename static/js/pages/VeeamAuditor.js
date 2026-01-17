@@ -277,16 +277,16 @@ export class VeeamAuditorPage {
                 <!-- Main Content -->
                 <div class="file-share-auditor-main">
                     ${this.activeView === 'license' ? this.renderLicenseView(licenseInfo) :
-                      this.activeView === 'database' ? this.renderDatabaseView(backupServerInfo) :
-                      this.activeView === 'backup-jobs' ? this.renderBackupJobsView(jobInfo) :
-                      this.activeView === 'repositories' ? this.renderRepositoriesView(repositories) :
-                      this.activeView === 'sobrs' ? this.renderSOBRsView(sobrs) :
-                      this.activeView === 'proxies' ? this.renderProxiesView(proxies) :
-                      this.activeView === 'wan-accelerators' ? this.renderWANAcceleratorsView(wanAccelerators) :
-                      this.activeView === 'managed-servers' ? this.renderManagedServersView(managedServers) :
-                      this.activeView === 'restore-points' ? this.renderRestorePointsView(restorePoints) :
-                      this.activeView === 'sessions' ? this.renderSessionsView(jobSessionSummary) :
-                      this.renderOverviewView(veeam, data)}
+                this.activeView === 'database' ? this.renderDatabaseView(backupServerInfo) :
+                    this.activeView === 'backup-jobs' ? this.renderBackupJobsView(jobInfo) :
+                        this.activeView === 'repositories' ? this.renderRepositoriesView(repositories) :
+                            this.activeView === 'sobrs' ? this.renderSOBRsView(sobrs) :
+                                this.activeView === 'proxies' ? this.renderProxiesView(proxies) :
+                                    this.activeView === 'wan-accelerators' ? this.renderWANAcceleratorsView(wanAccelerators) :
+                                        this.activeView === 'managed-servers' ? this.renderManagedServersView(managedServers) :
+                                            this.activeView === 'restore-points' ? this.renderRestorePointsView(restorePoints) :
+                                                this.activeView === 'sessions' ? this.renderSessionsView(jobSessionSummary) :
+                                                    this.renderOverviewView(veeam, data)}
                     ${this.showRestorePointDetailsModalFlag ? this.renderRestorePointDetailsModal() : ''}
                 </div>
             </div>
@@ -295,7 +295,7 @@ export class VeeamAuditorPage {
 
     renderOverviewView(veeam, data) {
         return `
-            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 1.5rem;">
                     ${veeam.installed !== false ? `
                             
                             ${veeam.error ? `
@@ -456,13 +456,13 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${veeam.backupServerInfo.localDisks
-                                                    .slice()
-                                                    .sort((a, b) => {
-                                                        const numA = a.diskNumber !== undefined && a.diskNumber !== null ? Number(a.diskNumber) : -1;
-                                                        const numB = b.diskNumber !== undefined && b.diskNumber !== null ? Number(b.diskNumber) : -1;
-                                                        return numA - numB;
-                                                    })
-                                                    .map(disk => `
+                        .slice()
+                        .sort((a, b) => {
+                            const numA = a.diskNumber !== undefined && a.diskNumber !== null ? Number(a.diskNumber) : -1;
+                            const numB = b.diskNumber !== undefined && b.diskNumber !== null ? Number(b.diskNumber) : -1;
+                            return numA - numB;
+                        })
+                        .map(disk => `
                                                     <tr>
                                                         <td style="padding: 0.4rem;">${disk.diskNumber !== undefined && disk.diskNumber !== null ? disk.diskNumber : 'N/A'}</td>
                                                         <td style="padding: 0.4rem;">${disk.model || 'N/A'}</td>
@@ -496,40 +496,40 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${veeam.backupServerInfo.hostVolumes.map(volume => {
-                                                    const size = volume.size || 0;
-                                                    const freeSpace = volume.freeSpace || 0;
-                                                    const usedSpace = size - freeSpace;
-                                                    const usedPercent = size > 0 ? Math.round((usedSpace / size) * 100) : 0;
-                                                    
-                                                    // Convert numeric health status to text
-                                                    let healthStatusText = 'N/A';
-                                                    let healthColor = '#ef4444';
-                                                    let bgColor = 'rgba(239, 68, 68, 0.1)';
-                                                    let borderColor = '#ef444440';
-                                                    
-                                                    if (volume.healthStatus !== undefined && volume.healthStatus !== null) {
-                                                        const healthStatus = String(volume.healthStatus);
-                                                        if (healthStatus === '0' || healthStatus.toLowerCase() === 'healthy') {
-                                                            healthStatusText = 'Healthy';
-                                                            healthColor = '#10b981';
-                                                            bgColor = 'rgba(16, 185, 129, 0.1)';
-                                                            borderColor = '#10b98140';
-                                                        } else if (healthStatus === '1' || healthStatus.toLowerCase() === 'warning') {
-                                                            healthStatusText = 'Warning';
-                                                            healthColor = '#f59e0b';
-                                                            bgColor = 'rgba(245, 158, 11, 0.1)';
-                                                            borderColor = '#f59e0b40';
-                                                        } else if (healthStatus === '2' || healthStatus.toLowerCase() === 'unhealthy') {
-                                                            healthStatusText = 'Unhealthy';
-                                                            healthColor = '#ef4444';
-                                                            bgColor = 'rgba(239, 68, 68, 0.1)';
-                                                            borderColor = '#ef444440';
-                                                        } else {
-                                                            healthStatusText = healthStatus;
-                                                        }
-                                                    }
-                                                    
-                                                    return `
+                            const size = volume.size || 0;
+                            const freeSpace = volume.freeSpace || 0;
+                            const usedSpace = size - freeSpace;
+                            const usedPercent = size > 0 ? Math.round((usedSpace / size) * 100) : 0;
+
+                            // Convert numeric health status to text
+                            let healthStatusText = 'N/A';
+                            let healthColor = '#ef4444';
+                            let bgColor = 'rgba(239, 68, 68, 0.1)';
+                            let borderColor = '#ef444440';
+
+                            if (volume.healthStatus !== undefined && volume.healthStatus !== null) {
+                                const healthStatus = String(volume.healthStatus);
+                                if (healthStatus === '0' || healthStatus.toLowerCase() === 'healthy') {
+                                    healthStatusText = 'Healthy';
+                                    healthColor = '#10b981';
+                                    bgColor = 'rgba(16, 185, 129, 0.1)';
+                                    borderColor = '#10b98140';
+                                } else if (healthStatus === '1' || healthStatus.toLowerCase() === 'warning') {
+                                    healthStatusText = 'Warning';
+                                    healthColor = '#f59e0b';
+                                    bgColor = 'rgba(245, 158, 11, 0.1)';
+                                    borderColor = '#f59e0b40';
+                                } else if (healthStatus === '2' || healthStatus.toLowerCase() === 'unhealthy') {
+                                    healthStatusText = 'Unhealthy';
+                                    healthColor = '#ef4444';
+                                    bgColor = 'rgba(239, 68, 68, 0.1)';
+                                    borderColor = '#ef444440';
+                                } else {
+                                    healthStatusText = healthStatus;
+                                }
+                            }
+
+                            return `
                                                     <tr>
                                                         <td style="padding: 0.4rem;">
                                                             <span style="font-weight: 600;">${volume.driveLetter || 'N/A'}</span>
@@ -566,7 +566,7 @@ export class VeeamAuditorPage {
                                                         </td>
                                                     </tr>
                                                 `;
-                                                }).join('')}
+                        }).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -853,22 +853,22 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${Array.isArray(veeam.complianceTable) && veeam.complianceTable.length > 0 ? veeam.complianceTable.map(item => {
-                                                    let statusColor = '#94a3b8'; // Default gray
-                                                    let bgColor = 'rgba(148, 163, 184, 0.1)';
-                                                    if (item.status === 'Passed') {
-                                                        statusColor = '#10b981'; // Green
-                                                        bgColor = 'rgba(16, 185, 129, 0.1)';
-                                                    } else if (item.status === 'Not Implemented') {
-                                                        statusColor = '#ef4444'; // Red
-                                                        bgColor = 'rgba(239, 68, 68, 0.1)';
-                                                    } else if (item.status === 'Suppressed') {
-                                                        statusColor = '#f59e0b'; // Orange
-                                                        bgColor = 'rgba(245, 158, 11, 0.1)';
-                                                    } else if (item.status === 'Unable to detect' || item.status === 'Unable to Detect') {
-                                                        statusColor = '#3b82f6'; // Blue
-                                                        bgColor = 'rgba(59, 130, 246, 0.1)';
-                                                    }
-                                                    return `
+                            let statusColor = '#94a3b8'; // Default gray
+                            let bgColor = 'rgba(148, 163, 184, 0.1)';
+                            if (item.status === 'Passed') {
+                                statusColor = '#10b981'; // Green
+                                bgColor = 'rgba(16, 185, 129, 0.1)';
+                            } else if (item.status === 'Not Implemented') {
+                                statusColor = '#ef4444'; // Red
+                                bgColor = 'rgba(239, 68, 68, 0.1)';
+                            } else if (item.status === 'Suppressed') {
+                                statusColor = '#f59e0b'; // Orange
+                                bgColor = 'rgba(245, 158, 11, 0.1)';
+                            } else if (item.status === 'Unable to detect' || item.status === 'Unable to Detect') {
+                                statusColor = '#3b82f6'; // Blue
+                                bgColor = 'rgba(59, 130, 246, 0.1)';
+                            }
+                            return `
                                                     <tr>
                                                         <td style="padding: 0.4rem;">${item.bestPractice || 'N/A'}</td>
                                                         <td style="padding: 0.4rem; text-align: center;">
@@ -876,7 +876,7 @@ export class VeeamAuditorPage {
                                                         </td>
                                                     </tr>
                                                 `;
-                                                }).join('') : '<tr><td colspan="2" style="padding: 0.4rem; text-align: center;">No compliance data available</td></tr>'}
+                        }).join('') : '<tr><td colspan="2" style="padding: 0.4rem; text-align: center;">No compliance data available</td></tr>'}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1193,11 +1193,11 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${veeam.servicesStatus.map(service => {
-                                                    const isRunning = service.status && service.status.toLowerCase() === 'running';
-                                                    const statusColor = isRunning ? '#10b981' : '#ef4444';
-                                                    const bgColor = isRunning ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-                                                    const borderColor = isRunning ? '#10b98140' : '#ef444440';
-                                                    return `
+                            const isRunning = service.status && service.status.toLowerCase() === 'running';
+                            const statusColor = isRunning ? '#10b981' : '#ef4444';
+                            const bgColor = isRunning ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+                            const borderColor = isRunning ? '#10b98140' : '#ef444440';
+                            return `
                                                     <tr>
                                                         <td style="padding: 0.4rem;">${service.displayName || 'N/A'}</td>
                                                         <td style="padding: 0.4rem;">${service.shortName || 'N/A'}</td>
@@ -1208,7 +1208,7 @@ export class VeeamAuditorPage {
                                                         </td>
                                                     </tr>
                                                 `;
-                                                }).join('')}
+                        }).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1273,116 +1273,116 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${(() => {
-                                                    // Helper function to convert HH:MM:SS to seconds
-                                                    const timeToSeconds = (timeStr) => {
-                                                        if (!timeStr || timeStr === '0' || timeStr === 'N/A' || timeStr === '00:00' || timeStr === '00:00:00') return 0;
-                                                        if (typeof timeStr === 'string' && timeStr.match(/^\d{2}:\d{2}:\d{2}$/)) {
-                                                            const parts = timeStr.split(':');
-                                                            const hours = parseInt(parts[0]) || 0;
-                                                            const mins = parseInt(parts[1]) || 0;
-                                                            const secs = parseInt(parts[2]) || 0;
-                                                            return hours * 3600 + mins * 60 + secs;
-                                                        }
-                                                        // Fallback: try to parse as minutes
-                                                        const num = parseFloat(timeStr);
-                                                        return isNaN(num) ? 0 : Math.round(num * 60);
-                                                    };
-                                                    
-                                                    // Helper function to convert seconds to HH:MM:SS
-                                                    const secondsToTime = (seconds) => {
-                                                        if (seconds <= 0) return '00:00:00';
-                                                        const hours = Math.floor(seconds / 3600);
-                                                        const mins = Math.floor((seconds % 3600) / 60);
-                                                        const secs = seconds % 60;
-                                                        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                                                    };
-                                                    
-                                                    // Calculate totals
-                                                    const totals = {
-                                                        items: 0,
-                                                        minTimeSeconds: 0,  // Sum of all min times
-                                                        maxTimeSeconds: 0,  // Sum of all max times
-                                                        avgTimeSeconds: 0,  // Sum of all avg times
-                                                        totalSessions: 0,
-                                                        fails: 0,
-                                                        retries: 0,
-                                                        avgBackupSize: 0,
-                                                        maxBackupSize: 0,
-                                                        avgDataSize: 0,
-                                                        maxDataSize: 0,
-                                                        avgChangeRate: 0,
-                                                        waitCount: 0
-                                                    };
-                                                    
-                                                    // Collect all individual values for proper calculations
-                                                    const allAvgChangeRates = [];
-                                                    
-                                                    veeam.jobSessionSummary.forEach(job => {
-                                                        // Sum items (total count of all items across all jobs)
-                                                        totals.items += job.Items || 0;
-                                                        
-                                                        // Sum sessions, fails, retries, waitCount (these are totals)
-                                                        totals.totalSessions += job.TotalSessions || 0;
-                                                        totals.fails += job.Fails || 0;
-                                                        totals.retries += job.Retries || 0;
-                                                        totals.waitCount += job.WaitCount || 0;
-                                                        
-                                                        // For Times: sum all values (not min/max/avg)
-                                                        const minTimeSec = timeToSeconds(job.MinTime);
-                                                        const maxTimeSec = timeToSeconds(job.MaxTime);
-                                                        const avgTimeSec = timeToSeconds(job.AvgTime);
-                                                        
-                                                        totals.minTimeSeconds += minTimeSec;
-                                                        totals.maxTimeSeconds += maxTimeSec;
-                                                        totals.avgTimeSeconds += avgTimeSec;
-                                                        
-                                                        // For Backup/Data Sizes: sum all values (not max or avg)
-                                                        totals.maxBackupSize += job.MaxBackupSize || 0;
-                                                        totals.maxDataSize += job.MaxDataSize || 0;
-                                                        totals.avgBackupSize += job.AvgBackupSize || 0;
-                                                        totals.avgDataSize += job.AvgDataSize || 0;
-                                                        
-                                                        // Collect avg values for simple average calculation (sum all, then divide by count)
-                                                        // Include all values, even if 0
-                                                        allAvgChangeRates.push(job.AvgChangeRate || 0);
-                                                    });
-                                                    
-                                                    // Note: Times and Backup/Data Sizes are already summed above
-                                                    
-                                                    // Calculate simple averages: sum all values, then divide by count
-                                                    // Always calculate if we have any jobs
-                                                    if (allAvgChangeRates.length > 0) {
-                                                        const sumAvgChangeRate = allAvgChangeRates.reduce((sum, val) => sum + val, 0);
-                                                        totals.avgChangeRate = sumAvgChangeRate / allAvgChangeRates.length;
-                                                    }
-                                                    
-                                                    const totalSuccessRate = totals.totalSessions > 0 ? 
-                                                        ((totals.totalSessions - totals.fails) / totals.totalSessions * 100).toFixed(2) : 0;
-                                                    
-                                                    // Format job rows (Total will be added at the end)
-                                                    const jobRows = veeam.jobSessionSummary.map((job, index) => {
-                                                        const successRate = job.SuccessRate || 0;
-                                                        const successRateColor = successRate >= 95 ? '#10b981' : successRate >= 80 ? '#f59e0b' : '#ef4444';
-                                                        const successRateBg = successRate >= 95 ? 'rgba(16, 185, 129, 0.1)' : successRate >= 80 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
-                                                        
-                                                        // Time values are already in HH:MM:SS format from backend
-                                                        const formatTime = (time) => {
-                                                            if (!time || time === '0' || time === 'N/A' || time === '00:00') return '00:00:00';
-                                                            // If it's already in HH:MM:SS format, return as is
-                                                            if (typeof time === 'string' && time.match(/^\d{2}:\d{2}:\d{2}$/)) {
-                                                                return time;
-                                                            }
-                                                            // Fallback: try to parse as minutes and convert
-                                                            const num = parseFloat(time);
-                                                            if (isNaN(num)) return '00:00:00';
-                                                            const totalSeconds = Math.round(num * 60);
-                                                            const hours = Math.floor(totalSeconds / 3600);
-                                                            const mins = Math.floor((totalSeconds % 3600) / 60);
-                                                            const secs = totalSeconds % 60;
-                                                            return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-                                                        };
-                                                        
-                                                        return `
+                            // Helper function to convert HH:MM:SS to seconds
+                            const timeToSeconds = (timeStr) => {
+                                if (!timeStr || timeStr === '0' || timeStr === 'N/A' || timeStr === '00:00' || timeStr === '00:00:00') return 0;
+                                if (typeof timeStr === 'string' && timeStr.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                                    const parts = timeStr.split(':');
+                                    const hours = parseInt(parts[0]) || 0;
+                                    const mins = parseInt(parts[1]) || 0;
+                                    const secs = parseInt(parts[2]) || 0;
+                                    return hours * 3600 + mins * 60 + secs;
+                                }
+                                // Fallback: try to parse as minutes
+                                const num = parseFloat(timeStr);
+                                return isNaN(num) ? 0 : Math.round(num * 60);
+                            };
+
+                            // Helper function to convert seconds to HH:MM:SS
+                            const secondsToTime = (seconds) => {
+                                if (seconds <= 0) return '00:00:00';
+                                const hours = Math.floor(seconds / 3600);
+                                const mins = Math.floor((seconds % 3600) / 60);
+                                const secs = seconds % 60;
+                                return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                            };
+
+                            // Calculate totals
+                            const totals = {
+                                items: 0,
+                                minTimeSeconds: 0,  // Sum of all min times
+                                maxTimeSeconds: 0,  // Sum of all max times
+                                avgTimeSeconds: 0,  // Sum of all avg times
+                                totalSessions: 0,
+                                fails: 0,
+                                retries: 0,
+                                avgBackupSize: 0,
+                                maxBackupSize: 0,
+                                avgDataSize: 0,
+                                maxDataSize: 0,
+                                avgChangeRate: 0,
+                                waitCount: 0
+                            };
+
+                            // Collect all individual values for proper calculations
+                            const allAvgChangeRates = [];
+
+                            veeam.jobSessionSummary.forEach(job => {
+                                // Sum items (total count of all items across all jobs)
+                                totals.items += job.Items || 0;
+
+                                // Sum sessions, fails, retries, waitCount (these are totals)
+                                totals.totalSessions += job.TotalSessions || 0;
+                                totals.fails += job.Fails || 0;
+                                totals.retries += job.Retries || 0;
+                                totals.waitCount += job.WaitCount || 0;
+
+                                // For Times: sum all values (not min/max/avg)
+                                const minTimeSec = timeToSeconds(job.MinTime);
+                                const maxTimeSec = timeToSeconds(job.MaxTime);
+                                const avgTimeSec = timeToSeconds(job.AvgTime);
+
+                                totals.minTimeSeconds += minTimeSec;
+                                totals.maxTimeSeconds += maxTimeSec;
+                                totals.avgTimeSeconds += avgTimeSec;
+
+                                // For Backup/Data Sizes: sum all values (not max or avg)
+                                totals.maxBackupSize += job.MaxBackupSize || 0;
+                                totals.maxDataSize += job.MaxDataSize || 0;
+                                totals.avgBackupSize += job.AvgBackupSize || 0;
+                                totals.avgDataSize += job.AvgDataSize || 0;
+
+                                // Collect avg values for simple average calculation (sum all, then divide by count)
+                                // Include all values, even if 0
+                                allAvgChangeRates.push(job.AvgChangeRate || 0);
+                            });
+
+                            // Note: Times and Backup/Data Sizes are already summed above
+
+                            // Calculate simple averages: sum all values, then divide by count
+                            // Always calculate if we have any jobs
+                            if (allAvgChangeRates.length > 0) {
+                                const sumAvgChangeRate = allAvgChangeRates.reduce((sum, val) => sum + val, 0);
+                                totals.avgChangeRate = sumAvgChangeRate / allAvgChangeRates.length;
+                            }
+
+                            const totalSuccessRate = totals.totalSessions > 0 ?
+                                ((totals.totalSessions - totals.fails) / totals.totalSessions * 100).toFixed(2) : 0;
+
+                            // Format job rows (Total will be added at the end)
+                            const jobRows = veeam.jobSessionSummary.map((job, index) => {
+                                const successRate = job.SuccessRate || 0;
+                                const successRateColor = successRate >= 95 ? '#10b981' : successRate >= 80 ? '#f59e0b' : '#ef4444';
+                                const successRateBg = successRate >= 95 ? 'rgba(16, 185, 129, 0.1)' : successRate >= 80 ? 'rgba(245, 158, 11, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+
+                                // Time values are already in HH:MM:SS format from backend
+                                const formatTime = (time) => {
+                                    if (!time || time === '0' || time === 'N/A' || time === '00:00') return '00:00:00';
+                                    // If it's already in HH:MM:SS format, return as is
+                                    if (typeof time === 'string' && time.match(/^\d{2}:\d{2}:\d{2}$/)) {
+                                        return time;
+                                    }
+                                    // Fallback: try to parse as minutes and convert
+                                    const num = parseFloat(time);
+                                    if (isNaN(num)) return '00:00:00';
+                                    const totalSeconds = Math.round(num * 60);
+                                    const hours = Math.floor(totalSeconds / 3600);
+                                    const mins = Math.floor((totalSeconds % 3600) / 60);
+                                    const secs = totalSeconds % 60;
+                                    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                                };
+
+                                return `
                                                             <tr style="cursor: pointer;" onclick="window.veeamAuditorPage.showJobSessionsModal(${index})" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
                                                                 <td style="padding: 0.4rem;">${job.JobName || 'N/A'}</td>
                                                                 <td style="padding: 0.4rem; text-align: center;">${job.Items || 0}</td>
@@ -1408,13 +1408,13 @@ export class VeeamAuditorPage {
                                                                 <td style="padding: 0.4rem;">${job.JobType || 'N/A'}</td>
                                                             </tr>
                                                         `;
-                                                    }).join('');
-                                                    
-                                                    // Format totals row (at the end)
-                                                    // For "Avg" columns, show weighted average
-                                                    // For "Max" columns, show global maximum
-                                                    // For totals, show sum
-                                                    const totalsRow = `
+                            }).join('');
+
+                            // Format totals row (at the end)
+                            // For "Avg" columns, show weighted average
+                            // For "Max" columns, show global maximum
+                            // For totals, show sum
+                            const totalsRow = `
                                                         <tr style="background: rgba(59, 130, 246, 0.1); font-weight: 600;">
                                                             <td style="padding: 0.4rem;">Total</td>
                                                             <td style="padding: 0.4rem; text-align: center;">${totals.items}</td>
@@ -1436,9 +1436,9 @@ export class VeeamAuditorPage {
                                                             <td style="padding: 0.4rem;">--</td>
                                                         </tr>
                                                     `;
-                                                    
-                                                    return jobRows + totalsRow;
-                                                })()}
+
+                            return jobRows + totalsRow;
+                        })()}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1476,26 +1476,26 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${veeam.sobrs.map(sobr => {
-                                                    const formatBoolean = (value) => {
-                                                        if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                                        return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                                    };
-                                                    
-                                                    const extents = sobr.Extents || sobr.extents || 0;
-                                                    const jobCount = sobr.JobCount || sobr.jobCount || 0;
-                                                    const policy = sobr.Policy || sobr.policy || 'N/A';
-                                                    const capacityTier = formatBoolean(sobr.CapacityTier || sobr.capacityTier);
-                                                    const copy = formatBoolean(sobr.Copy || sobr.copy);
-                                                    const move = formatBoolean(sobr.Move || sobr.move);
-                                                    const archiveTier = formatBoolean(sobr.ArchiveTier || sobr.archiveTier);
-                                                    const perMachine = formatBoolean(sobr.PerMachine || sobr.perMachine);
-                                                    const capTierType = sobr.CapTierType || sobr.capTierType || '';
-                                                    const immutable = formatBoolean(sobr.Immutable || sobr.immutable);
-                                                    const immutablePeriod = sobr.ImmutablePeriod || sobr.immutablePeriod || '';
-                                                    const sizeLimitEnabled = formatBoolean(sobr.SizeLimitEnabled || sobr.sizeLimitEnabled);
-                                                    const sizeLimit = sobr.SizeLimit || sobr.sizeLimit || '';
-                                                    
-                                                    return `
+                            const formatBoolean = (value) => {
+                                if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                                return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+                            };
+
+                            const extents = sobr.Extents || sobr.extents || 0;
+                            const jobCount = sobr.JobCount || sobr.jobCount || 0;
+                            const policy = sobr.Policy || sobr.policy || 'N/A';
+                            const capacityTier = formatBoolean(sobr.CapacityTier || sobr.capacityTier);
+                            const copy = formatBoolean(sobr.Copy || sobr.copy);
+                            const move = formatBoolean(sobr.Move || sobr.move);
+                            const archiveTier = formatBoolean(sobr.ArchiveTier || sobr.archiveTier);
+                            const perMachine = formatBoolean(sobr.PerMachine || sobr.perMachine);
+                            const capTierType = sobr.CapTierType || sobr.capTierType || '';
+                            const immutable = formatBoolean(sobr.Immutable || sobr.immutable);
+                            const immutablePeriod = sobr.ImmutablePeriod || sobr.immutablePeriod || '';
+                            const sizeLimitEnabled = formatBoolean(sobr.SizeLimitEnabled || sobr.sizeLimitEnabled);
+                            const sizeLimit = sobr.SizeLimit || sobr.sizeLimit || '';
+
+                            return `
                                                         <tr>
                                                             <td style="padding: 0.4rem;">${sobr.Name || sobr.name || 'N/A'}</td>
                                                             <td style="padding: 0.4rem; text-align: center;">${extents}</td>
@@ -1513,7 +1513,7 @@ export class VeeamAuditorPage {
                                                             <td style="padding: 0.4rem; text-align: right;">${sizeLimit}</td>
                                                         </tr>
                                                     `;
-                                                }).join('')}
+                        }).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1549,34 +1549,34 @@ export class VeeamAuditorPage {
                                             </thead>
                                             <tbody>
                                                 ${veeam.sobrExtents.map(extent => {
-                                                    const formatBoolean = (value) => {
-                                                        if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                                        return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                                    };
-                                                    
-                                                    const freeSpaceGB = extent.FreeSpaceGB || extent.freeSpaceGB || 0;
-                                                    const totalSpaceGB = extent.TotalSpaceGB || extent.totalSpaceGB || 0;
-                                                    const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
-                                                    const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
-                                                    const freeSpacePercent = extent.FreeSpacePercent || extent.freeSpacePercent || 0;
-                                                    
-                                                    const setTasks = extent.SetTasks || extent.setTasks || 0;
-                                                    const cores = extent.Cores || extent.cores || 0;
-                                                    const ram = extent.Ram || extent.ram || 0;
-                                                    const ramDisplay = ram > 0 ? `${ram} GB` : '0';
-                                                    
-                                                    const sobr = extent.SOBR || extent.sobr || 'N/A';
-                                                    const host = extent.Host || extent.host || 'N/A';
-                                                    const path = extent.Path || extent.path || 'N/A';
-                                                    const type = extent.Type || extent.type || 'N/A';
-                                                    
-                                                    const autoGateway = formatBoolean(extent.AutoGateway || extent.autoGateway);
-                                                    const decompress = formatBoolean(extent.Decompress || extent.decompress);
-                                                    const alignBlocks = formatBoolean(extent.AlignBlocks || extent.alignBlocks);
-                                                    const rotatedDrives = formatBoolean(extent.RotatedDrives || extent.rotatedDrives);
-                                                    const useImmutability = formatBoolean(extent.UseImmutability || extent.useImmutability);
-                                                    
-                                                    return `
+                            const formatBoolean = (value) => {
+                                if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                                return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+                            };
+
+                            const freeSpaceGB = extent.FreeSpaceGB || extent.freeSpaceGB || 0;
+                            const totalSpaceGB = extent.TotalSpaceGB || extent.totalSpaceGB || 0;
+                            const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
+                            const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
+                            const freeSpacePercent = extent.FreeSpacePercent || extent.freeSpacePercent || 0;
+
+                            const setTasks = extent.SetTasks || extent.setTasks || 0;
+                            const cores = extent.Cores || extent.cores || 0;
+                            const ram = extent.Ram || extent.ram || 0;
+                            const ramDisplay = ram > 0 ? `${ram} GB` : '0';
+
+                            const sobr = extent.SOBR || extent.sobr || 'N/A';
+                            const host = extent.Host || extent.host || 'N/A';
+                            const path = extent.Path || extent.path || 'N/A';
+                            const type = extent.Type || extent.type || 'N/A';
+
+                            const autoGateway = formatBoolean(extent.AutoGateway || extent.autoGateway);
+                            const decompress = formatBoolean(extent.Decompress || extent.decompress);
+                            const alignBlocks = formatBoolean(extent.AlignBlocks || extent.alignBlocks);
+                            const rotatedDrives = formatBoolean(extent.RotatedDrives || extent.rotatedDrives);
+                            const useImmutability = formatBoolean(extent.UseImmutability || extent.useImmutability);
+
+                            return `
                                                         <tr>
                                                             <td style="padding: 0.4rem;">${extent.Name || extent.name || 'N/A'}</td>
                                                             <td style="padding: 0.4rem;">${sobr}</td>
@@ -1596,7 +1596,7 @@ export class VeeamAuditorPage {
                                                             <td style="padding: 0.4rem;">${type}</td>
                                                         </tr>
                                                     `;
-                                                }).join('')}
+                        }).join('')}
                                             </tbody>
                                         </table>
                                     </div>
@@ -1669,20 +1669,20 @@ export class VeeamAuditorPage {
                                                 </thead>
                                                 <tbody>
                                                     ${veeam.tapeJobs.jobList.map(job => {
-                                                        const statusColor = job.LastSessionStatus === 'Success' ? 'success' : 
-                                                                          job.LastSessionStatus === 'Warning' ? 'warning' : 
-                                                                          job.LastSessionStatus === 'Failed' || job.LastSessionStatus === 'Error' ? 'error' : 
-                                                                          job.LastSessionStatus === 'Running' ? 'info' : 'secondary';
-                                                        return `
+                            const statusColor = job.LastSessionStatus === 'Success' ? 'success' :
+                                job.LastSessionStatus === 'Warning' ? 'warning' :
+                                    job.LastSessionStatus === 'Failed' || job.LastSessionStatus === 'Error' ? 'error' :
+                                        job.LastSessionStatus === 'Running' ? 'info' : 'secondary';
+                            return `
                                                         <tr>
                                                             <td><strong>${job.Name || 'N/A'}</strong></td>
                                                             <td>
                                                                 <span class="status-badge status-${statusColor}">
-                                                                    ${job.LastSessionStatus === 'Success' ? '<i class="fas fa-check-circle"></i> ' : 
-                                                                      job.LastSessionStatus === 'Warning' ? '<i class="fas fa-exclamation-triangle"></i> ' : 
-                                                                      job.LastSessionStatus === 'Failed' || job.LastSessionStatus === 'Error' ? '<i class="fas fa-times-circle"></i> ' : 
-                                                                      job.LastSessionStatus === 'Running' ? '<i class="fas fa-spinner fa-spin"></i> ' : 
-                                                                      '<i class="fas fa-circle"></i> '}
+                                                                    ${job.LastSessionStatus === 'Success' ? '<i class="fas fa-check-circle"></i> ' :
+                                    job.LastSessionStatus === 'Warning' ? '<i class="fas fa-exclamation-triangle"></i> ' :
+                                        job.LastSessionStatus === 'Failed' || job.LastSessionStatus === 'Error' ? '<i class="fas fa-times-circle"></i> ' :
+                                            job.LastSessionStatus === 'Running' ? '<i class="fas fa-spinner fa-spin"></i> ' :
+                                                '<i class="fas fa-circle"></i> '}
                                                                     ${job.LastSessionStatus || 'Never Run'}
                                                                 </span>
                                                             </td>
@@ -1691,7 +1691,7 @@ export class VeeamAuditorPage {
                                                             <td>${job.NextRun && job.NextRun !== 'N/A' ? job.NextRun : '<span style="color: #64748b;">N/A</span>'}</td>
                                                         </tr>
                                                     `;
-                                                    }).join('')}
+                        }).join('')}
                                                 </tbody>
                                             </table>
                                         </div>
@@ -1787,106 +1787,106 @@ export class VeeamAuditorPage {
         return `
             <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
                 ${(() => {
-                    // Helper function to format boolean values
-                    const formatBoolean = (value) => {
-                        // Check if value is explicitly set (not null/undefined)
-                        if (value === null || value === undefined || value === '') return 'N/A';
-                        // Handle boolean true values
-                        if (value === true || value === 'true' || value === 'True' || value === 1 || value === '1') return 'Yes';
-                        // Handle boolean false values
-                        if (value === false || value === 'false' || value === 'False' || value === 0 || value === '0') return 'No';
-                        // For any other value, try to convert to boolean
-                        const boolValue = Boolean(value);
-                        return boolValue ? 'Yes' : 'No';
-                    };
-                    
-                    // Helper function to render regular job row (non-tape)
-                    const renderJobRow = (job, jobType) => {
-                        const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
-                                         (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
-                                         (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
-                                         (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
-                        
-                        let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
-                        if (typeof lastResult === 'number') {
-                            if (lastResult === 0) lastResult = 'Success';
-                            else if (lastResult === 1) lastResult = 'Warning';
-                            else if (lastResult === 2) lastResult = 'Failed';
-                            else lastResult = 'None';
-                        }
-                        if (typeof lastResult === 'string') {
-                            lastResult = lastResult.trim();
-                            if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
-                                lastResult = 'None';
-                            }
-                        }
-                        let resultColor = '#94a3b8';
-                        let resultBg = 'rgba(148, 163, 184, 0.1)';
-                        const lastResultLower = String(lastResult).toLowerCase();
-                        if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
-                            resultColor = '#10b981';
-                            resultBg = 'rgba(16, 185, 129, 0.1)';
-                            lastResult = 'Success';
-                        } else if (lastResultLower === 'warning' || lastResultLower === '1') {
-                            resultColor = '#f59e0b';
-                            resultBg = 'rgba(245, 158, 11, 0.1)';
-                            lastResult = 'Warning';
-                        } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
-                            resultColor = '#ef4444';
-                            resultBg = 'rgba(239, 68, 68, 0.1)';
-                            lastResult = 'Failed';
-                        } else {
+                // Helper function to format boolean values
+                const formatBoolean = (value) => {
+                    // Check if value is explicitly set (not null/undefined)
+                    if (value === null || value === undefined || value === '') return 'N/A';
+                    // Handle boolean true values
+                    if (value === true || value === 'true' || value === 'True' || value === 1 || value === '1') return 'Yes';
+                    // Handle boolean false values
+                    if (value === false || value === 'false' || value === 'False' || value === 0 || value === '0') return 'No';
+                    // For any other value, try to convert to boolean
+                    const boolValue = Boolean(value);
+                    return boolValue ? 'Yes' : 'No';
+                };
+
+                // Helper function to render regular job row (non-tape)
+                const renderJobRow = (job, jobType) => {
+                    const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
+                        (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
+                        (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
+                        (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
+
+                    let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
+                    if (typeof lastResult === 'number') {
+                        if (lastResult === 0) lastResult = 'Success';
+                        else if (lastResult === 1) lastResult = 'Warning';
+                        else if (lastResult === 2) lastResult = 'Failed';
+                        else lastResult = 'None';
+                    }
+                    if (typeof lastResult === 'string') {
+                        lastResult = lastResult.trim();
+                        if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
                             lastResult = 'None';
                         }
-                        
-                        // Get all job properties
-                        const repository = job.Repository || job.repository || 'N/A';
-                        const sourceSize = job.SourceSize || job.sourceSize || 'N/A';
-                        const retentionScheme = job.RetentionScheme || job.retentionScheme || 'N/A';
-                        const restorePoints = job.RestorePoints || job.restorePoints || 'N/A';
-                        // Get Encrypted - check multiple property names and handle false values
-                        let encryptedValue = job.Encrypted !== undefined ? job.Encrypted : (job.encrypted !== undefined ? job.encrypted : (job.StorageEncryption !== undefined ? job.StorageEncryption : null));
-                        const encrypted = formatBoolean(encryptedValue);
-                        
-                        // Get GfsEnabled - check multiple property names and handle false values
-                        let gfsEnabledValue = job.GfsEnabled !== undefined ? job.GfsEnabled : (job.gfsEnabled !== undefined ? job.gfsEnabled : null);
-                        const gfsEnabled = formatBoolean(gfsEnabledValue);
-                        
-                        // Get GfsRetention - format as Yes/No if it's a boolean, otherwise show the value
-                        let gfsRetentionValue = job.GfsRetention !== undefined ? job.GfsRetention : (job.gfsRetention !== undefined ? job.gfsRetention : null);
-                        let gfsRetention = 'N/A';
-                        if (gfsRetentionValue !== null && gfsRetentionValue !== undefined && gfsRetentionValue !== '') {
-                            // If it's a boolean, format it
-                            if (typeof gfsRetentionValue === 'boolean' || gfsRetentionValue === 'true' || gfsRetentionValue === 'false' || gfsRetentionValue === 'True' || gfsRetentionValue === 'False' || gfsRetentionValue === 1 || gfsRetentionValue === 0) {
-                                gfsRetention = formatBoolean(gfsRetentionValue);
-                            } else {
-                                // Otherwise show the value as is
-                                gfsRetention = String(gfsRetentionValue);
-                            }
+                    }
+                    let resultColor = '#94a3b8';
+                    let resultBg = 'rgba(148, 163, 184, 0.1)';
+                    const lastResultLower = String(lastResult).toLowerCase();
+                    if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
+                        resultColor = '#10b981';
+                        resultBg = 'rgba(16, 185, 129, 0.1)';
+                        lastResult = 'Success';
+                    } else if (lastResultLower === 'warning' || lastResultLower === '1') {
+                        resultColor = '#f59e0b';
+                        resultBg = 'rgba(245, 158, 11, 0.1)';
+                        lastResult = 'Warning';
+                    } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
+                        resultColor = '#ef4444';
+                        resultBg = 'rgba(239, 68, 68, 0.1)';
+                        lastResult = 'Failed';
+                    } else {
+                        lastResult = 'None';
+                    }
+
+                    // Get all job properties
+                    const repository = job.Repository || job.repository || 'N/A';
+                    const sourceSize = job.SourceSize || job.sourceSize || 'N/A';
+                    const retentionScheme = job.RetentionScheme || job.retentionScheme || 'N/A';
+                    const restorePoints = job.RestorePoints || job.restorePoints || 'N/A';
+                    // Get Encrypted - check multiple property names and handle false values
+                    let encryptedValue = job.Encrypted !== undefined ? job.Encrypted : (job.encrypted !== undefined ? job.encrypted : (job.StorageEncryption !== undefined ? job.StorageEncryption : null));
+                    const encrypted = formatBoolean(encryptedValue);
+
+                    // Get GfsEnabled - check multiple property names and handle false values
+                    let gfsEnabledValue = job.GfsEnabled !== undefined ? job.GfsEnabled : (job.gfsEnabled !== undefined ? job.gfsEnabled : null);
+                    const gfsEnabled = formatBoolean(gfsEnabledValue);
+
+                    // Get GfsRetention - format as Yes/No if it's a boolean, otherwise show the value
+                    let gfsRetentionValue = job.GfsRetention !== undefined ? job.GfsRetention : (job.gfsRetention !== undefined ? job.gfsRetention : null);
+                    let gfsRetention = 'N/A';
+                    if (gfsRetentionValue !== null && gfsRetentionValue !== undefined && gfsRetentionValue !== '') {
+                        // If it's a boolean, format it
+                        if (typeof gfsRetentionValue === 'boolean' || gfsRetentionValue === 'true' || gfsRetentionValue === 'false' || gfsRetentionValue === 'True' || gfsRetentionValue === 'False' || gfsRetentionValue === 1 || gfsRetentionValue === 0) {
+                            gfsRetention = formatBoolean(gfsRetentionValue);
+                        } else {
+                            // Otherwise show the value as is
+                            gfsRetention = String(gfsRetentionValue);
                         }
-                        const activeFullEnabled = formatBoolean(job.ActiveFullEnabled || job.activeFullEnabled);
-                        // Check multiple property name variations for SyntheticFullEnabled
-                        let syntheticFullEnabledValue = null;
-                        if (job.hasOwnProperty('SyntheticFullEnabled')) {
-                            syntheticFullEnabledValue = job.SyntheticFullEnabled;
-                        } else if (job.hasOwnProperty('syntheticFullEnabled')) {
-                            syntheticFullEnabledValue = job.syntheticFullEnabled;
-                        } else if (job.hasOwnProperty('SyntheticFull')) {
-                            syntheticFullEnabledValue = job.SyntheticFull;
-                        } else if (job.hasOwnProperty('syntheticFull')) {
-                            syntheticFullEnabledValue = job.syntheticFull;
-                        }
-                        const syntheticFullEnabled = formatBoolean(syntheticFullEnabledValue);
-                        const backupChainType = job.BackupChainType || job.backupChainType || 'N/A';
-                        
-                        // Get IndexingEnabled - check multiple property names and handle false values
-                        let indexingEnabledValue = job.IndexingEnabled !== undefined ? job.IndexingEnabled : (job.indexingEnabled !== undefined ? job.indexingEnabled : null);
-                        const indexingEnabled = formatBoolean(indexingEnabledValue);
-                        
-                        // Encode job data for click handler
-                        const jobData = encodeURIComponent(JSON.stringify(job));
-                        
-                        return `
+                    }
+                    const activeFullEnabled = formatBoolean(job.ActiveFullEnabled || job.activeFullEnabled);
+                    // Check multiple property name variations for SyntheticFullEnabled
+                    let syntheticFullEnabledValue = null;
+                    if (job.hasOwnProperty('SyntheticFullEnabled')) {
+                        syntheticFullEnabledValue = job.SyntheticFullEnabled;
+                    } else if (job.hasOwnProperty('syntheticFullEnabled')) {
+                        syntheticFullEnabledValue = job.syntheticFullEnabled;
+                    } else if (job.hasOwnProperty('SyntheticFull')) {
+                        syntheticFullEnabledValue = job.SyntheticFull;
+                    } else if (job.hasOwnProperty('syntheticFull')) {
+                        syntheticFullEnabledValue = job.syntheticFull;
+                    }
+                    const syntheticFullEnabled = formatBoolean(syntheticFullEnabledValue);
+                    const backupChainType = job.BackupChainType || job.backupChainType || 'N/A';
+
+                    // Get IndexingEnabled - check multiple property names and handle false values
+                    let indexingEnabledValue = job.IndexingEnabled !== undefined ? job.IndexingEnabled : (job.indexingEnabled !== undefined ? job.indexingEnabled : null);
+                    const indexingEnabled = formatBoolean(indexingEnabledValue);
+
+                    // Encode job data for click handler
+                    const jobData = encodeURIComponent(JSON.stringify(job));
+
+                    return `
                             <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
                                 <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
                                 <td style="padding: 0.4rem;">
@@ -1906,65 +1906,65 @@ export class VeeamAuditorPage {
                                 <td style="padding: 0.4rem;">${indexingEnabled}</td>
                             </tr>
                         `;
-                    };
-                    
-                    // Helper function to render tape job row
-                    const renderTapeJobRow = (job, jobType) => {
-                        const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
-                                         (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
-                                         (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
-                                         (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
-                        
-                        let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
-                        if (typeof lastResult === 'number') {
-                            if (lastResult === 0) lastResult = 'Success';
-                            else if (lastResult === 1) lastResult = 'Warning';
-                            else if (lastResult === 2) lastResult = 'Failed';
-                            else lastResult = 'None';
-                        }
-                        if (typeof lastResult === 'string') {
-                            lastResult = lastResult.trim();
-                            if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
-                                lastResult = 'None';
-                            }
-                        }
-                        let resultColor = '#94a3b8';
-                        let resultBg = 'rgba(148, 163, 184, 0.1)';
-                        const lastResultLower = String(lastResult).toLowerCase();
-                        if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
-                            resultColor = '#10b981';
-                            resultBg = 'rgba(16, 185, 129, 0.1)';
-                            lastResult = 'Success';
-                        } else if (lastResultLower === 'warning' || lastResultLower === '1') {
-                            resultColor = '#f59e0b';
-                            resultBg = 'rgba(245, 158, 11, 0.1)';
-                            lastResult = 'Warning';
-                        } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
-                            resultColor = '#ef4444';
-                            resultBg = 'rgba(239, 68, 68, 0.1)';
-                            lastResult = 'Failed';
-                        } else {
+                };
+
+                // Helper function to render tape job row
+                const renderTapeJobRow = (job, jobType) => {
+                    const isEnabled = (job.IsEnabled === true || job.IsEnabled === 'true' || job.IsEnabled === 'True' || job.IsEnabled === 1) ||
+                        (job.JobIsEnabled === true || job.JobIsEnabled === 'true' || job.JobIsEnabled === 'True' || job.JobIsEnabled === 1) ||
+                        (job.Enabled === true || job.Enabled === 'true' || job.Enabled === 'True' || job.Enabled === 1) ||
+                        (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1);
+
+                    let lastResult = job.LastResult || job.lastResult || job.LastRunResult || job.Result || job.LastSessionResult || 'None';
+                    if (typeof lastResult === 'number') {
+                        if (lastResult === 0) lastResult = 'Success';
+                        else if (lastResult === 1) lastResult = 'Warning';
+                        else if (lastResult === 2) lastResult = 'Failed';
+                        else lastResult = 'None';
+                    }
+                    if (typeof lastResult === 'string') {
+                        lastResult = lastResult.trim();
+                        if (lastResult === '' || lastResult === 'N/A' || lastResult === 'null' || lastResult === 'undefined' || lastResult === 'None') {
                             lastResult = 'None';
                         }
-                        
-                        const isScheduleEnabled = (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1) ||
-                                               (job.isScheduleEnabled === true || job.isScheduleEnabled === 'true' || job.isScheduleEnabled === 'True' || job.isScheduleEnabled === 1);
-                        const nextRun = job.NextRun || job.nextRun || job.NextRunTime || (job.ScheduleOptions && job.ScheduleOptions.NextRun) || null;
-                        const hasNextRun = nextRun && nextRun !== 'N/A' && nextRun !== null && nextRun !== '' && nextRun !== 'null' && nextRun !== 'undefined' && nextRun !== '0001-01-01 00:00:00';
-                        
-                        // Get tape job specific properties
-                        const mediaPoolFull = job.MediaPoolFull || job.mediaPoolFull || job.MediaPool || job.mediaPool || 'N/A';
-                        const incrementalEnabled = formatBoolean(job.IncrementalEnabled || job.incrementalEnabled);
-                        const mediaPoolIncremental = job.MediaPoolIncremental || job.mediaPoolIncremental || 'N/A';
-                        const hardwareCompression = formatBoolean(job.HardwareCompression || job.hardwareCompression);
-                        const ejectMedium = formatBoolean(job.EjectMedium || job.ejectMedium);
-                        const exportMediaSet = formatBoolean(job.ExportMediaSet || job.exportMediaSet);
-                        const jobIsEnabled = formatBoolean(isEnabled);
-                        
-                        // Encode job data for click handler
-                        const jobData = encodeURIComponent(JSON.stringify(job));
-                        
-                        return `
+                    }
+                    let resultColor = '#94a3b8';
+                    let resultBg = 'rgba(148, 163, 184, 0.1)';
+                    const lastResultLower = String(lastResult).toLowerCase();
+                    if (lastResultLower === 'success' || lastResultLower === 'ok' || lastResultLower === '0') {
+                        resultColor = '#10b981';
+                        resultBg = 'rgba(16, 185, 129, 0.1)';
+                        lastResult = 'Success';
+                    } else if (lastResultLower === 'warning' || lastResultLower === '1') {
+                        resultColor = '#f59e0b';
+                        resultBg = 'rgba(245, 158, 11, 0.1)';
+                        lastResult = 'Warning';
+                    } else if (lastResultLower === 'failed' || lastResultLower === 'error' || lastResultLower === '2') {
+                        resultColor = '#ef4444';
+                        resultBg = 'rgba(239, 68, 68, 0.1)';
+                        lastResult = 'Failed';
+                    } else {
+                        lastResult = 'None';
+                    }
+
+                    const isScheduleEnabled = (job.IsScheduleEnabled === true || job.IsScheduleEnabled === 'true' || job.IsScheduleEnabled === 'True' || job.IsScheduleEnabled === 1) ||
+                        (job.isScheduleEnabled === true || job.isScheduleEnabled === 'true' || job.isScheduleEnabled === 'True' || job.isScheduleEnabled === 1);
+                    const nextRun = job.NextRun || job.nextRun || job.NextRunTime || (job.ScheduleOptions && job.ScheduleOptions.NextRun) || null;
+                    const hasNextRun = nextRun && nextRun !== 'N/A' && nextRun !== null && nextRun !== '' && nextRun !== 'null' && nextRun !== 'undefined' && nextRun !== '0001-01-01 00:00:00';
+
+                    // Get tape job specific properties
+                    const mediaPoolFull = job.MediaPoolFull || job.mediaPoolFull || job.MediaPool || job.mediaPool || 'N/A';
+                    const incrementalEnabled = formatBoolean(job.IncrementalEnabled || job.incrementalEnabled);
+                    const mediaPoolIncremental = job.MediaPoolIncremental || job.mediaPoolIncremental || 'N/A';
+                    const hardwareCompression = formatBoolean(job.HardwareCompression || job.hardwareCompression);
+                    const ejectMedium = formatBoolean(job.EjectMedium || job.ejectMedium);
+                    const exportMediaSet = formatBoolean(job.ExportMediaSet || job.exportMediaSet);
+                    const jobIsEnabled = formatBoolean(isEnabled);
+
+                    // Encode job data for click handler
+                    const jobData = encodeURIComponent(JSON.stringify(job));
+
+                    return `
                             <tr style="cursor: pointer;" data-job-data="${jobData.replace(/"/g, '&quot;')}" onclick="if(window.veeamAuditorPage){window.veeamAuditorPage.showJobDetails(this.getAttribute('data-job-data'))}" onmouseover="this.style.backgroundColor='rgba(59, 130, 246, 0.1)'" onmouseout="this.style.backgroundColor=''">
                                 <td style="padding: 0.4rem;">${job.Name || job.name || 'N/A'}</td>
                                 <td style="padding: 0.4rem;">
@@ -1982,64 +1982,64 @@ export class VeeamAuditorPage {
                                 <td style="padding: 0.4rem;">${hasNextRun ? nextRun : 'N/A'}</td>
                             </tr>
                         `;
-                    };
-                    
-                    // Group jobs by type
-                    const jobGroups = {
-                        'Backup Jobs': [],
-                        'Replica Jobs': [],
-                        'File Copy Jobs': [],
-                        'Backup Copy Jobs': [],
-                        'File Backup Jobs': [],
-                        'Tape Jobs': []
-                    };
-                    
-                    if (jobInfo.backupJobs && Array.isArray(jobInfo.backupJobs)) {
-                        jobInfo.backupJobs.forEach(job => {
-                            let jobType = job.JobType || job.jobType || 'N/A';
-                            if (jobType === 'Hyper-V Backup' || jobType === 'VMware Backup') {
-                                jobGroups['Backup Jobs'].push({ job, jobType });
-                            } else {
-                                jobGroups['Backup Jobs'].push({ job, jobType });
-                            }
-                        });
-                    }
-                    if (jobInfo.replicaJobs && Array.isArray(jobInfo.replicaJobs)) {
-                        jobInfo.replicaJobs.forEach(job => {
-                            jobGroups['Replica Jobs'].push({ job, jobType: 'Replica' });
-                        });
-                    }
-                    if (jobInfo.fileCopyJobs && Array.isArray(jobInfo.fileCopyJobs)) {
-                        jobInfo.fileCopyJobs.forEach(job => {
-                            jobGroups['File Copy Jobs'].push({ job, jobType: 'File Copy' });
-                        });
-                    }
-                    if (jobInfo.backupCopyJobs && Array.isArray(jobInfo.backupCopyJobs)) {
-                        jobInfo.backupCopyJobs.forEach(job => {
-                            jobGroups['Backup Copy Jobs'].push({ job, jobType: 'Backup Copy' });
-                        });
-                    }
-                    if (jobInfo.fileBackupJobs && Array.isArray(jobInfo.fileBackupJobs)) {
-                        jobInfo.fileBackupJobs.forEach(job => {
-                            jobGroups['File Backup Jobs'].push({ job, jobType: 'File Backup' });
-                        });
-                    }
-                    if (jobInfo.tapeJobs && Array.isArray(jobInfo.tapeJobs)) {
-                        jobInfo.tapeJobs.forEach(job => {
-                            jobGroups['Tape Jobs'].push({ job, jobType: 'Tape' });
-                        });
-                    }
-                    
-                    // Render tables for each job type
-                    let tablesHtml = '';
-                    Object.keys(jobGroups).forEach(groupName => {
-                        const jobs = jobGroups[groupName];
-                        if (jobs.length === 0) return;
-                        
-                        // Use different headers and render function for tape jobs
-                        const isTapeJobs = groupName === 'Tape Jobs';
-                        
-                        const headers = isTapeJobs ? `
+                };
+
+                // Group jobs by type
+                const jobGroups = {
+                    'Backup Jobs': [],
+                    'Replica Jobs': [],
+                    'File Copy Jobs': [],
+                    'Backup Copy Jobs': [],
+                    'File Backup Jobs': [],
+                    'Tape Jobs': []
+                };
+
+                if (jobInfo.backupJobs && Array.isArray(jobInfo.backupJobs)) {
+                    jobInfo.backupJobs.forEach(job => {
+                        let jobType = job.JobType || job.jobType || 'N/A';
+                        if (jobType === 'Hyper-V Backup' || jobType === 'VMware Backup') {
+                            jobGroups['Backup Jobs'].push({ job, jobType });
+                        } else {
+                            jobGroups['Backup Jobs'].push({ job, jobType });
+                        }
+                    });
+                }
+                if (jobInfo.replicaJobs && Array.isArray(jobInfo.replicaJobs)) {
+                    jobInfo.replicaJobs.forEach(job => {
+                        jobGroups['Replica Jobs'].push({ job, jobType: 'Replica' });
+                    });
+                }
+                if (jobInfo.fileCopyJobs && Array.isArray(jobInfo.fileCopyJobs)) {
+                    jobInfo.fileCopyJobs.forEach(job => {
+                        jobGroups['File Copy Jobs'].push({ job, jobType: 'File Copy' });
+                    });
+                }
+                if (jobInfo.backupCopyJobs && Array.isArray(jobInfo.backupCopyJobs)) {
+                    jobInfo.backupCopyJobs.forEach(job => {
+                        jobGroups['Backup Copy Jobs'].push({ job, jobType: 'Backup Copy' });
+                    });
+                }
+                if (jobInfo.fileBackupJobs && Array.isArray(jobInfo.fileBackupJobs)) {
+                    jobInfo.fileBackupJobs.forEach(job => {
+                        jobGroups['File Backup Jobs'].push({ job, jobType: 'File Backup' });
+                    });
+                }
+                if (jobInfo.tapeJobs && Array.isArray(jobInfo.tapeJobs)) {
+                    jobInfo.tapeJobs.forEach(job => {
+                        jobGroups['Tape Jobs'].push({ job, jobType: 'Tape' });
+                    });
+                }
+
+                // Render tables for each job type
+                let tablesHtml = '';
+                Object.keys(jobGroups).forEach(groupName => {
+                    const jobs = jobGroups[groupName];
+                    if (jobs.length === 0) return;
+
+                    // Use different headers and render function for tape jobs
+                    const isTapeJobs = groupName === 'Tape Jobs';
+
+                    const headers = isTapeJobs ? `
                             <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Job Name</th>
                             <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Last Result</th>
                             <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Media Pool - Full</th>
@@ -2064,8 +2064,8 @@ export class VeeamAuditorPage {
                             <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Synthetic Full Enabled</th>
                             <th style="padding: 0.4rem; text-align: left; font-size: 0.8rem;">Indexing Enabled</th>
                         `;
-                        
-                        tablesHtml += `
+
+                    tablesHtml += `
                             <div style="margin-bottom: 1.5rem;">
                                 <h3 style="color: #e2e8f0; font-size: 0.9rem; margin-bottom: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
                                     <i class="fas fa-list" style="color: #8b5cf6;"></i>${groupName} (${jobs.length})
@@ -2084,10 +2084,10 @@ export class VeeamAuditorPage {
                                 </div>
                             </div>
                         `;
-                    });
-                    
-                    return tablesHtml || '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No jobs found</div>';
-                })()}
+                });
+
+                return tablesHtml || '<div style="padding: 1rem; text-align: center; color: #94a3b8;">No jobs found</div>';
+            })()}
             </div>
         `;
     }
@@ -2130,40 +2130,40 @@ export class VeeamAuditorPage {
                         </thead>
                         <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
                             ${repositories.map(repo => {
-                                const formatBoolean = (value) => {
-                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                    return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                };
-                                
-                                const formatWarning = (value) => {
-                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>';
-                                    return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                };
-                                
-                                const freeSpaceGB = repo.CachedFreeSpaceGB || repo.cachedFreeSpaceGB || 0;
-                                const totalSpaceGB = repo.CachedTotalSpaceGB || repo.cachedTotalSpaceGB || 0;
-                                const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
-                                const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
-                                const freeSpacePercent = repo.FreeSpacePercent || repo.freeSpacePercent || 0;
-                                
-                                const jobCount = repo.JobCount || repo.jobCount || 0;
-                                const setTasks = repo.SetTasks || repo.setTasks || 0;
-                                const cores = repo.Cores || repo.cores || 0;
-                                const ram = repo.Ram || repo.ram || 0;
-                                const ramDisplay = ram > 0 ? `${ram} GB` : '0';
-                                
-                                const host = repo.Host || repo.host || 'N/A';
-                                const path = repo.Path || repo.path || 'N/A';
-                                const type = repo.Type || repo.type || 'N/A';
-                                
-                                const autoGateway = formatBoolean(repo.AutoGateway || repo.autoGateway);
-                                const perVM = formatWarning(repo.PerVM || repo.perVM);
-                                const decompress = formatBoolean(repo.Decompress || repo.decompress);
-                                const alignBlocks = formatBoolean(repo.AlignBlocks || repo.alignBlocks);
-                                const rotatedDrives = formatBoolean(repo.RotatedDrives || repo.rotatedDrives);
-                                const useImmutability = formatBoolean(repo.UseImmutability || repo.useImmutability);
-                                
-                                return `
+            const formatBoolean = (value) => {
+                if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+            };
+
+            const formatWarning = (value) => {
+                if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>';
+                return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+            };
+
+            const freeSpaceGB = repo.CachedFreeSpaceGB || repo.cachedFreeSpaceGB || 0;
+            const totalSpaceGB = repo.CachedTotalSpaceGB || repo.cachedTotalSpaceGB || 0;
+            const freeSpaceTB = freeSpaceGB > 0 ? (freeSpaceGB / 1024).toFixed(2) : '0.00';
+            const totalSpaceTB = totalSpaceGB > 0 ? (totalSpaceGB / 1024).toFixed(2) : '0.00';
+            const freeSpacePercent = repo.FreeSpacePercent || repo.freeSpacePercent || 0;
+
+            const jobCount = repo.JobCount || repo.jobCount || 0;
+            const setTasks = repo.SetTasks || repo.setTasks || 0;
+            const cores = repo.Cores || repo.cores || 0;
+            const ram = repo.Ram || repo.ram || 0;
+            const ramDisplay = ram > 0 ? `${ram} GB` : '0';
+
+            const host = repo.Host || repo.host || 'N/A';
+            const path = repo.Path || repo.path || 'N/A';
+            const type = repo.Type || repo.type || 'N/A';
+
+            const autoGateway = formatBoolean(repo.AutoGateway || repo.autoGateway);
+            const perVM = formatWarning(repo.PerVM || repo.perVM);
+            const decompress = formatBoolean(repo.Decompress || repo.decompress);
+            const alignBlocks = formatBoolean(repo.AlignBlocks || repo.alignBlocks);
+            const rotatedDrives = formatBoolean(repo.RotatedDrives || repo.rotatedDrives);
+            const useImmutability = formatBoolean(repo.UseImmutability || repo.useImmutability);
+
+            return `
                                     <tr style="display: table; width: 100%; table-layout: fixed;">
                                         <td style="padding: 0.4rem; width: 10%;">${repo.Name || repo.name || 'N/A'}</td>
                                         <td style="padding: 0.4rem; text-align: center; width: 5%;">${jobCount}</td>
@@ -2184,7 +2184,7 @@ export class VeeamAuditorPage {
                                         <td style="padding: 0.4rem; width: 6%;">${type}</td>
                                     </tr>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2231,17 +2231,17 @@ export class VeeamAuditorPage {
                         </thead>
                         <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
                             ${proxies.map(proxy => {
-                                const name = proxy.Name || proxy.name || 'N/A';
-                                const host = proxy.Host || proxy.host || 'N/A';
-                                const type = proxy.Type || proxy.type || 'N/A';
-                                const port = proxy.Port || proxy.port || 'N/A';
-                                const transportMode = proxy.TransportMode || proxy.transportMode || 'N/A';
-                                const maxTasks = proxy.MaxTasksCount || proxy.maxTasksCount || 'N/A';
-                                const isDisabled = formatBoolean(proxy.IsDisabled !== undefined ? proxy.IsDisabled : (proxy.isDisabled !== undefined ? proxy.isDisabled : false));
-                                const trafficRules = proxy.TrafficRules || proxy.trafficRules || [];
-                                const trafficRulesCount = Array.isArray(trafficRules) ? trafficRules.length : 0;
-                                
-                                return `
+            const name = proxy.Name || proxy.name || 'N/A';
+            const host = proxy.Host || proxy.host || 'N/A';
+            const type = proxy.Type || proxy.type || 'N/A';
+            const port = proxy.Port || proxy.port || 'N/A';
+            const transportMode = proxy.TransportMode || proxy.transportMode || 'N/A';
+            const maxTasks = proxy.MaxTasksCount || proxy.maxTasksCount || 'N/A';
+            const isDisabled = formatBoolean(proxy.IsDisabled !== undefined ? proxy.IsDisabled : (proxy.isDisabled !== undefined ? proxy.isDisabled : false));
+            const trafficRules = proxy.TrafficRules || proxy.trafficRules || [];
+            const trafficRulesCount = Array.isArray(trafficRules) ? trafficRules.length : 0;
+
+            return `
                                     <tr style="display: table; width: 100%; table-layout: fixed;">
                                         <td style="padding: 0.4rem; width: 15%;">${name}</td>
                                         <td style="padding: 0.4rem; width: 12%;">${host}</td>
@@ -2253,7 +2253,7 @@ export class VeeamAuditorPage {
                                         <td style="padding: 0.4rem; text-align: center; width: 8%;">${trafficRulesCount}</td>
                                     </tr>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2300,21 +2300,21 @@ export class VeeamAuditorPage {
                         </thead>
                         <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
                             ${managedServers.map(server => {
-                                const isProxy = server.isProxy === true || server.isProxy === 'true' || server.isProxy === 'True' || server.isProxy === 1;
-                                const isRepo = server.isRepo === true || server.isRepo === 'true' || server.isRepo === 'True' || server.isRepo === 1;
-                                const isWANAcc = server.isWANAcc === true || server.isWANAcc === 'true' || server.isWANAcc === 'True' || server.isWANAcc === 1;
-                                const isUnavailable = server.isUnavailable === true || server.isUnavailable === 'true' || server.isUnavailable === 'True' || server.isUnavailable === 1;
-                                
-                                const formatBoolean = (value) => {
-                                    if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
-                                    return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
-                                };
-                                
-                                const cores = server.cores || server.Cores || 0;
-                                const ram = server.ram || server.RAM || 0;
-                                const ramDisplay = ram > 0 ? `${ram} GB` : '0';
-                                
-                                return `
+            const isProxy = server.isProxy === true || server.isProxy === 'true' || server.isProxy === 'True' || server.isProxy === 1;
+            const isRepo = server.isRepo === true || server.isRepo === 'true' || server.isRepo === 'True' || server.isRepo === 1;
+            const isWANAcc = server.isWANAcc === true || server.isWANAcc === 'true' || server.isWANAcc === 'True' || server.isWANAcc === 1;
+            const isUnavailable = server.isUnavailable === true || server.isUnavailable === 'true' || server.isUnavailable === 'True' || server.isUnavailable === 1;
+
+            const formatBoolean = (value) => {
+                if (value === true || value === 'true' || value === 'True' || value === 1) return '<i class="fas fa-check-circle" style="color: #10b981;"></i>';
+                return '<i class="fas fa-times-circle" style="color: #64748b;"></i>';
+            };
+
+            const cores = server.cores || server.Cores || 0;
+            const ram = server.ram || server.RAM || 0;
+            const ramDisplay = ram > 0 ? `${ram} GB` : '0';
+
+            return `
                                     <tr style="display: table; width: 100%; table-layout: fixed;">
                                         <td style="padding: 0.4rem; width: 15%;">${server.name || server.Name || 'N/A'}</td>
                                         <td style="padding: 0.4rem; text-align: center; width: 6%;">${cores}</td>
@@ -2331,7 +2331,7 @@ export class VeeamAuditorPage {
                                         <td style="padding: 0.4rem; text-align: center; width: 5%;">${formatBoolean(isUnavailable)}</td>
                                     </tr>
                                 `;
-                            }).join('')}
+        }).join('')}
                         </tbody>
                     </table>
                 </div>
@@ -2393,61 +2393,61 @@ export class VeeamAuditorPage {
                             </thead>
                             <tbody style="display: block; overflow-y: auto; max-height: calc(100vh - 300px); width: 100%;">
                                 ${allSessions.map(session => {
-                                    // Try multiple possible property names for result
-                                    let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
-                                    
-                                    // Normalize result value first
-                                    if (result === null || result === undefined) {
-                                        result = 'None';
-                                    } else if (typeof result === 'number') {
-                                        if (result === 0) result = 'Success';
-                                        else if (result === 1) result = 'Warning';
-                                        else if (result === 2) result = 'Failed';
-                                        else result = 'None';
-                                    } else if (typeof result === 'string') {
-                                        result = result.trim();
-                                        if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
-                                            result = 'None';
-                                        }
-                                    }
-                                    
-                                    // If result is still 'None' or empty, try to infer from State
-                                    if ((result === 'None' || result === '' || result === null || result === undefined) && session.State) {
-                                        const state = String(session.State || '').toLowerCase();
-                                        if (state === 'stopped' || state === 'completed' || state === 'success') {
-                                            result = 'Success';
-                                        } else if (state === 'warning' || state === 'warn') {
-                                            result = 'Warning';
-                                        } else if (state === 'failed' || state === 'error' || state === 'failure') {
-                                            result = 'Failed';
-                                        }
-                                    }
-                                    
-                                    const resultLower = String(result).toLowerCase();
-                                    let resultColor = '#94a3b8';
-                                    let resultBg = 'rgba(148, 163, 184, 0.1)';
-                                    
-                                    // Check if it's a success (multiple ways - the PowerShell script stores it in lowercase)
-                                    if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
-                                        resultColor = '#10b981';
-                                        resultBg = 'rgba(16, 185, 129, 0.1)';
-                                        result = 'Success';
-                                    } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
-                                        resultColor = '#f59e0b';
-                                        resultBg = 'rgba(245, 158, 11, 0.1)';
-                                        result = 'Warning';
-                                    } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
-                                        resultColor = '#ef4444';
-                                        resultBg = 'rgba(239, 68, 68, 0.1)';
-                                        result = 'Failed';
-                                    } else if (resultLower === 'none' || result === null || result === undefined) {
-                                        result = 'None';
-                                    } else {
-                                        // If we have a value but don't recognize it, keep it as is but style as unknown
-                                        result = String(result);
-                                    }
-                                    
-                                    return `
+            // Try multiple possible property names for result
+            let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
+
+            // Normalize result value first
+            if (result === null || result === undefined) {
+                result = 'None';
+            } else if (typeof result === 'number') {
+                if (result === 0) result = 'Success';
+                else if (result === 1) result = 'Warning';
+                else if (result === 2) result = 'Failed';
+                else result = 'None';
+            } else if (typeof result === 'string') {
+                result = result.trim();
+                if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
+                    result = 'None';
+                }
+            }
+
+            // If result is still 'None' or empty, try to infer from State
+            if ((result === 'None' || result === '' || result === null || result === undefined) && session.State) {
+                const state = String(session.State || '').toLowerCase();
+                if (state === 'stopped' || state === 'completed' || state === 'success') {
+                    result = 'Success';
+                } else if (state === 'warning' || state === 'warn') {
+                    result = 'Warning';
+                } else if (state === 'failed' || state === 'error' || state === 'failure') {
+                    result = 'Failed';
+                }
+            }
+
+            const resultLower = String(result).toLowerCase();
+            let resultColor = '#94a3b8';
+            let resultBg = 'rgba(148, 163, 184, 0.1)';
+
+            // Check if it's a success (multiple ways - the PowerShell script stores it in lowercase)
+            if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
+                resultColor = '#10b981';
+                resultBg = 'rgba(16, 185, 129, 0.1)';
+                result = 'Success';
+            } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
+                resultColor = '#f59e0b';
+                resultBg = 'rgba(245, 158, 11, 0.1)';
+                result = 'Warning';
+            } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
+                resultColor = '#ef4444';
+                resultBg = 'rgba(239, 68, 68, 0.1)';
+                result = 'Failed';
+            } else if (resultLower === 'none' || result === null || result === undefined) {
+                result = 'None';
+            } else {
+                // If we have a value but don't recognize it, keep it as is but style as unknown
+                result = String(result);
+            }
+
+            return `
                                         <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td style="padding: 0.5rem; width: 15%;">${session.JobName || 'N/A'}</td>
                                             <td style="padding: 0.5rem; width: 10%;">${session.JobType || 'N/A'}</td>
@@ -2468,7 +2468,7 @@ export class VeeamAuditorPage {
                                             </td>
                                         </tr>
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -2514,7 +2514,7 @@ export class VeeamAuditorPage {
 
     async generateScript(options = {}) {
         const { encrypt = true, obfuscate = true } = options;
-        
+
         // If no reportId, allow generating a generic script
         // This is useful when creating a new report
         if (!this.reportId) {
@@ -2553,7 +2553,7 @@ export class VeeamAuditorPage {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             // Get response as text first to check if it's valid JSON
             const responseText = await response.text();
             let data;
@@ -2564,11 +2564,11 @@ export class VeeamAuditorPage {
                 console.error('Response text:', responseText.substring(0, 200));
                 throw new Error('Invalid JSON response from server');
             }
-            
+
             if (!data || !data.script) {
                 throw new Error('No script data received from server');
             }
-            
+
             // Create a blob and download
             const blob = new Blob([data.script], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
@@ -2631,7 +2631,7 @@ export class VeeamAuditorPage {
 
             const result = await response.json();
             this.showMessage('Report imported successfully!', 'success');
-            
+
             // Reload the report data
             await this.loadReport();
         } catch (error) {
@@ -2681,7 +2681,7 @@ export class VeeamAuditorPage {
                     this.drawJobsResultChart();
                     this.drawSessionStatsChart();
                     this.drawBackupSizesChart();
-                    
+
                     // Redraw charts on window resize/zoom with debounce
                     let resizeTimeout;
                     const redrawCharts = () => {
@@ -2693,7 +2693,7 @@ export class VeeamAuditorPage {
                             this.drawBackupSizesChart();
                         }, 150);
                     };
-                    
+
                     // Use ResizeObserver for better performance
                     if (window.ResizeObserver) {
                         const chartsContainer = document.getElementById('page-content');
@@ -2702,7 +2702,7 @@ export class VeeamAuditorPage {
                                 redrawCharts();
                             });
                             resizeObserver.observe(chartsContainer);
-                            
+
                             // Also observe each canvas container individually
                             const canvasIds = ['complianceChart', 'jobsResultChart', 'sessionStatsChart', 'backupSizesChart'];
                             canvasIds.forEach(id => {
@@ -2720,42 +2720,42 @@ export class VeeamAuditorPage {
                 setTimeout(() => {
                     this.drawInstancesChart();
                 }, 200);
-                
+
                 // Make showJobDetails available globally
                 window.veeamAuditorPage = this;
             });
         }
     }
-    
+
     drawComplianceChart() {
         const canvas = document.getElementById('complianceChart');
         if (!canvas) return;
-        
+
         const complianceSummary = this.reportData?.veeam?.complianceSummary;
         if (!complianceSummary) return;
-        
+
         const container = canvas.parentElement;
         if (!container) return;
-        
+
         const dpr = window.devicePixelRatio || 1;
-        
+
         // Use 100% width to prevent layout thrashing
         canvas.style.width = '100%';
         canvas.style.height = '200px';
-        
+
         const rect = canvas.getBoundingClientRect();
         const width = rect.width;
-        
+
         canvas.width = width * dpr;
         canvas.height = 200 * dpr;
-        
+
         const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
         const height = 200;
-        
+
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
-        
+
         // Data - order matches the image: Passed, Unable to detect, Not Implemented, Suppressed
         const data = [
             { label: 'Passed', value: complianceSummary.passed || 0, color: '#10b981' },
@@ -2763,27 +2763,27 @@ export class VeeamAuditorPage {
             { label: 'Not Implemented', value: complianceSummary.notImplemented || 0, color: '#f87171' },
             { label: 'Suppressed', value: complianceSummary.suppressed || 0, color: '#94a3b8' }
         ];
-        
+
         // Find max value for scaling
         const maxValue = Math.max(...data.map(d => d.value), 1);
-        
+
         // Chart dimensions
         const padding = { top: 15, right: 15, bottom: 45, left: 35 };
         const chartWidth = width - padding.left - padding.right;
         const chartHeight = height - padding.top - padding.bottom;
         const barWidth = Math.max(30, (chartWidth / data.length) - 8);
         const barSpacing = 8;
-        
+
         // Draw bars
         data.forEach((item, index) => {
             const barHeight = (item.value / maxValue) * chartHeight;
             const x = padding.left + index * (barWidth + barSpacing) + barSpacing / 2;
             const y = padding.top + chartHeight - barHeight;
-            
+
             // Draw bar
             ctx.fillStyle = item.color;
             ctx.fillRect(x, y, barWidth, barHeight);
-            
+
             // Draw value label on top of bar
             if (item.value > 0) {
                 ctx.fillStyle = '#e2e8f0';
@@ -2792,7 +2792,7 @@ export class VeeamAuditorPage {
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(item.value.toString(), x + barWidth / 2, y - 3);
             }
-            
+
             // Draw label below bar
             ctx.fillStyle = '#cbd5e1';
             ctx.font = '10px Arial';
@@ -2808,7 +2808,7 @@ export class VeeamAuditorPage {
                 ctx.fillText(item.label, x + barWidth / 2, labelY);
             }
         });
-        
+
         // Draw Y-axis
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 1;
@@ -2816,7 +2816,7 @@ export class VeeamAuditorPage {
         ctx.moveTo(padding.left, padding.top);
         ctx.lineTo(padding.left, padding.top + chartHeight);
         ctx.stroke();
-        
+
         // Draw Y-axis grid lines
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 0.5;
@@ -2830,7 +2830,7 @@ export class VeeamAuditorPage {
             ctx.stroke();
         }
         ctx.setLineDash([]);
-        
+
         // Draw Y-axis labels
         ctx.fillStyle = '#94a3b8';
         ctx.font = '10px Arial';
@@ -2841,7 +2841,7 @@ export class VeeamAuditorPage {
             const y = padding.top + chartHeight - (i / ySteps) * chartHeight;
             ctx.fillText(value.toString(), padding.left - 8, y);
         }
-        
+
         // Draw Y-axis title
         ctx.save();
         ctx.translate(15, padding.top + chartHeight / 2);
@@ -2853,10 +2853,10 @@ export class VeeamAuditorPage {
         ctx.fillText('Count', 0, 0);
         ctx.restore();
     }
-    
+
     calculateTotalSize(jobs) {
         if (!jobs || jobs.length === 0) return '0 B';
-        
+
         let totalBytes = 0;
         jobs.forEach(job => {
             if (job.SourceSize && job.SourceSize !== 'N/A') {
@@ -2865,7 +2865,7 @@ export class VeeamAuditorPage {
                 if (match) {
                     const value = parseFloat(match[1]);
                     const unit = match[2];
-                    switch(unit) {
+                    switch (unit) {
                         case 'TB': totalBytes += value * 1024 * 1024 * 1024 * 1024; break;
                         case 'GB': totalBytes += value * 1024 * 1024 * 1024; break;
                         case 'MB': totalBytes += value * 1024 * 1024; break;
@@ -2875,7 +2875,7 @@ export class VeeamAuditorPage {
                 }
             }
         });
-        
+
         if (totalBytes >= 1024 * 1024 * 1024 * 1024) {
             return `${(totalBytes / (1024 * 1024 * 1024 * 1024)).toFixed(2)} TB`;
         } else if (totalBytes >= 1024 * 1024 * 1024) {
@@ -2888,74 +2888,74 @@ export class VeeamAuditorPage {
             return `${totalBytes} B`;
         }
     }
-    
+
     drawInstancesChart() {
         const canvas = document.getElementById('instancesChart');
         if (!canvas) {
             return;
         }
-        
+
         const license = this.reportData?.veeam?.license;
         if (!license) {
             return;
         }
-        
+
         const container = canvas.parentElement;
         if (!container) {
             return;
         }
-        
+
         // Wait for container to have dimensions
         const rect = container.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) {
             setTimeout(() => this.drawInstancesChart(), 100);
             return;
         }
-        
+
         const dpr = window.devicePixelRatio || 1;
-        
+
         // Use 100% width/height to prevent layout thrashing
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        
+
         const canvasRect = canvas.getBoundingClientRect();
         const width = canvasRect.width;
         const height = canvasRect.height || 300;
-        
+
         if (width <= 0 || height <= 0) return;
-        
+
         canvas.width = width * dpr;
         canvas.height = height * dpr;
-        
+
         const ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
-        
+
         // Clear canvas
         ctx.clearRect(0, 0, width, height);
-        
+
         // Data
         const instancesCapacity = license.licensedInstances || 0;
         const usedInstances = license.usedInstances || 0;
         const newInstances = license.newInstances || 0;
         const rentalInstances = license.rentalInstances || 0;
-        
+
         const data = [
             { label: 'Instances Capacity', value: instancesCapacity, color: '#3b82f6' },
             { label: 'Used Instances', value: usedInstances, color: '#10b981' },
             { label: 'New Instances', value: newInstances, color: '#f59e0b' },
             { label: 'Rental Instances', value: rentalInstances, color: '#8b5cf6' }
         ];
-        
+
         // Find max value for scaling
         const maxValue = Math.max(...data.map(d => d.value), 1);
-        
+
         // Chart dimensions
         const padding = { top: 20, right: 20, bottom: 40, left: 50 };
         const chartWidth = width - padding.left - padding.right;
         const chartHeight = height - padding.top - padding.bottom;
         const barWidth = Math.max(40, (chartWidth / data.length) - 10);
         const barSpacing = 10;
-        
+
         // Draw grid lines
         ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
         ctx.lineWidth = 1;
@@ -2966,7 +2966,7 @@ export class VeeamAuditorPage {
             ctx.moveTo(padding.left, y);
             ctx.lineTo(padding.left + chartWidth, y);
             ctx.stroke();
-            
+
             // Y-axis labels
             const value = maxValue - (maxValue / gridLines) * i;
             ctx.fillStyle = '#94a3b8';
@@ -2975,23 +2975,23 @@ export class VeeamAuditorPage {
             ctx.textBaseline = 'middle';
             ctx.fillText(Math.round(value).toString(), padding.left - 10, y);
         }
-        
+
         // Draw bars
         data.forEach((item, index) => {
             const barHeight = (item.value / maxValue) * chartHeight;
             const x = padding.left + index * (barWidth + barSpacing) + barSpacing / 2;
             const y = padding.top + chartHeight - barHeight;
-            
+
             // Draw bar
             ctx.fillStyle = item.color;
             ctx.fillRect(x, y, barWidth, barHeight);
-            
+
             // Draw bar border with same color as bar (darker shade)
             const borderColor = item.color;
             ctx.strokeStyle = borderColor;
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, barWidth, barHeight);
-            
+
             // Draw value on top of bar
             if (item.value > 0) {
                 ctx.fillStyle = '#e2e8f0';
@@ -3000,7 +3000,7 @@ export class VeeamAuditorPage {
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(item.value.toString(), x + barWidth / 2, y - 5);
             }
-            
+
             // Draw label below bar
             ctx.fillStyle = '#94a3b8';
             ctx.font = '9px Arial';
@@ -3013,7 +3013,7 @@ export class VeeamAuditorPage {
                 ctx.fillText(word, x + barWidth / 2, labelY + (wordIndex * 12));
             });
         });
-        
+
         // Draw Y-axis label
         ctx.save();
         ctx.translate(15, height / 2);
@@ -3024,14 +3024,14 @@ export class VeeamAuditorPage {
         ctx.fillText('Instances', 0, 0);
         ctx.restore();
     }
-    
+
     drawJobsResultChart() {
         const canvas = document.getElementById('jobsResultChart');
         if (!canvas) return;
-        
+
         const veeam = this.reportData?.veeam;
         if (!veeam || !veeam.jobInfo) return;
-        
+
         // Collect all jobs
         const allJobs = [];
         if (veeam.jobInfo.backupJobs && Array.isArray(veeam.jobInfo.backupJobs)) {
@@ -3052,7 +3052,7 @@ export class VeeamAuditorPage {
         if (veeam.jobInfo.tapeJobs && Array.isArray(veeam.jobInfo.tapeJobs)) {
             allJobs.push(...veeam.jobInfo.tapeJobs);
         }
-        
+
         // Count job results
         const resultCounts = { Success: 0, Warning: 0, Failed: 0, None: 0 };
         allJobs.forEach(job => {
@@ -3067,39 +3067,39 @@ export class VeeamAuditorPage {
                 resultCounts.None++;
             }
         });
-        
+
         const ctx = canvas.getContext('2d');
-        
+
         // Get device pixel ratio for high DPI displays
         const dpr = window.devicePixelRatio || 1;
-        
+
         // Use 100% width to fill container and prevent infinite growth loop
         canvas.style.width = '100%';
         canvas.style.height = '200px';
-        
+
         // Get the actual display width from the canvas itself
         const rect = canvas.getBoundingClientRect();
         const displayWidth = Math.max(300, rect.width || canvas.clientWidth || 400);
         const displayHeight = 200;
-        
+
         // Set internal canvas size accounting for device pixel ratio
         canvas.width = displayWidth * dpr;
         canvas.height = displayHeight * dpr;
-        
+
         // Scale context to account for device pixel ratio
         ctx.scale(dpr, dpr);
-        
+
         // Enable better text rendering
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
-        
+
         const chartData = [
             { label: 'Success', value: resultCounts.Success, color: '#10b981' },
             { label: 'Warning', value: resultCounts.Warning, color: '#f59e0b' },
             { label: 'Failed', value: resultCounts.Failed, color: '#ef4444' },
             { label: 'None', value: resultCounts.None, color: '#64748b' }
         ];
-        
+
         const maxValue = Math.max(...chartData.map(d => d.value), 1);
         // Calculate bar width and spacing to use available width better
         const minPadding = 20;
@@ -3114,16 +3114,16 @@ export class VeeamAuditorPage {
         const maxChartWidth = displayWidth - (minPadding * 2);
         const finalChartWidth = Math.min(chartWidth, maxChartWidth);
         const padding = { top: 30, right: minPadding, bottom: 50, left: minPadding };
-        
+
         // Calculate horizontal offset to center the chart - use full width
         // Center the chart within the available space
         const availableSpace = displayWidth - padding.left - padding.right;
         const chartOffsetX = Math.max(0, (availableSpace - finalChartWidth) / 2);
         const adjustedLeft = padding.left + chartOffsetX;
-        
+
         // Clear canvas with transparent background
         ctx.clearRect(0, 0, displayWidth, displayHeight);
-        
+
         // Draw grid lines
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1;
@@ -3135,27 +3135,27 @@ export class VeeamAuditorPage {
             ctx.lineTo(adjustedLeft + finalChartWidth, y);
             ctx.stroke();
         }
-        
+
         // Draw bars with better quality
         chartData.forEach((item, index) => {
             const x = adjustedLeft + index * (barWidth + barSpacing);
             const barHeight = (item.value / maxValue) * chartHeight;
             const y = padding.top + chartHeight - barHeight;
-            
+
             // Draw bar with gradient for better appearance
             const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
             gradient.addColorStop(0, item.color);
             const darkerColor = this.darkenColor(item.color, 0.2);
             gradient.addColorStop(1, darkerColor);
-            
+
             ctx.fillStyle = gradient;
             ctx.fillRect(x, y, barWidth, barHeight);
-            
+
             // Draw bar border
             ctx.strokeStyle = item.color;
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, barWidth, barHeight);
-            
+
             // Draw value on top with better font
             if (item.value > 0) {
                 ctx.fillStyle = '#e2e8f0';
@@ -3164,14 +3164,14 @@ export class VeeamAuditorPage {
                 ctx.textBaseline = 'bottom';
                 ctx.fillText(item.value.toString(), x + barWidth / 2, y - 8);
             }
-            
+
             // Draw label with better font
             ctx.fillStyle = '#94a3b8';
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
             ctx.textBaseline = 'top';
             ctx.fillText(item.label, x + barWidth / 2, padding.top + chartHeight + 10);
         });
-        
+
         // Draw axes with better quality
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 2;
@@ -3182,7 +3182,7 @@ export class VeeamAuditorPage {
         ctx.lineTo(adjustedLeft, padding.top + chartHeight);
         ctx.lineTo(adjustedLeft + finalChartWidth, padding.top + chartHeight);
         ctx.stroke();
-        
+
         // Draw Y-axis labels with better font
         ctx.fillStyle = '#cbd5e1';
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -3193,7 +3193,7 @@ export class VeeamAuditorPage {
             const y = padding.top + chartHeight - (i / 5) * chartHeight;
             ctx.fillText(Math.round(value).toString(), adjustedLeft - 15, y);
         }
-        
+
         // Draw Y-axis label
         ctx.save();
         ctx.translate(20, padding.top + chartHeight / 2);
@@ -3205,11 +3205,11 @@ export class VeeamAuditorPage {
         ctx.fillText('Count', 0, 0);
         ctx.restore();
     }
-    
+
     drawSessionStatsChart() {
         const canvas = document.getElementById('sessionStatsChart');
         if (!canvas) return;
-        
+
         const veeam = this.reportData?.veeam;
         if (!veeam || !veeam.jobSessionSummary || !Array.isArray(veeam.jobSessionSummary) || veeam.jobSessionSummary.length === 0) {
             // Draw empty state
@@ -3231,7 +3231,7 @@ export class VeeamAuditorPage {
             ctx.fillText('No session data available', displayWidth / 2, displayHeight / 2);
             return;
         }
-        
+
         // Calculate totals from jobSessionSummary
         const totals = {
             totalSessions: 0,
@@ -3239,50 +3239,50 @@ export class VeeamAuditorPage {
             retries: 0,
             successRate: 0
         };
-        
+
         veeam.jobSessionSummary.forEach(job => {
             totals.totalSessions += job.TotalSessions || 0;
             totals.fails += job.Fails || 0;
             totals.retries += job.Retries || 0;
         });
-        
+
         // Calculate success rate
         if (totals.totalSessions > 0) {
             totals.successRate = ((totals.totalSessions - totals.fails) / totals.totalSessions * 100);
         }
-        
+
         const ctx = canvas.getContext('2d');
-        
+
         // Get device pixel ratio for high DPI displays
         const dpr = window.devicePixelRatio || 1;
-        
+
         // Use 100% width to fill container and prevent infinite growth loop
         canvas.style.width = '100%';
         canvas.style.height = '200px';
-        
+
         // Get the actual display width from the canvas itself
         const rect = canvas.getBoundingClientRect();
         const displayWidth = Math.max(300, rect.width || canvas.clientWidth || 400);
         const displayHeight = 200;
-        
+
         // Set internal canvas size accounting for device pixel ratio
         canvas.width = displayWidth * dpr;
         canvas.height = displayHeight * dpr;
-        
+
         // Scale context to account for device pixel ratio
         ctx.scale(dpr, dpr);
-        
+
         // Enable better text rendering
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
-        
+
         const chartData = [
             { label: 'Total Sessions', value: totals.totalSessions, color: '#3b82f6' },
             { label: 'Fails', value: totals.fails, color: '#ef4444' },
             { label: 'Retries', value: totals.retries, color: '#f59e0b' },
             { label: 'Success Rate %', value: totals.successRate, color: '#10b981' }
         ];
-        
+
         const maxValue = Math.max(...chartData.map(d => d.value), 1);
         // Calculate bar width and spacing to use available width better
         const minPadding = 20;
@@ -3297,16 +3297,16 @@ export class VeeamAuditorPage {
         const maxChartWidth = displayWidth - (minPadding * 2);
         const finalChartWidth = Math.min(chartWidth, maxChartWidth);
         const padding = { top: 30, right: minPadding, bottom: 50, left: minPadding };
-        
+
         // Calculate horizontal offset to center the chart - use full width
         // Center the chart within the available space
         const availableSpace = displayWidth - padding.left - padding.right;
         const chartOffsetX = Math.max(0, (availableSpace - finalChartWidth) / 2);
         const adjustedLeft = padding.left + chartOffsetX;
-        
+
         // Clear canvas with transparent background
         ctx.clearRect(0, 0, displayWidth, displayHeight);
-        
+
         // Draw grid lines
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1;
@@ -3318,27 +3318,27 @@ export class VeeamAuditorPage {
             ctx.lineTo(adjustedLeft + finalChartWidth, y);
             ctx.stroke();
         }
-        
+
         // Draw bars with better quality
         chartData.forEach((item, index) => {
             const x = adjustedLeft + index * (barWidth + barSpacing);
             const barHeight = (item.value / maxValue) * chartHeight;
             const y = padding.top + chartHeight - barHeight;
-            
+
             // Draw bar with gradient for better appearance
             const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
             gradient.addColorStop(0, item.color);
             const darkerColor = this.darkenColor(item.color, 0.2);
             gradient.addColorStop(1, darkerColor);
-            
+
             ctx.fillStyle = gradient;
             ctx.fillRect(x, y, barWidth, barHeight);
-            
+
             // Draw bar border
             ctx.strokeStyle = item.color;
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, barWidth, barHeight);
-            
+
             // Draw value on top with better font
             if (item.value > 0) {
                 ctx.fillStyle = '#e2e8f0';
@@ -3346,12 +3346,12 @@ export class VeeamAuditorPage {
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 // Format value: for Success Rate, show percentage, otherwise show number
-                const displayValue = item.label === 'Success Rate %' 
-                    ? totals.successRate.toFixed(1) + '%' 
+                const displayValue = item.label === 'Success Rate %'
+                    ? totals.successRate.toFixed(1) + '%'
                     : item.value.toString();
                 ctx.fillText(displayValue, x + barWidth / 2, y - 8);
             }
-            
+
             // Draw label with better font
             ctx.fillStyle = '#94a3b8';
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -3371,7 +3371,7 @@ export class VeeamAuditorPage {
                 ctx.fillText(label, x + barWidth / 2, labelY);
             }
         });
-        
+
         // Draw axes with better quality
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 2;
@@ -3382,7 +3382,7 @@ export class VeeamAuditorPage {
         ctx.lineTo(adjustedLeft, padding.top + chartHeight);
         ctx.lineTo(adjustedLeft + finalChartWidth, padding.top + chartHeight);
         ctx.stroke();
-        
+
         // Draw Y-axis labels with better font
         ctx.fillStyle = '#cbd5e1';
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -3395,7 +3395,7 @@ export class VeeamAuditorPage {
             const displayValue = maxValue > 100 ? Math.round(value).toString() : value.toFixed(1);
             ctx.fillText(displayValue, Math.max(5, adjustedLeft - 8), y);
         }
-        
+
         // Draw Y-axis label
         ctx.save();
         ctx.translate(10, padding.top + chartHeight / 2);
@@ -3407,11 +3407,11 @@ export class VeeamAuditorPage {
         ctx.fillText('Value', 0, 0);
         ctx.restore();
     }
-    
+
     drawBackupSizesChart() {
         const canvas = document.getElementById('backupSizesChart');
         if (!canvas) return;
-        
+
         const veeam = this.reportData?.veeam;
         if (!veeam || !veeam.jobSessionSummary || !Array.isArray(veeam.jobSessionSummary) || veeam.jobSessionSummary.length === 0) {
             const ctx = canvas.getContext('2d');
@@ -3432,29 +3432,29 @@ export class VeeamAuditorPage {
             ctx.fillText('No session data available', displayWidth / 2, displayHeight / 2);
             return;
         }
-        
+
         const totals = {
             avgBackupSize: 0,
             maxBackupSize: 0,
             avgDataSize: 0,
             maxDataSize: 0
         };
-        
+
         veeam.jobSessionSummary.forEach(job => {
             totals.avgBackupSize += job.AvgBackupSize || 0;
             totals.maxBackupSize += job.MaxBackupSize || 0;
             totals.avgDataSize += job.AvgDataSize || 0;
             totals.maxDataSize += job.MaxDataSize || 0;
         });
-        
+
         const ctx = canvas.getContext('2d');
         const dpr = window.devicePixelRatio || 1;
         const rect = canvas.getBoundingClientRect();
         const displayWidth = rect.width || 400;
         const displayHeight = 200;
-        
+
         if (displayWidth <= 0) return;
-        
+
         canvas.width = displayWidth * dpr;
         canvas.height = displayHeight * dpr;
         canvas.style.width = '100%';
@@ -3462,14 +3462,14 @@ export class VeeamAuditorPage {
         ctx.scale(dpr, dpr);
         ctx.textBaseline = 'middle';
         ctx.textAlign = 'center';
-        
+
         const chartData = [
             { label: 'Avg Backup', value: totals.avgBackupSize, color: '#3b82f6' },
             { label: 'Max Backup', value: totals.maxBackupSize, color: '#2563eb' },
             { label: 'Avg Data', value: totals.avgDataSize, color: '#10b981' },
             { label: 'Max Data', value: totals.maxDataSize, color: '#059669' }
         ];
-        
+
         const maxValue = Math.max(...chartData.map(d => d.value), 1);
         // Calculate bar width and spacing to use available width better
         const minPadding = 20;
@@ -3484,16 +3484,16 @@ export class VeeamAuditorPage {
         const maxChartWidth = displayWidth - (minPadding * 2);
         const finalChartWidth = Math.min(chartWidth, maxChartWidth);
         const padding = { top: 30, right: minPadding, bottom: 50, left: minPadding };
-        
+
         // Calculate horizontal offset to center the chart - use full width
         // Center the chart within the available space
         const availableSpace = displayWidth - padding.left - padding.right;
         const chartOffsetX = Math.max(0, (availableSpace - finalChartWidth) / 2);
         const adjustedLeft = padding.left + chartOffsetX;
-        
+
         // Clear canvas with transparent background
         ctx.clearRect(0, 0, displayWidth, displayHeight);
-        
+
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1;
         ctx.setLineDash([]);
@@ -3504,24 +3504,24 @@ export class VeeamAuditorPage {
             ctx.lineTo(adjustedLeft + finalChartWidth, y);
             ctx.stroke();
         }
-        
+
         chartData.forEach((item, index) => {
             const x = adjustedLeft + index * (barWidth + barSpacing) + barSpacing;
             const barHeight = (item.value / maxValue) * chartHeight;
             const y = padding.top + chartHeight - barHeight;
-            
+
             const gradient = ctx.createLinearGradient(x, y, x, y + barHeight);
             gradient.addColorStop(0, item.color);
             const darkerColor = this.darkenColor(item.color, 0.2);
             gradient.addColorStop(1, darkerColor);
-            
+
             ctx.fillStyle = gradient;
             ctx.fillRect(x, y, barWidth, barHeight);
-            
+
             ctx.strokeStyle = item.color;
             ctx.lineWidth = 2;
             ctx.strokeRect(x, y, barWidth, barHeight);
-            
+
             if (item.value > 0) {
                 ctx.fillStyle = '#e2e8f0';
                 ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
@@ -3530,7 +3530,7 @@ export class VeeamAuditorPage {
                 const displayValue = item.value.toFixed(2) + ' TB';
                 ctx.fillText(displayValue, x + barWidth / 2, y - 8);
             }
-            
+
             ctx.fillStyle = '#94a3b8';
             ctx.font = '12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
             ctx.textBaseline = 'top';
@@ -3548,7 +3548,7 @@ export class VeeamAuditorPage {
                 ctx.fillText(label, x + barWidth / 2, labelY);
             }
         });
-        
+
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
@@ -3558,7 +3558,7 @@ export class VeeamAuditorPage {
         ctx.lineTo(adjustedLeft, padding.top + chartHeight);
         ctx.lineTo(adjustedLeft + finalChartWidth, padding.top + chartHeight);
         ctx.stroke();
-        
+
         ctx.fillStyle = '#cbd5e1';
         ctx.font = '11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
         ctx.textAlign = 'right';
@@ -3569,7 +3569,7 @@ export class VeeamAuditorPage {
             const displayValue = value.toFixed(2) + ' TB';
             ctx.fillText(displayValue, Math.max(5, adjustedLeft - 8), y);
         }
-        
+
         ctx.save();
         ctx.translate(20, padding.top + chartHeight / 2);
         ctx.rotate(-Math.PI / 2);
@@ -3580,7 +3580,7 @@ export class VeeamAuditorPage {
         ctx.fillText('Size (TB)', 0, 0);
         ctx.restore();
     }
-    
+
     darkenColor(color, amount) {
         const hex = color.replace('#', '');
         const r = Math.max(0, parseInt(hex.substr(0, 2), 16) - Math.round(255 * amount));
@@ -3588,11 +3588,11 @@ export class VeeamAuditorPage {
         const b = Math.max(0, parseInt(hex.substr(4, 2), 16) - Math.round(255 * amount));
         return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
     }
-    
+
     showJobDetails(jobDataEncoded) {
         try {
             const job = JSON.parse(decodeURIComponent(jobDataEncoded));
-            
+
             // Create or get modal
             let modal = document.getElementById('jobDetailsModal');
             if (!modal) {
@@ -3601,7 +3601,7 @@ export class VeeamAuditorPage {
                 modal.style.cssText = 'display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); z-index: 10000; overflow-y: auto; align-items: center; justify-content: center; flex-direction: column;';
                 document.body.appendChild(modal);
             }
-            
+
             const content = document.getElementById('jobDetailsContent');
             if (!content) {
                 // Create modal structure if it doesn't exist
@@ -3620,16 +3620,16 @@ export class VeeamAuditorPage {
                     </div>
                 `;
             }
-            
+
             const contentElement = document.getElementById('jobDetailsContent');
             if (!contentElement) return;
-            
+
             // Update modal title
             const modalTitle = document.getElementById('jobDetailsTitle');
             if (modalTitle) {
                 modalTitle.textContent = `${job.Name || job.name || 'Job'} Details`;
             }
-            
+
             // Helper function to format values
             const formatValue = (value) => {
                 if (value === null || value === undefined || value === '') return 'N/A';
@@ -3657,13 +3657,13 @@ export class VeeamAuditorPage {
                 }
                 return String(value);
             };
-            
+
             const formatBoolean = (value) => {
                 if (value === true || value === 'true' || value === 'True' || value === 1) return 'Yes';
                 if (value === false || value === 'false' || value === 'False' || value === 0) return 'No';
                 return 'N/A';
             };
-            
+
             // Helper function to render a table section
             const renderTable = (properties) => {
                 const rows = properties.map(p => {
@@ -3676,9 +3676,9 @@ export class VeeamAuditorPage {
                         </tr>
                     `;
                 }).filter(h => h).join('');
-                
+
                 if (!rows) return '<div style="padding: 0.75rem; text-align: center; color: #94a3b8; font-size: 0.75rem;">No data available.</div>';
-                
+
                 return `
                     <div class="audit-table-wrapper" style="width: 100%; max-width: 100%; margin: 0; padding: 0; overflow-x: auto;">
                         <table class="audit-table" style="width: 100%; min-width: 100%; table-layout: fixed; font-size: 0.75rem; border-collapse: collapse;">
@@ -3695,11 +3695,11 @@ export class VeeamAuditorPage {
                     </div>
                 `;
             };
-            
+
             // Tab content functions
             const tabs = [];
             let tabContent = '';
-            
+
             // Tab 1: Common Information
             const commonInfo = renderTable([
                 { key: 'Name', label: 'Name' },
@@ -3715,14 +3715,14 @@ export class VeeamAuditorPage {
                 { key: 'LatestRunLocal', label: 'Latest Run (Local)' }
             ]);
             if (commonInfo && !commonInfo.includes('No data available')) {
-            tabs.push({ id: 'common', label: 'Common Information', active: tabs.length === 0 });
-            tabContent += `<div id="tab-common" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 0.5rem 0;">${commonInfo}</div>`;
+                tabs.push({ id: 'common', label: 'Common Information', active: tabs.length === 0 });
+                tabContent += `<div id="tab-common" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 0.5rem 0;">${commonInfo}</div>`;
             }
-            
+
             // Tab 2: Virtual Machines
             // Try multiple property names and handle different data structures
             let vmsData = [];
-            
+
             // Check if Objects is an array
             if (job.Objects && Array.isArray(job.Objects)) {
                 vmsData = job.Objects;
@@ -3740,32 +3740,32 @@ export class VeeamAuditorPage {
                     vmsData = job.Objects.List;
                 }
             }
-            
+
             // Filter out invalid entries (e.g., if Objects contains the job name instead of VM objects)
             vmsData = vmsData.filter(vm => {
                 // Check if it's a valid VM object (has Name property and it's not the job name)
                 if (!vm || typeof vm !== 'object') return false;
                 const vmName = vm.Name || vm.name;
                 const jobName = job.Name || job.name;
-                
+
                 // Exclude if the VM name is the same as the job name (likely a default/fallback entry from backend)
                 // But only if it doesn't have other VM-like properties that indicate it's a real VM
                 if (vmName && jobName && vmName === jobName) {
                     // Check if it has VM-specific properties (if it does, it might be valid)
-                    const hasVmProperties = vm.ApproxSize || vm.approxSize || vm.Size || vm.size || 
-                                          (vm.ResourceType && vm.ResourceType !== 'Virtual Machine') ||
-                                          (vm.resourceType && vm.resourceType !== 'Virtual Machine') ||
-                                          vm.DiskFilterMode || vm.diskFilterMode ||
-                                          vm.GuestProcessingEnabled !== undefined ||
-                                          vm.ApplicationProcessing !== undefined;
+                    const hasVmProperties = vm.ApproxSize || vm.approxSize || vm.Size || vm.size ||
+                        (vm.ResourceType && vm.ResourceType !== 'Virtual Machine') ||
+                        (vm.resourceType && vm.resourceType !== 'Virtual Machine') ||
+                        vm.DiskFilterMode || vm.diskFilterMode ||
+                        vm.GuestProcessingEnabled !== undefined ||
+                        vm.ApplicationProcessing !== undefined;
                     // If it's just the job name with default values, exclude it
                     if (!hasVmProperties) return false;
                 }
-                
+
                 // Include if it has a Name property or other VM-like properties
                 return vmName || vm.ResourceType || vm.resourceType || vm.ApproxSize || vm.approxSize;
             });
-            
+
             // If after filtering we still have only one entry that matches the job name, 
             // it's likely a fallback entry - try to get VMs from other sources
             if (vmsData.length === 1 && vmsData[0] && (vmsData[0].Name || vmsData[0].name) === (job.Name || job.name)) {
@@ -3780,7 +3780,7 @@ export class VeeamAuditorPage {
                     vmsData = job.VMList;
                 }
             }
-            
+
             let vmsTable = '';
             if (vmsData.length > 0) {
                 vmsTable = `
@@ -3816,7 +3816,7 @@ export class VeeamAuditorPage {
             }
             tabs.push({ id: 'vms', label: 'Virtual Machines', active: tabs.length === 0 && !commonInfo.includes('No data available') ? false : tabs.length === 0 });
             tabContent += `<div id="tab-vms" class="tab-content" style="display: ${tabs.length === 1 ? 'block' : 'none'}; padding: 0.5rem 0;">${vmsTable}</div>`;
-            
+
             // Tab 3: Schedule
             const scheduleInfo = renderTable([
                 { key: 'IsScheduleEnabled', label: 'Schedule Enabled', format: 'boolean' },
@@ -3845,7 +3845,7 @@ export class VeeamAuditorPage {
                 tabs.push({ id: 'schedule', label: 'Schedule', active: false });
                 tabContent += `<div id="tab-schedule" class="tab-content" style="display: none; padding: 0.5rem 0;">${scheduleInfo}</div>`;
             }
-            
+
             // Tab 4: Advanced Settings (Combined)
             const storageInfo = renderTable([
                 { key: 'BackupProxy', label: 'Backup Proxy' },
@@ -3870,7 +3870,7 @@ export class VeeamAuditorPage {
                 { key: 'GfsEnabled', label: 'Keep certain full backup longer for archival purposes (GFS)', format: 'boolean' },
                 { key: 'GfsRetention', label: 'GFS Retention' }
             ]);
-            
+
             const maintenanceInfo = renderTable([
                 { key: 'StorageLevelCorruptionGuard', label: 'Storage-Level Corruption Guard (SLCG)', format: 'boolean' },
                 { key: 'SlcgScheduleType', label: 'SLCG Schedule Type' },
@@ -3882,7 +3882,7 @@ export class VeeamAuditorPage {
                 { key: 'DcfbBackupMonthlySchedule', label: 'DCFB Backup Monthly Schedule' },
                 { key: 'RemoveDeletedItemDataAfter', label: 'Remove deleted item data after' }
             ]);
-            
+
             const storageAdvancedInfo = renderTable([
                 { key: 'InlineDataDeduplication', label: 'Inline Data Deduplication', format: 'boolean' },
                 { key: 'Deduplication', label: 'Deduplication', format: 'boolean' },
@@ -3895,7 +3895,7 @@ export class VeeamAuditorPage {
                 { key: 'EnabledBackupFileEncryption', label: 'Enabled Backup File Encryption', format: 'boolean' },
                 { key: 'EncryptionKey', label: 'Encryption Key' }
             ]);
-            
+
             const notificationInfo = renderTable([
                 { key: 'SendSnmpNotification', label: 'Send Snmp Notification', format: 'boolean' },
                 { key: 'SendEmailNotification', label: 'Send Email Notification', format: 'boolean' },
@@ -3911,14 +3911,14 @@ export class VeeamAuditorPage {
                 { key: 'VmAttributeNoteValue', label: 'VM Attribute Note Value' },
                 { key: 'AppendToExistingAttribute', label: 'Append to Existing Attribute', format: 'boolean' }
             ]);
-            
+
             const vsphereInfo = renderTable([
                 { key: 'EnableVmwareToolsQuiescence', label: 'Enable VMware Tools Quiescence', format: 'boolean' },
                 { key: 'UseChangeBlockTracking', label: 'Use Change Block Tracking', format: 'boolean' },
                 { key: 'EnableCbtForAllProtectedVms', label: 'Enable CBT for all protected VMs', format: 'boolean' },
                 { key: 'ResetCbtOnEachActiveFullBackup', label: 'Reset CBT On each Active Full Backup', format: 'boolean' }
             ]);
-            
+
             const scriptInfo = renderTable([
                 { key: 'RunTheFollowingScriptBefore', label: 'Run the Following Script Before', format: 'boolean' },
                 { key: 'RunScriptBeforeTheJob', label: 'Run Script Before the Job' },
@@ -3927,18 +3927,18 @@ export class VeeamAuditorPage {
                 { key: 'RunScriptFrequency', label: 'Run Script Frequency' },
                 { key: 'RunScriptEveryBackupSession', label: 'Run Script Every Backup Session' }
             ]);
-            
+
             // Combine all advanced settings into one tab
             const hasAdvancedSettings = (storageInfo && !storageInfo.includes('No data available')) ||
-                                      (maintenanceInfo && !maintenanceInfo.includes('No data available')) ||
-                                      (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) ||
-                                      (notificationInfo && !notificationInfo.includes('No data available')) ||
-                                      (vsphereInfo && !vsphereInfo.includes('No data available')) ||
-                                      (scriptInfo && !scriptInfo.includes('No data available'));
-            
+                (maintenanceInfo && !maintenanceInfo.includes('No data available')) ||
+                (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) ||
+                (notificationInfo && !notificationInfo.includes('No data available')) ||
+                (vsphereInfo && !vsphereInfo.includes('No data available')) ||
+                (scriptInfo && !scriptInfo.includes('No data available'));
+
             if (hasAdvancedSettings) {
                 let advancedSettingsContent = '';
-                
+
                 if (storageInfo && !storageInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3947,7 +3947,7 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 if (maintenanceInfo && !maintenanceInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3956,7 +3956,7 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 if (storageAdvancedInfo && !storageAdvancedInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3965,7 +3965,7 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 if (notificationInfo && !notificationInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3974,7 +3974,7 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 if (vsphereInfo && !vsphereInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3983,7 +3983,7 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 if (scriptInfo && !scriptInfo.includes('No data available')) {
                     advancedSettingsContent += `
                         <div style="margin-bottom: 1.5rem;">
@@ -3992,22 +3992,22 @@ export class VeeamAuditorPage {
                         </div>
                     `;
                 }
-                
+
                 tabs.push({ id: 'advanced', label: 'Advanced Settings', active: false });
                 tabContent += `<div id="tab-advanced" class="tab-content" style="display: none; padding: 0.5rem 0;">${advancedSettingsContent}</div>`;
             }
-            
+
             // Tab 9: Guest Processing
             const guestProcessingData = vmsData.filter(vm => {
                 // Include if GuestProcessingEnabled is true, or if any guest processing property exists
-                return vm.GuestProcessingEnabled === true || 
-                       vm.GuestProcessingEnabled !== undefined ||
-                       vm.DefaultCredential || vm.defaultCredential ||
-                       vm.ObjectCredential || vm.objectCredential ||
-                       vm.ApplicationProcessing !== undefined ||
-                       vm.TransactionLogs || vm.transactionLogs ||
-                       vm.FileExclusions !== undefined ||
-                       vm.Scripts !== undefined;
+                return vm.GuestProcessingEnabled === true ||
+                    vm.GuestProcessingEnabled !== undefined ||
+                    vm.DefaultCredential || vm.defaultCredential ||
+                    vm.ObjectCredential || vm.objectCredential ||
+                    vm.ApplicationProcessing !== undefined ||
+                    vm.TransactionLogs || vm.transactionLogs ||
+                    vm.FileExclusions !== undefined ||
+                    vm.Scripts !== undefined;
             });
             let guestProcessingTable = '';
             if (guestProcessingData.length > 0 || vmsData.length > 0) {
@@ -4017,7 +4017,7 @@ export class VeeamAuditorPage {
                         if (val === false || val === 'false' || val === 'False' || val === 0) return 'No';
                         return 'N/A';
                     };
-                    
+
                     return `
                         <div style="margin-bottom: 1.25rem;">
                             <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
@@ -4162,7 +4162,7 @@ export class VeeamAuditorPage {
                         if (val === false || val === 'false' || val === 'False' || val === 0) return 'No';
                         return 'N/A';
                     };
-                    
+
                     return `
                         <div style="margin-bottom: 1.25rem;">
                             <h4 style="color: #e2e8f0; font-size: 0.8rem; margin-bottom: 0.5rem; font-weight: 600; padding-bottom: 0.35rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
@@ -4202,7 +4202,7 @@ export class VeeamAuditorPage {
                 tabs.push({ id: 'guest-processing', label: 'Guest Processing', active: false });
                 tabContent += `<div id="tab-guest-processing" class="tab-content" style="display: none; padding: 0.5rem 0;">${guestProcessingTable}</div>`;
             }
-            
+
             // Tab 10: Secondary Target
             const secondaryTargetData = job.SecondaryTarget || job.SecondaryTargets || [];
             let secondaryTargetTable = '';
@@ -4236,7 +4236,7 @@ export class VeeamAuditorPage {
             }
             tabs.push({ id: 'secondary', label: 'Secondary Target', active: false });
             tabContent += `<div id="tab-secondary" class="tab-content" style="display: none; padding: 0.5rem 0;">${secondaryTargetTable}</div>`;
-            
+
             // Build tabs HTML
             const tabsHtml = `
                 <div style="border-bottom: 1px solid #334155; margin-bottom: 0.75rem;">
@@ -4267,12 +4267,12 @@ export class VeeamAuditorPage {
                     </div>
                 </div>
             `;
-            
+
             const html = tabsHtml + tabContent;
-            
+
             contentElement.innerHTML = html || '<div style="padding: 2rem; text-align: center; color: #94a3b8;">No job details available.</div>';
             modal.style.display = 'flex';
-            
+
             // Close modal when clicking outside
             modal.onclick = (e) => {
                 if (e.target === modal) {
@@ -4283,13 +4283,13 @@ export class VeeamAuditorPage {
             console.error('Error showing job details:', error);
         }
     }
-    
+
     switchJobDetailsTab(tabId) {
         // Hide all tab contents
         document.querySelectorAll('.tab-content').forEach(content => {
             content.style.display = 'none';
         });
-        
+
         // Remove active class from all tabs
         document.querySelectorAll('.job-details-tab').forEach(tab => {
             tab.style.background = 'transparent';
@@ -4298,13 +4298,13 @@ export class VeeamAuditorPage {
             tab.style.fontWeight = '400';
             tab.classList.remove('active');
         });
-        
+
         // Show selected tab content
         const selectedContent = document.getElementById(`tab-${tabId}`);
         if (selectedContent) {
             selectedContent.style.display = 'block';
         }
-        
+
         // Activate selected tab
         const selectedTab = document.querySelector(`[data-tab="${tabId}"]`);
         if (selectedTab) {
@@ -4365,49 +4365,49 @@ export class VeeamAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${sessions.map(session => {
-                                            // Try multiple possible property names for result
-                                            let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
-                                            
-                                            // Normalize result value
-                                            if (result === null || result === undefined) {
-                                                result = 'None';
-                                            } else if (typeof result === 'number') {
-                                                if (result === 0) result = 'Success';
-                                                else if (result === 1) result = 'Warning';
-                                                else if (result === 2) result = 'Failed';
-                                                else result = 'None';
-                                            } else if (typeof result === 'string') {
-                                                result = result.trim();
-                                                if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
-                                                    result = 'None';
-                                                }
-                                            }
-                                            
-                                            const resultLower = String(result).toLowerCase();
-                                            let resultColor = '#94a3b8';
-                                            let resultBg = 'rgba(148, 163, 184, 0.1)';
-                                            
-                                            // Check if it's a success (multiple ways)
-                                            if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
-                                                resultColor = '#10b981';
-                                                resultBg = 'rgba(16, 185, 129, 0.1)';
-                                                result = 'Success';
-                                            } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
-                                                resultColor = '#f59e0b';
-                                                resultBg = 'rgba(245, 158, 11, 0.1)';
-                                                result = 'Warning';
-                                            } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
-                                                resultColor = '#ef4444';
-                                                resultBg = 'rgba(239, 68, 68, 0.1)';
-                                                result = 'Failed';
-                                            } else if (resultLower === 'none' || result === null || result === undefined) {
-                                                result = 'None';
-                                            } else {
-                                                // If we have a value but don't recognize it, keep it as is but style as unknown
-                                                result = String(result);
-                                            }
-                                            
-                                            return `
+                // Try multiple possible property names for result
+                let result = session.Result || session.result || session.ResultStr || session.resultStr || session.Status || session.status || null;
+
+                // Normalize result value
+                if (result === null || result === undefined) {
+                    result = 'None';
+                } else if (typeof result === 'number') {
+                    if (result === 0) result = 'Success';
+                    else if (result === 1) result = 'Warning';
+                    else if (result === 2) result = 'Failed';
+                    else result = 'None';
+                } else if (typeof result === 'string') {
+                    result = result.trim();
+                    if (result === '' || result === 'N/A' || result === 'null' || result === 'undefined') {
+                        result = 'None';
+                    }
+                }
+
+                const resultLower = String(result).toLowerCase();
+                let resultColor = '#94a3b8';
+                let resultBg = 'rgba(148, 163, 184, 0.1)';
+
+                // Check if it's a success (multiple ways)
+                if (resultLower === 'success' || resultLower === 'ok' || resultLower === '0' || resultLower === 'succeeded' || resultLower === 'completed') {
+                    resultColor = '#10b981';
+                    resultBg = 'rgba(16, 185, 129, 0.1)';
+                    result = 'Success';
+                } else if (resultLower === 'warning' || resultLower === '1' || resultLower === 'warn') {
+                    resultColor = '#f59e0b';
+                    resultBg = 'rgba(245, 158, 11, 0.1)';
+                    result = 'Warning';
+                } else if (resultLower === 'failed' || resultLower === 'error' || resultLower === 'failure' || resultLower === '2' || resultLower === 'fail') {
+                    resultColor = '#ef4444';
+                    resultBg = 'rgba(239, 68, 68, 0.1)';
+                    result = 'Failed';
+                } else if (resultLower === 'none' || result === null || result === undefined) {
+                    result = 'None';
+                } else {
+                    // If we have a value but don't recognize it, keep it as is but style as unknown
+                    result = String(result);
+                }
+
+                return `
                                                 <tr>
                                                     <td style="padding: 0.5rem;">
                                                         <span style="display: inline-block; padding: 0.15rem 0.35rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 500; color: ${resultColor}; background-color: ${resultBg}; border: 1px solid ${resultColor}40;">
@@ -4426,7 +4426,7 @@ export class VeeamAuditorPage {
                                                     </td>
                                                 </tr>
                                             `;
-                                        }).join('')}
+            }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -4474,7 +4474,7 @@ export class VeeamAuditorPage {
             }
 
             this.showMessage('Report deleted successfully!', 'success');
-            
+
             // Navigate back to list page
             setTimeout(() => {
                 if (window.appInstance) {
@@ -4590,7 +4590,7 @@ export class VeeamAuditorPage {
         if (!tbody) return;
         const rows = tbody.querySelectorAll('tr');
         const term = (searchTerm || '').toLowerCase();
-        
+
         rows.forEach(row => {
             const text = row.textContent.toLowerCase();
             row.style.display = text.includes(term) ? 'table-row' : 'none';

@@ -138,18 +138,18 @@ export class FileShareAuditorPage {
         const criticalIssues = summary.criticalIssues || [];
         const warningIssues = summary.warningIssues || [];
         const folderTree = folderAnalysis.folderTree || [];
-        
+
         // Calculate total permissions statistics
         let totalPermissions = 0;
         let totalExplicit = 0;
         let totalInherited = 0;
         let totalDenyAces = 0;
         let totalAllow = 0;
-        
+
         // Aggregate groups and users with their folder access
         const groupsMap = new Map(); // groupName -> { folders: [], totalFolders: 0, rights: Set }
         const usersMap = new Map(); // userName -> { folders: [], totalFolders: 0, rights: Set }
-        
+
         folderTree.forEach(folder => {
             const perms = folder.permissions || [];
             totalPermissions += perms.length;
@@ -157,30 +157,30 @@ export class FileShareAuditorPage {
             totalInherited += perms.filter(p => p.isInherited).length;
             totalDenyAces += perms.filter(p => p.accessControlType === 'Deny').length;
             totalAllow += perms.filter(p => p.accessControlType === 'Allow').length;
-            
+
             // Process each permission to categorize as group or user
             perms.forEach(perm => {
                 const identity = perm.identityReference || '';
                 if (!identity || identity.trim() === '') return;
-                
+
                 // Detect groups: BUILTIN\, NT AUTHORITY\, Domain\Group patterns, or well-known groups
-                const isGroup = identity.includes('BUILTIN\\') || 
-                               identity.includes('NT AUTHORITY\\') ||
-                               identity.includes('Everyone') ||
-                               identity.includes('Authenticated Users') ||
-                               identity.includes('Domain Users') ||
-                               identity.includes('Users') ||
-                               identity.includes('Administrators') ||
-                               identity.includes('Guests') ||
-                               identity.includes('Backup Operators') ||
-                               identity.includes('Power Users') ||
-                               (identity.includes('\\') && !identity.match(/^[A-Z]+\\[A-Za-z0-9_]+$/i)); // Domain\User pattern (not a group)
-                
+                const isGroup = identity.includes('BUILTIN\\') ||
+                    identity.includes('NT AUTHORITY\\') ||
+                    identity.includes('Everyone') ||
+                    identity.includes('Authenticated Users') ||
+                    identity.includes('Domain Users') ||
+                    identity.includes('Users') ||
+                    identity.includes('Administrators') ||
+                    identity.includes('Guests') ||
+                    identity.includes('Backup Operators') ||
+                    identity.includes('Power Users') ||
+                    (identity.includes('\\') && !identity.match(/^[A-Z]+\\[A-Za-z0-9_]+$/i)); // Domain\User pattern (not a group)
+
                 // Skip system accounts (SYSTEM, CREATOR OWNER, etc.)
                 if (identity.includes('SYSTEM') || identity.includes('CREATOR OWNER') || identity.includes('SELF')) {
                     return;
                 }
-                
+
                 if (isGroup) {
                     if (!groupsMap.has(identity)) {
                         groupsMap.set(identity, { folders: [], rights: new Set(), totalFolders: 0 });
@@ -223,12 +223,12 @@ export class FileShareAuditorPage {
                 }
             });
         });
-        
+
         // Convert maps to sorted arrays and store in class
         this.groupsArray = Array.from(groupsMap.entries())
             .map(([name, data]) => ({ name, ...data, rights: Array.from(data.rights) }))
             .sort((a, b) => b.totalFolders - a.totalFolders);
-        
+
         this.usersArray = Array.from(usersMap.entries())
             .map(([name, data]) => ({ name, ...data, rights: Array.from(data.rights) }))
             .sort((a, b) => b.totalFolders - a.totalFolders);
@@ -266,7 +266,7 @@ export class FileShareAuditorPage {
     renderOverviewView(folderAnalysis, summary, criticalIssues, warningIssues, totalPermissions, totalExplicit, totalInherited, totalDenyAces, totalAllow) {
         const folderTree = folderAnalysis.folderTree || [];
         return `
-            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 0.5rem 0.75rem;">
+            <div class="audit-content" style="height: 100%; overflow-y: auto; margin-top: 0; padding: 1.5rem;">
                     <!-- Summary Cards -->
                     ${folderAnalysis.folderPath ? `
                     <div class="hardware-section-modern">
@@ -420,11 +420,11 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folderAnalysis.shareEnumeration.map((share, shareIndex) => {
-                                        const hasRedFlags = share.hasRedFlags || false;
-                                        const shareRiskLevel = share.shareRiskLevel || share.highestNTFSRisk || 'Low';
-                                        const shareRiskIcon = share.shareRiskIcon || (shareRiskLevel === 'Critical' ? '🔴' : shareRiskLevel === 'High' ? '🟠' : shareRiskLevel === 'Medium' ? '🟡' : '🟢');
-                                        const shareRiskColor = share.shareRiskColor || (shareRiskLevel === 'Critical' ? '#ef4444' : shareRiskLevel === 'High' ? '#f59e0b' : shareRiskLevel === 'Medium' ? '#fbbf24' : '#10b981');
-                                        return `
+            const hasRedFlags = share.hasRedFlags || false;
+            const shareRiskLevel = share.shareRiskLevel || share.highestNTFSRisk || 'Low';
+            const shareRiskIcon = share.shareRiskIcon || (shareRiskLevel === 'Critical' ? '🔴' : shareRiskLevel === 'High' ? '🟠' : shareRiskLevel === 'Medium' ? '🟡' : '🟢');
+            const shareRiskColor = share.shareRiskColor || (shareRiskLevel === 'Critical' ? '#ef4444' : shareRiskLevel === 'High' ? '#f59e0b' : shareRiskLevel === 'Medium' ? '#fbbf24' : '#10b981');
+            return `
                                         <tr 
                                             onclick="fileShareAuditorInstance.showShareDetailsModal(${shareIndex})"
                                             style="${hasRedFlags || shareRiskLevel === 'Critical' ? 'background: rgba(239, 68, 68, 0.05);' : shareRiskLevel === 'High' ? 'background: rgba(245, 158, 11, 0.03);' : ''} cursor: pointer; transition: background-color 0.2s;"
@@ -494,7 +494,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -523,17 +523,17 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${this.groupsArray.map((group, index) => {
-                                        // Calculate highest risk level
-                                        const risks = group.folders.map(f => f.riskLevel || 'Low');
-                                        const riskOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-                                        const highestRisk = risks.sort((a, b) => (riskOrder[b] || 0) - (riskOrder[a] || 0))[0] || 'Low';
-                                        const riskColor = highestRisk === 'Critical' ? '#ef4444' : 
-                                                         highestRisk === 'High' ? '#f59e0b' : 
-                                                         highestRisk === 'Medium' ? '#fbbf24' : '#10b981';
-                                        const riskIcon = highestRisk === 'Critical' ? '🔴' : 
-                                                        highestRisk === 'High' ? '🟠' : 
-                                                        highestRisk === 'Medium' ? '🟡' : '🟢';
-                                        return `
+            // Calculate highest risk level
+            const risks = group.folders.map(f => f.riskLevel || 'Low');
+            const riskOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+            const highestRisk = risks.sort((a, b) => (riskOrder[b] || 0) - (riskOrder[a] || 0))[0] || 'Low';
+            const riskColor = highestRisk === 'Critical' ? '#ef4444' :
+                highestRisk === 'High' ? '#f59e0b' :
+                    highestRisk === 'Medium' ? '#fbbf24' : '#10b981';
+            const riskIcon = highestRisk === 'Critical' ? '🔴' :
+                highestRisk === 'High' ? '🟠' :
+                    highestRisk === 'Medium' ? '🟡' : '🟢';
+            return `
                                         <tr onclick="fileShareAuditorInstance.showGroupModal(${index})" 
                                             style="cursor: pointer; transition: background 0.15s;" 
                                             onmouseover="this.style.background='rgba(59, 130, 246, 0.1)'" 
@@ -552,37 +552,37 @@ export class FileShareAuditorPage {
                                             <td style="font-size: 0.75rem; color: #cbd5e1;">
                                                 <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
                                                     ${(() => {
-                                                        // Parse rights - they might be strings like "FullControl, Modify, Synchronize" or arrays
-                                                        const allRights = [];
-                                                        if (Array.isArray(group.rights)) {
-                                                            group.rights.forEach(right => {
-                                                                if (typeof right === 'string') {
-                                                                    const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                                                    allRights.push(...rightsList);
-                                                                } else {
-                                                                    allRights.push(right);
-                                                                }
-                                                            });
-                                                        } else if (typeof group.rights === 'string') {
-                                                            const rightsList = group.rights.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                                            allRights.push(...rightsList);
-                                                        }
-                                                        // Remove duplicates
-                                                        const uniqueRights = [...new Set(allRights)];
-                                                        // Show all rights, but limit to first 3 for compact display
-                                                        const displayRights = uniqueRights.slice(0, 3);
-                                                        return displayRights.map(right => {
-                                                            const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                                             right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                                             right.includes('Write') ? '#fbbf24' : 
-                                                                             right.includes('Read') ? '#10b981' : '#3b82f6';
-                                                            return `
+                    // Parse rights - they might be strings like "FullControl, Modify, Synchronize" or arrays
+                    const allRights = [];
+                    if (Array.isArray(group.rights)) {
+                        group.rights.forEach(right => {
+                            if (typeof right === 'string') {
+                                const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                                allRights.push(...rightsList);
+                            } else {
+                                allRights.push(right);
+                            }
+                        });
+                    } else if (typeof group.rights === 'string') {
+                        const rightsList = group.rights.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        allRights.push(...rightsList);
+                    }
+                    // Remove duplicates
+                    const uniqueRights = [...new Set(allRights)];
+                    // Show all rights, but limit to first 3 for compact display
+                    const displayRights = uniqueRights.slice(0, 3);
+                    return displayRights.map(right => {
+                        const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                            right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                                right.includes('Write') ? '#fbbf24' :
+                                    right.includes('Read') ? '#10b981' : '#3b82f6';
+                        return `
                                                             <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.125rem 0.375rem; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; white-space: nowrap;">
                                                                 ${right}
                                                             </span>
                                                         `;
-                                                        }).join('') + (uniqueRights.length > 3 ? `<span style="color: #64748b; font-size: 0.6875rem;">+${uniqueRights.length - 3} more</span>` : '');
-                                                    })()}
+                    }).join('') + (uniqueRights.length > 3 ? `<span style="color: #64748b; font-size: 0.6875rem;">+${uniqueRights.length - 3} more</span>` : '');
+                })()}
                                                 </div>
                                             </td>
                                             <td>
@@ -592,7 +592,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -620,17 +620,17 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${this.usersArray.map((user, index) => {
-                                        // Calculate highest risk level
-                                        const risks = user.folders.map(f => f.riskLevel || 'Low');
-                                        const riskOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
-                                        const highestRisk = risks.sort((a, b) => (riskOrder[b] || 0) - (riskOrder[a] || 0))[0] || 'Low';
-                                        const riskColor = highestRisk === 'Critical' ? '#ef4444' : 
-                                                         highestRisk === 'High' ? '#f59e0b' : 
-                                                         highestRisk === 'Medium' ? '#fbbf24' : '#10b981';
-                                        const riskIcon = highestRisk === 'Critical' ? '🔴' : 
-                                                        highestRisk === 'High' ? '🟠' : 
-                                                        highestRisk === 'Medium' ? '🟡' : '🟢';
-                                        return `
+            // Calculate highest risk level
+            const risks = user.folders.map(f => f.riskLevel || 'Low');
+            const riskOrder = { 'Critical': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+            const highestRisk = risks.sort((a, b) => (riskOrder[b] || 0) - (riskOrder[a] || 0))[0] || 'Low';
+            const riskColor = highestRisk === 'Critical' ? '#ef4444' :
+                highestRisk === 'High' ? '#f59e0b' :
+                    highestRisk === 'Medium' ? '#fbbf24' : '#10b981';
+            const riskIcon = highestRisk === 'Critical' ? '🔴' :
+                highestRisk === 'High' ? '🟠' :
+                    highestRisk === 'Medium' ? '🟡' : '🟢';
+            return `
                                         <tr onclick="fileShareAuditorInstance.showUserModal(${index})" 
                                             style="cursor: pointer; transition: background 0.15s;" 
                                             onmouseover="this.style.background='rgba(16, 185, 129, 0.1)'" 
@@ -649,37 +649,37 @@ export class FileShareAuditorPage {
                                             <td style="font-size: 0.75rem; color: #cbd5e1;">
                                                 <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
                                                     ${(() => {
-                                                        // Parse rights - they might be strings like "FullControl, Modify, Synchronize" or arrays
-                                                        const allRights = [];
-                                                        if (Array.isArray(user.rights)) {
-                                                            user.rights.forEach(right => {
-                                                                if (typeof right === 'string') {
-                                                                    const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                                                    allRights.push(...rightsList);
-                                                                } else {
-                                                                    allRights.push(right);
-                                                                }
-                                                            });
-                                                        } else if (typeof user.rights === 'string') {
-                                                            const rightsList = user.rights.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                                            allRights.push(...rightsList);
-                                                        }
-                                                        // Remove duplicates
-                                                        const uniqueRights = [...new Set(allRights)];
-                                                        // Show all rights, but limit to first 3 for compact display
-                                                        const displayRights = uniqueRights.slice(0, 3);
-                                                        return displayRights.map(right => {
-                                                            const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                                             right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                                             right.includes('Write') ? '#fbbf24' : 
-                                                                             right.includes('Read') ? '#10b981' : '#10b981';
-                                                            return `
+                    // Parse rights - they might be strings like "FullControl, Modify, Synchronize" or arrays
+                    const allRights = [];
+                    if (Array.isArray(user.rights)) {
+                        user.rights.forEach(right => {
+                            if (typeof right === 'string') {
+                                const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                                allRights.push(...rightsList);
+                            } else {
+                                allRights.push(right);
+                            }
+                        });
+                    } else if (typeof user.rights === 'string') {
+                        const rightsList = user.rights.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        allRights.push(...rightsList);
+                    }
+                    // Remove duplicates
+                    const uniqueRights = [...new Set(allRights)];
+                    // Show all rights, but limit to first 3 for compact display
+                    const displayRights = uniqueRights.slice(0, 3);
+                    return displayRights.map(right => {
+                        const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                            right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                                right.includes('Write') ? '#fbbf24' :
+                                    right.includes('Read') ? '#10b981' : '#10b981';
+                        return `
                                                             <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.125rem 0.375rem; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; white-space: nowrap;">
                                                                 ${right}
                                                             </span>
                                                         `;
-                                                        }).join('') + (uniqueRights.length > 3 ? `<span style="color: #64748b; font-size: 0.6875rem;">+${uniqueRights.length - 3} more</span>` : '');
-                                                    })()}
+                    }).join('') + (uniqueRights.length > 3 ? `<span style="color: #64748b; font-size: 0.6875rem;">+${uniqueRights.length - 3} more</span>` : '');
+                })()}
                                                 </div>
                                             </td>
                                             <td>
@@ -689,7 +689,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                     `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -715,11 +715,11 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folderAnalysis.ntfsPermissions.map(perm => {
-                                        const hasIssues = (perm.misconfigurations || []).length > 0;
-                                        // Parse rights string into individual rights
-                                        const rightsStr = perm.fileSystemRights || 'N/A';
-                                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
-                                        return `
+            const hasIssues = (perm.misconfigurations || []).length > 0;
+            // Parse rights string into individual rights
+            const rightsStr = perm.fileSystemRights || 'N/A';
+            const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
+            return `
                                         <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.05);' : ''}">
                                             <td>
                                                 <strong style="color: ${perm.identityReference && perm.identityReference.includes('CREATOR OWNER') ? '#f59e0b' : '#e2e8f0'};">
@@ -730,16 +730,16 @@ export class FileShareAuditorPage {
                                                 ${rightsArray.length > 0 ? `
                                                 <div style="display: flex; flex-wrap: wrap; gap: 0.375rem;">
                                                     ${rightsArray.map(right => {
-                                                        const rightColor = right.includes('FullControl') ? '#ef4444' : 
-                                                                         right.includes('Modify') ? '#f59e0b' : 
-                                                                         right.includes('Write') ? '#fbbf24' : 
-                                                                         right.includes('Read') ? '#10b981' : '#94a3b8';
-                                                        return `
+                const rightColor = right.includes('FullControl') ? '#ef4444' :
+                    right.includes('Modify') ? '#f59e0b' :
+                        right.includes('Write') ? '#fbbf24' :
+                            right.includes('Read') ? '#10b981' : '#94a3b8';
+                return `
                                                         <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
                                                             ${right}
                                                         </span>
                                                     `;
-                                                    }).join('')}
+            }).join('')}
                                                 </div>
                                                 ` : `<span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.8125rem; color: #94a3b8;">${rightsStr}</span>`}
                                             </td>
@@ -762,7 +762,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -813,24 +813,24 @@ export class FileShareAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${folderAnalysis.smbPermissions.map(perm => {
-                                            const hasIssues = (perm.misconfigurations || []).length > 0;
-                                            const rights = perm.accessRights || (perm.accessRight ? [perm.accessRight] : ['N/A']);
-                                            return `
+            const hasIssues = (perm.misconfigurations || []).length > 0;
+            const rights = perm.accessRights || (perm.accessRight ? [perm.accessRight] : ['N/A']);
+            return `
                                             <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.05);' : ''}">
                                                 <td><strong>${perm.accountName || 'N/A'}</strong></td>
                                                 <td>
                                                     <div style="display: flex; flex-wrap: wrap; gap: 0.375rem;">
                                                         ${rights.map(right => {
-                                                            const rightColor = right === 'Full' ? '#ef4444' : 
-                                                                             right === 'Change' || right === 'Modify' ? '#f59e0b' : 
-                                                                             right === 'Write' ? '#fbbf24' : 
-                                                                             right === 'Read' ? '#10b981' : '#94a3b8';
-                                                            return `
+                const rightColor = right === 'Full' ? '#ef4444' :
+                    right === 'Change' || right === 'Modify' ? '#f59e0b' :
+                        right === 'Write' ? '#fbbf24' :
+                            right === 'Read' ? '#10b981' : '#94a3b8';
+                return `
                                                             <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40;">
                                                                 ${right}
                                                             </span>
                                                         `;
-                                                        }).join('')}
+            }).join('')}
                                                     </div>
                                                 </td>
                                                 <td>${perm.accessControlType || 'N/A'}</td>
@@ -847,7 +847,7 @@ export class FileShareAuditorPage {
                                                 </td>
                                             </tr>
                                             `;
-                                        }).join('')}
+        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -886,55 +886,55 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folderAnalysis.permissionAnalysis.map(analysis => {
-                                        // Map share level to readable format
-                                        const shareRight = analysis.shareLevel === 'FullControl' ? 'Full' : 
-                                                          analysis.shareLevel === 'Modify' ? 'Change' : 
-                                                          analysis.shareLevel === 'Read' ? 'Read' : 
-                                                          analysis.shareLevel || 'None';
-                                        
-                                        // Map NTFS level to readable format
-                                        const ntfsRight = analysis.ntfsPermission === 'FullControl' ? 'FullControl' :
-                                                         analysis.ntfsPermission === 'Modify' ? 'Modify' :
-                                                         analysis.ntfsPermission === 'Write' ? 'Write' :
-                                                         analysis.ntfsPermission === 'Read' ? 'Read' :
-                                                         analysis.ntfsPermission === 'Denied' ? 'Denied' :
-                                                         analysis.ntfsPermission || 'None';
-                                        
-                                        // Map effective permission
-                                        const effectiveAccess = analysis.effectivePermission === 'FullControl' ? 'FullControl' :
-                                                               analysis.effectivePermission === 'Modify' ? 'Modify' :
-                                                               analysis.effectivePermission === 'Write' ? 'Write' :
-                                                               analysis.effectivePermission === 'Read' ? 'Read' :
-                                                               analysis.effectivePermission === 'Denied' ? 'Denied' :
-                                                               analysis.effectivePermission || 'None';
-                                        
-                                        // Determine risk level and color
-                                        const riskLevel = analysis.riskLevel || 'Low';
-                                        const riskColor = riskLevel === 'Critical' ? '#ef4444' : 
-                                                         riskLevel === 'High' ? '#f59e0b' : 
-                                                         riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                        const riskIcon = riskLevel === 'Critical' ? '🔴' : 
-                                                        riskLevel === 'High' ? '🟠' : 
-                                                        riskLevel === 'Medium' ? '🟡' : '🟢';
-                                        
-                                        // Color for effective access
-                                        const effectiveColor = effectiveAccess === 'FullControl' || effectiveAccess === 'Denied' ? '#ef4444' :
-                                                              effectiveAccess === 'Modify' ? '#f59e0b' :
-                                                              effectiveAccess === 'Write' ? '#fbbf24' :
-                                                              effectiveAccess === 'Read' ? '#10b981' : '#94a3b8';
-                                        
-                                        // Color for share right
-                                        const shareColor = shareRight === 'Full' ? '#ef4444' :
-                                                          shareRight === 'Change' ? '#f59e0b' :
-                                                          shareRight === 'Read' ? '#10b981' : '#94a3b8';
-                                        
-                                        // Color for NTFS right
-                                        const ntfsColor = ntfsRight === 'FullControl' || ntfsRight === 'Denied' ? '#ef4444' :
-                                                         ntfsRight === 'Modify' ? '#f59e0b' :
-                                                         ntfsRight === 'Write' ? '#fbbf24' :
-                                                         ntfsRight === 'Read' ? '#10b981' : '#94a3b8';
-                                        
-                                        return `
+            // Map share level to readable format
+            const shareRight = analysis.shareLevel === 'FullControl' ? 'Full' :
+                analysis.shareLevel === 'Modify' ? 'Change' :
+                    analysis.shareLevel === 'Read' ? 'Read' :
+                        analysis.shareLevel || 'None';
+
+            // Map NTFS level to readable format
+            const ntfsRight = analysis.ntfsPermission === 'FullControl' ? 'FullControl' :
+                analysis.ntfsPermission === 'Modify' ? 'Modify' :
+                    analysis.ntfsPermission === 'Write' ? 'Write' :
+                        analysis.ntfsPermission === 'Read' ? 'Read' :
+                            analysis.ntfsPermission === 'Denied' ? 'Denied' :
+                                analysis.ntfsPermission || 'None';
+
+            // Map effective permission
+            const effectiveAccess = analysis.effectivePermission === 'FullControl' ? 'FullControl' :
+                analysis.effectivePermission === 'Modify' ? 'Modify' :
+                    analysis.effectivePermission === 'Write' ? 'Write' :
+                        analysis.effectivePermission === 'Read' ? 'Read' :
+                            analysis.effectivePermission === 'Denied' ? 'Denied' :
+                                analysis.effectivePermission || 'None';
+
+            // Determine risk level and color
+            const riskLevel = analysis.riskLevel || 'Low';
+            const riskColor = riskLevel === 'Critical' ? '#ef4444' :
+                riskLevel === 'High' ? '#f59e0b' :
+                    riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+            const riskIcon = riskLevel === 'Critical' ? '🔴' :
+                riskLevel === 'High' ? '🟠' :
+                    riskLevel === 'Medium' ? '🟡' : '🟢';
+
+            // Color for effective access
+            const effectiveColor = effectiveAccess === 'FullControl' || effectiveAccess === 'Denied' ? '#ef4444' :
+                effectiveAccess === 'Modify' ? '#f59e0b' :
+                    effectiveAccess === 'Write' ? '#fbbf24' :
+                        effectiveAccess === 'Read' ? '#10b981' : '#94a3b8';
+
+            // Color for share right
+            const shareColor = shareRight === 'Full' ? '#ef4444' :
+                shareRight === 'Change' ? '#f59e0b' :
+                    shareRight === 'Read' ? '#10b981' : '#94a3b8';
+
+            // Color for NTFS right
+            const ntfsColor = ntfsRight === 'FullControl' || ntfsRight === 'Denied' ? '#ef4444' :
+                ntfsRight === 'Modify' ? '#f59e0b' :
+                    ntfsRight === 'Write' ? '#fbbf24' :
+                        ntfsRight === 'Read' ? '#10b981' : '#94a3b8';
+
+            return `
                                         <tr style="${riskLevel === 'Critical' ? 'background: rgba(239, 68, 68, 0.05);' : riskLevel === 'High' ? 'background: rgba(245, 158, 11, 0.03);' : ''}">
                                             <td>
                                                 <strong style="color: #e2e8f0; font-size: 0.8125rem;">
@@ -969,7 +969,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -994,25 +994,25 @@ export class FileShareAuditorPage {
                         </div>
                         
                         ${(() => {
-                            const integrity = folderAnalysis.inheritanceIntegrity;
-                            const breakingInheritance = integrity.foldersBreakingInheritance || [];
-                            const deepChains = integrity.deepInheritanceChains || [];
-                            const explicitDuplicating = integrity.explicitDuplicatingInherited || [];
-                            const orphanedACLs = integrity.orphanedACLEntries || [];
-                            const creatorOwnerRoot = integrity.creatorOwnerOnSharedRoot || [];
-                            
-                            const totalIssues = breakingInheritance.length + deepChains.length + explicitDuplicating.length + orphanedACLs.length + creatorOwnerRoot.length;
-                            
-                            if (totalIssues === 0) {
-                                return `
+                    const integrity = folderAnalysis.inheritanceIntegrity;
+                    const breakingInheritance = integrity.foldersBreakingInheritance || [];
+                    const deepChains = integrity.deepInheritanceChains || [];
+                    const explicitDuplicating = integrity.explicitDuplicatingInherited || [];
+                    const orphanedACLs = integrity.orphanedACLEntries || [];
+                    const creatorOwnerRoot = integrity.creatorOwnerOnSharedRoot || [];
+
+                    const totalIssues = breakingInheritance.length + deepChains.length + explicitDuplicating.length + orphanedACLs.length + creatorOwnerRoot.length;
+
+                    if (totalIssues === 0) {
+                        return `
                                 <div style="padding: 1rem; text-align: center; background: rgba(16, 185, 129, 0.1); border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.25rem; margin-bottom: 0.375rem;"></i>
                                     <p style="color: #10b981; font-size: 0.8125rem; font-weight: 600; margin: 0;">No inheritance integrity issues detected</p>
                                 </div>
                                 `;
-                            }
-                            
-                            return `
+                    }
+
+                    return `
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem;">
                                 <div style="background: rgba(15, 23, 42, 0.4); padding: 0.5rem; border-radius: 3px; border: 1px solid #334155;">
                                     <div style="color: #94a3b8; font-size: 0.625rem; margin-bottom: 0.125rem;">Folders Breaking Inheritance</div>
@@ -1054,9 +1054,9 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${breakingInheritance.map(item => {
-                                                const riskColor = item.riskLevel === 'Critical' ? '#ef4444' : '#f59e0b';
-                                                const riskIcon = item.riskLevel === 'Critical' ? '🔴' : '🟠';
-                                                return `
+                        const riskColor = item.riskLevel === 'Critical' ? '#ef4444' : '#f59e0b';
+                        const riskIcon = item.riskLevel === 'Critical' ? '🔴' : '🟠';
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1074,7 +1074,7 @@ export class FileShareAuditorPage {
                                                     </td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1097,7 +1097,7 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${deepChains.map(item => {
-                                                return `
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1113,7 +1113,7 @@ export class FileShareAuditorPage {
                                                     </td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1137,7 +1137,7 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${explicitDuplicating.map(item => {
-                                                return `
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1147,7 +1147,7 @@ export class FileShareAuditorPage {
                                                     <td style="color: #94a3b8; font-size: 0.8125rem;">${item.depth || 0}</td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1169,8 +1169,8 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${orphanedACLs.map(item => {
-                                                const orphanedList = item.orphanedSIDs || [];
-                                                return `
+                        const orphanedList = item.orphanedSIDs || [];
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1186,7 +1186,7 @@ export class FileShareAuditorPage {
                                                     </td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1215,7 +1215,7 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${creatorOwnerRoot.map(item => {
-                                                return `
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1227,14 +1227,14 @@ export class FileShareAuditorPage {
                                                     </td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
                             ` : ''}
                             `;
-                        })()}
+                })()}
                     </div>
                     ` : ''}
 
@@ -1256,25 +1256,25 @@ export class FileShareAuditorPage {
                         </div>
                         
                         ${(() => {
-                            const unauthenticated = folderAnalysis.unauthenticatedAccess;
-                            const anonymousPaths = unauthenticated.anonymousAccessPaths || [];
-                            const guestReadable = unauthenticated.guestReadableFolders || [];
-                            const guestWritable = unauthenticated.guestWritableFolders || [];
-                            const smbAnonymousEnum = unauthenticated.smbAnonymousEnumeration || false;
-                            const offlineWithAnonymous = unauthenticated.offlineFilesWithAnonymous || [];
-                            
-                            const totalIssues = anonymousPaths.length + guestReadable.length + guestWritable.length + (smbAnonymousEnum ? 1 : 0) + offlineWithAnonymous.length;
-                            
-                            if (totalIssues === 0) {
-                                return `
+                    const unauthenticated = folderAnalysis.unauthenticatedAccess;
+                    const anonymousPaths = unauthenticated.anonymousAccessPaths || [];
+                    const guestReadable = unauthenticated.guestReadableFolders || [];
+                    const guestWritable = unauthenticated.guestWritableFolders || [];
+                    const smbAnonymousEnum = unauthenticated.smbAnonymousEnumeration || false;
+                    const offlineWithAnonymous = unauthenticated.offlineFilesWithAnonymous || [];
+
+                    const totalIssues = anonymousPaths.length + guestReadable.length + guestWritable.length + (smbAnonymousEnum ? 1 : 0) + offlineWithAnonymous.length;
+
+                    if (totalIssues === 0) {
+                        return `
                                 <div style="padding: 1rem; text-align: center; background: rgba(16, 185, 129, 0.1); border-radius: 4px; border: 1px solid rgba(16, 185, 129, 0.3);">
                                     <i class="fas fa-check-circle" style="color: #10b981; font-size: 1.25rem; margin-bottom: 0.375rem;"></i>
                                     <p style="color: #10b981; font-size: 0.8125rem; font-weight: 600; margin: 0;">No unauthenticated access detected</p>
                                 </div>
                                 `;
-                            }
-                            
-                            return `
+                    }
+
+                    return `
                             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.5rem; margin-bottom: 0.75rem;">
                                 <div style="background: rgba(15, 23, 42, 0.4); padding: 0.5rem; border-radius: 3px; border: 1px solid #334155;">
                                     <div style="color: #94a3b8; font-size: 0.625rem; margin-bottom: 0.125rem;">Anonymous Access Paths</div>
@@ -1317,10 +1317,10 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${anonymousPaths.map(item => {
-                                                const rightColor = item.highestRight === 'FullControl' ? '#ef4444' : 
-                                                                item.highestRight === 'Modify' ? '#f59e0b' : 
-                                                                item.highestRight === 'Write' ? '#fbbf24' : '#10b981';
-                                                return `
+                        const rightColor = item.highestRight === 'FullControl' ? '#ef4444' :
+                            item.highestRight === 'Modify' ? '#f59e0b' :
+                                item.highestRight === 'Write' ? '#fbbf24' : '#10b981';
+                        return `
                                                 <tr style="background: rgba(239, 68, 68, 0.05);">
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1341,7 +1341,7 @@ export class FileShareAuditorPage {
                                                     </td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1363,7 +1363,7 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${guestReadable.map(item => {
-                                                return `
+                        return `
                                                 <tr>
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1371,7 +1371,7 @@ export class FileShareAuditorPage {
                                                     <td style="color: #f59e0b; font-size: 0.8125rem;">${item.rights || 'Read'}</td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1400,9 +1400,9 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${guestWritable.map(item => {
-                                                const rightColor = item.effectiveRight === 'FullControl' ? '#ef4444' : 
-                                                                  item.effectiveRight === 'Modify' ? '#f59e0b' : '#fbbf24';
-                                                return `
+                        const rightColor = item.effectiveRight === 'FullControl' ? '#ef4444' :
+                            item.effectiveRight === 'Modify' ? '#f59e0b' : '#fbbf24';
+                        return `
                                                 <tr style="background: rgba(239, 68, 68, 0.05);">
                                                     <td style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1;">
                                                         ${item.folder || 'N/A'}
@@ -1415,7 +1415,7 @@ export class FileShareAuditorPage {
                                                     <td style="color: #f59e0b; font-size: 0.8125rem;">${item.rights || 'N/A'}</td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1445,7 +1445,7 @@ export class FileShareAuditorPage {
                                         </thead>
                                         <tbody>
                                             ${offlineWithAnonymous.map(item => {
-                                                return `
+                        return `
                                                 <tr style="background: rgba(239, 68, 68, 0.05);">
                                                     <td><strong style="color: #e2e8f0;">${item.share || 'N/A'}</strong></td>
                                                     <td style="color: #f59e0b; font-size: 0.8125rem;">${item.cachingMode || 'N/A'}</td>
@@ -1453,7 +1453,7 @@ export class FileShareAuditorPage {
                                                     <td style="color: #f59e0b; font-size: 0.8125rem;">${item.rights || 'N/A'}</td>
                                                 </tr>
                                                 `;
-                                            }).join('')}
+                    }).join('')}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1469,7 +1469,7 @@ export class FileShareAuditorPage {
                             </div>
                             ` : ''}
                             `;
-                        })()}
+                })()}
                     </div>
                     ` : ''}
 
@@ -1490,14 +1490,14 @@ export class FileShareAuditorPage {
                             </h5>
                             <div style="display: flex; flex-direction: column; gap: 0.5rem;">
                                 ${folderAnalysis.permissionMisconfigurations.map(misconfig => {
-                                    const riskColor = misconfig.riskLevel === 'Critical' ? '#ef4444' : misconfig.riskLevel === 'High' ? '#f59e0b' : '#fbbf24';
-                                    return `
+                    const riskColor = misconfig.riskLevel === 'Critical' ? '#ef4444' : misconfig.riskLevel === 'High' ? '#f59e0b' : '#fbbf24';
+                    return `
                                     <div style="color: ${riskColor}; font-size: 0.8125rem;">
                                         <i class="fas fa-${misconfig.riskLevel === 'Critical' ? 'times-circle' : 'exclamation-triangle'}"></i> 
                                         <strong>${misconfig.account}:</strong> ${misconfig.issue}
                                     </div>
                                     `;
-                                }).join('')}
+                }).join('')}
                             </div>
                         </div>
                         ` : ''}
@@ -1519,31 +1519,31 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folderAnalysis.permissionAnalysis.map(analysis => {
-                                        const hasIssues = (analysis.issues || []).length > 0;
-                                        const riskColor = analysis.riskLevel === 'Critical' ? '#ef4444' : analysis.riskLevel === 'High' ? '#f59e0b' : analysis.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                        return `
+                    const hasIssues = (analysis.issues || []).length > 0;
+                    const riskColor = analysis.riskLevel === 'Critical' ? '#ef4444' : analysis.riskLevel === 'High' ? '#f59e0b' : analysis.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+                    return `
                                         <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.05);' : ''}">
                                             <td><strong>${analysis.account || 'N/A'}</strong></td>
                                             <td>
                                                 ${(() => {
-                                                    const shareRights = analysis.shareRights || (analysis.sharePermission ? analysis.sharePermission.split(', ').map(r => r.trim()) : []);
-                                                    if (shareRights.length === 0) return '<span style="color: #94a3b8;">N/A</span>';
-                                                    return `
+                            const shareRights = analysis.shareRights || (analysis.sharePermission ? analysis.sharePermission.split(', ').map(r => r.trim()) : []);
+                            if (shareRights.length === 0) return '<span style="color: #94a3b8;">N/A</span>';
+                            return `
                                                     <div style="display: flex; flex-wrap: wrap; gap: 0.375rem;">
                                                         ${shareRights.map(right => {
-                                                            const rightColor = right === 'Full' ? '#ef4444' : 
-                                                                             right === 'Change' || right === 'Modify' ? '#f59e0b' : 
-                                                                             right === 'Write' ? '#fbbf24' : 
-                                                                             right === 'Read' ? '#10b981' : '#94a3b8';
-                                                            return `
+                                const rightColor = right === 'Full' ? '#ef4444' :
+                                    right === 'Change' || right === 'Modify' ? '#f59e0b' :
+                                        right === 'Write' ? '#fbbf24' :
+                                            right === 'Read' ? '#10b981' : '#94a3b8';
+                                return `
                                                             <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40;">
                                                                 ${right}
                                                             </span>
                                                         `;
-                                                        }).join('')}
+                            }).join('')}
                                                     </div>
                                                     `;
-                                                })()}
+                        })()}
                                             </td>
                                             <td>
                                                 <span style="color: ${analysis.ntfsPermission === 'Denied' ? '#ef4444' : analysis.ntfsPermission === 'FullControl' ? '#ef4444' : analysis.ntfsPermission === 'Modify' ? '#f59e0b' : '#94a3b8'};">
@@ -1579,19 +1579,19 @@ export class FileShareAuditorPage {
                                                 ${hasIssues ? `
                                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                                     ${analysis.issues.map(issue => {
-                                                        const issueColor = issue.match(/Critical:/) ? '#ef4444' : issue.match(/Warning:/) ? '#f59e0b' : '#fbbf24';
-                                                        return `
+                            const issueColor = issue.match(/Critical:/) ? '#ef4444' : issue.match(/Warning:/) ? '#f59e0b' : '#fbbf24';
+                            return `
                                                         <span style="color: ${issueColor}; font-size: 0.75rem;">
                                                             <i class="fas fa-${issue.match(/Critical:/) ? 'times-circle' : 'exclamation-triangle'}"></i> ${issue}
                                                         </span>
                                                         `;
-                                                    }).join('')}
+                        }).join('')}
                                                 </div>
                                                 ` : '<span style="color: #10b981;"><i class="fas fa-check"></i> OK</span>'}
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -1630,9 +1630,9 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folderAnalysis.highRiskPrincipals.map(principal => {
-                                        const riskColor = principal.ntfsRiskLevel === 'Critical' ? '#ef4444' : principal.ntfsRiskLevel === 'High' ? '#f59e0b' : principal.ntfsRiskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                        const shareRiskColor = principal.shareRiskLevel === 'Critical' ? '#ef4444' : principal.shareRiskLevel === 'High' ? '#f59e0b' : principal.shareRiskLevel === 'Medium' ? '#fbbf24' : '#94a3b8';
-                                        return `
+                    const riskColor = principal.ntfsRiskLevel === 'Critical' ? '#ef4444' : principal.ntfsRiskLevel === 'High' ? '#f59e0b' : principal.ntfsRiskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+                    const shareRiskColor = principal.shareRiskLevel === 'Critical' ? '#ef4444' : principal.shareRiskLevel === 'High' ? '#f59e0b' : principal.shareRiskLevel === 'Medium' ? '#fbbf24' : '#94a3b8';
+                    return `
                                         <tr style="background: ${principal.ntfsRiskLevel === 'Critical' ? 'rgba(239, 68, 68, 0.05)' : principal.ntfsRiskLevel === 'High' ? 'rgba(245, 158, 11, 0.05)' : 'transparent'};">
                                             <td>
                                                 <strong style="color: ${riskColor};">
@@ -1654,24 +1654,24 @@ export class FileShareAuditorPage {
                                             </td>
                                             <td>
                                                 ${(() => {
-                                                    const shareRights = principal.shareRights || (principal.sharePermission ? principal.sharePermission.split(', ').map(r => r.trim()) : []);
-                                                    if (shareRights.length === 0) return '<span style="color: #94a3b8;">None</span>';
-                                                    return `
+                            const shareRights = principal.shareRights || (principal.sharePermission ? principal.sharePermission.split(', ').map(r => r.trim()) : []);
+                            if (shareRights.length === 0) return '<span style="color: #94a3b8;">None</span>';
+                            return `
                                                     <div style="display: flex; flex-wrap: wrap; gap: 0.375rem;">
                                                         ${shareRights.map(right => {
-                                                            const rightColor = right === 'Full' ? '#ef4444' : 
-                                                                             right === 'Change' || right === 'Modify' ? '#f59e0b' : 
-                                                                             right === 'Write' ? '#fbbf24' : 
-                                                                             right === 'Read' ? '#10b981' : '#94a3b8';
-                                                            return `
+                                const rightColor = right === 'Full' ? '#ef4444' :
+                                    right === 'Change' || right === 'Modify' ? '#f59e0b' :
+                                        right === 'Write' ? '#fbbf24' :
+                                            right === 'Read' ? '#10b981' : '#94a3b8';
+                                return `
                                                             <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40;">
                                                                 ${right}
                                                             </span>
                                                         `;
-                                                        }).join('')}
+                            }).join('')}
                                                     </div>
                                                     `;
-                                                })()}
+                        })()}
                                             </td>
                                             <td>
                                                 <span style="color: ${principal.isServiceAccount ? '#ef4444' : '#94a3b8'};">
@@ -1685,7 +1685,7 @@ export class FileShareAuditorPage {
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+                }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -1792,7 +1792,7 @@ export class FileShareAuditorPage {
                 // Try alternative endpoint
                 response = await fetch(`/api/file-share-reports/get?id=${this.reportId}`);
             }
-            
+
             if (!response.ok) {
                 if (response.status === 404) {
                     console.warn('Report not found:', this.reportId);
@@ -1841,7 +1841,7 @@ export class FileShareAuditorPage {
                     this.reportId = parseInt(hashMatch[1]);
                 }
             }
-            
+
             if (!this.reportId || isNaN(this.reportId)) {
                 this.showMessage('Report ID not found. Please navigate to a valid report.', 'error');
                 return;
@@ -1900,9 +1900,9 @@ export class FileShareAuditorPage {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             const data = await response.json();
-            
+
             // Create a blob and download
             const blob = new Blob([data.script], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
@@ -1942,7 +1942,7 @@ export class FileShareAuditorPage {
 
         try {
             const text = await file.text();
-            
+
             // Validate that it's valid JSON (either plain or encrypted)
             try {
                 JSON.parse(text);
@@ -1973,7 +1973,7 @@ export class FileShareAuditorPage {
 
             const result = await response.json();
             this.showMessage('Report imported successfully!', 'success');
-            
+
             // Reload the report data
             await this.loadReport();
         } catch (error) {
@@ -2001,9 +2001,9 @@ export class FileShareAuditorPage {
 
     renderGroupModal() {
         if (this.selectedGroupModal === null || !this.groupsArray[this.selectedGroupModal]) return '';
-        
+
         const group = this.groupsArray[this.selectedGroupModal];
-        
+
         return `
             <div class="modal-overlay" onclick="fileShareAuditorInstance.closeGroupModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
                 <div class="modal-content" onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 0.5rem; max-width: 1000px; width: 100%; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
@@ -2032,30 +2032,30 @@ export class FileShareAuditorPage {
                             </h4>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 ${(() => {
-                                    // Flatten and parse all rights from the array
-                                    const allRights = [];
-                                    group.rights.forEach(right => {
-                                        if (typeof right === 'string') {
-                                            const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                            allRights.push(...rightsList);
-                                        } else {
-                                            allRights.push(right);
-                                        }
-                                    });
-                                    // Remove duplicates
-                                    const uniqueRights = [...new Set(allRights)];
-                                    return uniqueRights.map(right => {
-                                        const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                         right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                         right.includes('Write') ? '#fbbf24' : 
-                                                         right.includes('Read') ? '#10b981' : '#3b82f6';
-                                        return `
+                // Flatten and parse all rights from the array
+                const allRights = [];
+                group.rights.forEach(right => {
+                    if (typeof right === 'string') {
+                        const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        allRights.push(...rightsList);
+                    } else {
+                        allRights.push(right);
+                    }
+                });
+                // Remove duplicates
+                const uniqueRights = [...new Set(allRights)];
+                return uniqueRights.map(right => {
+                    const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                        right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                            right.includes('Write') ? '#fbbf24' :
+                                right.includes('Read') ? '#10b981' : '#3b82f6';
+                    return `
                                         <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.375rem 0.75rem; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40;">
                                             ${right}
                                         </span>
                                     `;
-                                    }).join('');
-                                })()}
+                }).join('');
+            })()}
                             </div>
                         </div>
                         <div>
@@ -2075,13 +2075,13 @@ export class FileShareAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${group.folders.map(folder => {
-                                            const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' : 
-                                                            folder.riskLevel === 'High' ? '#f59e0b' : 
-                                                            folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                            const riskIcon = folder.riskLevel === 'Critical' ? '🔴' : 
-                                                           folder.riskLevel === 'High' ? '🟠' : 
-                                                           folder.riskLevel === 'Medium' ? '🟡' : '🟢';
-                                            return `
+                const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' :
+                    folder.riskLevel === 'High' ? '#f59e0b' :
+                        folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+                const riskIcon = folder.riskLevel === 'Critical' ? '🔴' :
+                    folder.riskLevel === 'High' ? '🟠' :
+                        folder.riskLevel === 'Medium' ? '🟡' : '🟢';
+                return `
                                             <tr>
                                                 <td>
                                                     <div style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1; word-break: break-all;" title="${folder.path}">
@@ -2090,27 +2090,27 @@ export class FileShareAuditorPage {
                                                 </td>
                                                 <td>
                                                     ${(() => {
-                                                        const rightsStr = folder.rights || 'N/A';
-                                                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
-                                                        if (rightsArray.length > 0) {
-                                                            return `
+                        const rightsStr = folder.rights || 'N/A';
+                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
+                        if (rightsArray.length > 0) {
+                            return `
                                                             <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
                                                                 ${rightsArray.map(right => {
-                                                                    const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                                                     right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                                                     right.includes('Write') ? '#fbbf24' : 
-                                                                                     right.includes('Read') ? '#10b981' : '#3b82f6';
-                                                                    return `
+                                const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                                    right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                                        right.includes('Write') ? '#fbbf24' :
+                                            right.includes('Read') ? '#10b981' : '#3b82f6';
+                                return `
                                                                     <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
                                                                         ${right}
                                                                     </span>
                                                                 `;
-                                                                }).join('')}
+                            }).join('')}
                                                             </div>
                                                             `;
-                                                        }
-                                                        return `<span style="font-size: 0.75rem; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${rightsStr}</span>`;
-                                                    })()}
+                        }
+                        return `<span style="font-size: 0.75rem; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${rightsStr}</span>`;
+                    })()}
                                                 </td>
                                                 <td style="color: ${folder.accessType === 'Deny' ? '#f59e0b' : '#94a3b8'}; font-size: 0.75rem;">
                                                     ${folder.accessType}
@@ -2127,7 +2127,7 @@ export class FileShareAuditorPage {
                                                 </td>
                                             </tr>
                                         `;
-                                        }).join('')}
+            }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -2163,8 +2163,8 @@ export class FileShareAuditorPage {
         this.isRedFlagsModalOpen = false;
         this.selectedShareRedFlags = null;
         // Only unlock if no other modals are open
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isShareDetailsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isShareDetailsModalOpen &&
             this.selectedGroupModal === null && this.selectedUserModal === null) {
             this.unlockBodyScroll();
         }
@@ -2173,9 +2173,9 @@ export class FileShareAuditorPage {
 
     renderRedFlagsModal() {
         if (!this.isRedFlagsModalOpen || !this.selectedShareRedFlags) return '';
-        
+
         const { shareName, redFlags } = this.selectedShareRedFlags;
-        
+
         return `
             <div class="modal-overlay" onclick="fileShareAuditorInstance.closeRedFlagsModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
                 <div onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; width: 100%; max-width: 700px; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
@@ -2222,8 +2222,8 @@ export class FileShareAuditorPage {
         this.isShareDetailsModalOpen = false;
         this.selectedShareDetails = null;
         // Only unlock if no other modals are open
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isRedFlagsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isRedFlagsModalOpen &&
             this.selectedGroupModal === null && this.selectedUserModal === null) {
             this.unlockBodyScroll();
         }
@@ -2232,12 +2232,12 @@ export class FileShareAuditorPage {
 
     renderShareDetailsModal() {
         if (!this.isShareDetailsModalOpen || !this.selectedShareDetails) return '';
-        
+
         const share = this.selectedShareDetails;
         const shareRiskLevel = share.shareRiskLevel || share.highestNTFSRisk || 'Low';
         const shareRiskIcon = share.shareRiskIcon || (shareRiskLevel === 'Critical' ? '🔴' : shareRiskLevel === 'High' ? '🟠' : shareRiskLevel === 'Medium' ? '🟡' : '🟢');
         const shareRiskColor = share.shareRiskColor || (shareRiskLevel === 'Critical' ? '#ef4444' : shareRiskLevel === 'High' ? '#f59e0b' : shareRiskLevel === 'Medium' ? '#fbbf24' : '#10b981');
-        
+
         return `
             <div class="modal-overlay" onclick="fileShareAuditorInstance.closeShareDetailsModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
                 <div onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid #334155; border-radius: 6px; width: 100%; max-width: 700px; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);">
@@ -2377,9 +2377,9 @@ export class FileShareAuditorPage {
 
     renderUserModal() {
         if (this.selectedUserModal === null || !this.usersArray[this.selectedUserModal]) return '';
-        
+
         const user = this.usersArray[this.selectedUserModal];
-        
+
         return `
             <div class="modal-overlay" onclick="fileShareAuditorInstance.closeUserModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
                 <div class="modal-content" onclick="event.stopPropagation()" style="background: #1e293b; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 0.5rem; max-width: 1000px; width: 100%; max-height: 70vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);">
@@ -2408,30 +2408,30 @@ export class FileShareAuditorPage {
                             </h4>
                             <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
                                 ${(() => {
-                                    // Flatten and parse all rights from the array
-                                    const allRights = [];
-                                    user.rights.forEach(right => {
-                                        if (typeof right === 'string') {
-                                            const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
-                                            allRights.push(...rightsList);
-                                        } else {
-                                            allRights.push(right);
-                                        }
-                                    });
-                                    // Remove duplicates
-                                    const uniqueRights = [...new Set(allRights)];
-                                    return uniqueRights.map(right => {
-                                        const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                         right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                         right.includes('Write') ? '#fbbf24' : 
-                                                         right.includes('Read') ? '#10b981' : '#10b981';
-                                        return `
+                // Flatten and parse all rights from the array
+                const allRights = [];
+                user.rights.forEach(right => {
+                    if (typeof right === 'string') {
+                        const rightsList = right.split(',').map(r => r.trim()).filter(r => r.length > 0);
+                        allRights.push(...rightsList);
+                    } else {
+                        allRights.push(right);
+                    }
+                });
+                // Remove duplicates
+                const uniqueRights = [...new Set(allRights)];
+                return uniqueRights.map(right => {
+                    const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                        right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                            right.includes('Write') ? '#fbbf24' :
+                                right.includes('Read') ? '#10b981' : '#10b981';
+                    return `
                                         <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.375rem 0.75rem; border-radius: 3px; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; font-weight: 600; border: 1px solid ${rightColor}40;">
                                             ${right}
                                         </span>
                                     `;
-                                    }).join('');
-                                })()}
+                }).join('');
+            })()}
                             </div>
                         </div>
                         <div>
@@ -2451,13 +2451,13 @@ export class FileShareAuditorPage {
                                     </thead>
                                     <tbody>
                                         ${user.folders.map(folder => {
-                                            const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' : 
-                                                            folder.riskLevel === 'High' ? '#f59e0b' : 
-                                                            folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                            const riskIcon = folder.riskLevel === 'Critical' ? '🔴' : 
-                                                           folder.riskLevel === 'High' ? '🟠' : 
-                                                           folder.riskLevel === 'Medium' ? '🟡' : '🟢';
-                                            return `
+                const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' :
+                    folder.riskLevel === 'High' ? '#f59e0b' :
+                        folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+                const riskIcon = folder.riskLevel === 'Critical' ? '🔴' :
+                    folder.riskLevel === 'High' ? '🟠' :
+                        folder.riskLevel === 'Medium' ? '🟡' : '🟢';
+                return `
                                             <tr>
                                                 <td>
                                                     <div style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1; word-break: break-all;" title="${folder.path}">
@@ -2466,27 +2466,27 @@ export class FileShareAuditorPage {
                                                 </td>
                                                 <td>
                                                     ${(() => {
-                                                        const rightsStr = folder.rights || 'N/A';
-                                                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
-                                                        if (rightsArray.length > 0) {
-                                                            return `
+                        const rightsStr = folder.rights || 'N/A';
+                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
+                        if (rightsArray.length > 0) {
+                            return `
                                                             <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
                                                                 ${rightsArray.map(right => {
-                                                                    const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' : 
-                                                                                     right.includes('Modify') || right.includes('Change') ? '#f59e0b' : 
-                                                                                     right.includes('Write') ? '#fbbf24' : 
-                                                                                     right.includes('Read') ? '#10b981' : '#3b82f6';
-                                                                    return `
+                                const rightColor = right.includes('FullControl') || right.includes('Full') ? '#ef4444' :
+                                    right.includes('Modify') || right.includes('Change') ? '#f59e0b' :
+                                        right.includes('Write') ? '#fbbf24' :
+                                            right.includes('Read') ? '#10b981' : '#3b82f6';
+                                return `
                                                                     <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
                                                                         ${right}
                                                                     </span>
                                                                 `;
-                                                                }).join('')}
+                            }).join('')}
                                                             </div>
                                                             `;
-                                                        }
-                                                        return `<span style="font-size: 0.75rem; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${rightsStr}</span>`;
-                                                    })()}
+                        }
+                        return `<span style="font-size: 0.75rem; color: #94a3b8; font-family: 'Consolas', 'Monaco', monospace;">${rightsStr}</span>`;
+                    })()}
                                                 </td>
                                                 <td style="color: ${folder.accessType === 'Deny' ? '#f59e0b' : '#94a3b8'}; font-size: 0.75rem;">
                                                     ${folder.accessType}
@@ -2503,7 +2503,7 @@ export class FileShareAuditorPage {
                                                 </td>
                                             </tr>
                                         `;
-                                        }).join('')}
+            }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -2575,13 +2575,13 @@ export class FileShareAuditorPage {
             if (!folder) return '';
 
             const relativePath = folder.relativePath || folder.name || '.';
-            const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' : 
-                            folder.riskLevel === 'High' ? '#f59e0b' : 
-                            folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-            
+            const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' :
+                folder.riskLevel === 'High' ? '#f59e0b' :
+                    folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+
             const riskIcon = folder.riskLevel === 'Critical' ? 'fa-exclamation-triangle' :
-                           folder.riskLevel === 'High' ? 'fa-exclamation-circle' :
-                           folder.riskLevel === 'Medium' ? 'fa-exclamation' : 'fa-check-circle';
+                folder.riskLevel === 'High' ? 'fa-exclamation-circle' :
+                    folder.riskLevel === 'Medium' ? 'fa-exclamation' : 'fa-check-circle';
 
             const hasIssues = folder.hasMisconfigurations || false;
             const issueCount = (folder.criticalCount || 0) + (folder.highCount || 0) + (folder.mediumCount || 0) + (folder.warningCount || 0);
@@ -2597,12 +2597,12 @@ export class FileShareAuditorPage {
             const isRoot = depth === 0; // Root folder is always open
             const isExpanded = true; // All folders are expanded by default
             const hasChildren = childFolders.length > 0;
-            
+
             const explicitPerms = (folder.permissions || []).filter(p => !p.isInherited).length;
             const inheritedPerms = (folder.permissions || []).filter(p => p.isInherited).length;
             const denyAces = (folder.permissions || []).filter(p => p.accessControlType === 'Deny').length;
             const allowPerms = (folder.permissions || []).filter(p => p.accessControlType === 'Allow').length;
-            
+
             const folderPathEncoded = encodeURIComponent(folder.path || '');
             let html = `
                 <div class="folder-tree-node" data-folder-path="${folder.path || ''}">
@@ -2666,7 +2666,7 @@ export class FileShareAuditorPage {
             const relPath = f.relativePath || '';
             return relPath === '.' || relPath === '' || !relPath;
         }) || folderTree[0];
-        
+
         if (!rootFolder) {
             return '<div class="empty-state"><i class="fas fa-folder-open"></i><p>No root folder found</p></div>';
         }
@@ -2680,12 +2680,12 @@ export class FileShareAuditorPage {
 
     filterFolderTree(searchTerm) {
         if (!this.folderTreeData) return;
-        
+
         const container = document.getElementById('folder-tree-container');
         if (!container) return;
 
         const searchLower = searchTerm.toLowerCase().trim();
-        
+
         if (!searchLower) {
             // Show all folders and ensure they're all visible
             const allNodes = container.querySelectorAll('.folder-tree-node');
@@ -2698,14 +2698,14 @@ export class FileShareAuditorPage {
         // Filter folders
         const allNodes = container.querySelectorAll('.folder-tree-node');
         const matchingPaths = new Set();
-        
+
         // First pass: find all matching nodes
         allNodes.forEach(node => {
             const folderPath = node.getAttribute('data-folder-path') || '';
             const folderName = folderPath.split('\\').pop() || '';
-            const matches = folderPath.toLowerCase().includes(searchLower) || 
-                          folderName.toLowerCase().includes(searchLower);
-            
+            const matches = folderPath.toLowerCase().includes(searchLower) ||
+                folderName.toLowerCase().includes(searchLower);
+
             if (matches) {
                 matchingPaths.add(folderPath);
                 // Also add all parent paths
@@ -2723,7 +2723,7 @@ export class FileShareAuditorPage {
         allNodes.forEach(node => {
             const folderPath = node.getAttribute('data-folder-path') || '';
             const shouldShow = matchingPaths.has(folderPath);
-            
+
             if (shouldShow) {
                 node.style.display = '';
                 // Expand parent nodes to show this node
@@ -2773,8 +2773,8 @@ export class FileShareAuditorPage {
 
     closeFolderPermissionsModal() {
         this.selectedFolderForModal = null;
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen &&
             this.selectedGroupModal === null && this.selectedUserModal === null) {
             this.unlockBodyScroll();
         }
@@ -2783,16 +2783,16 @@ export class FileShareAuditorPage {
 
     renderFolderPermissionsModal() {
         if (!this.selectedFolderForModal) return '';
-        
+
         const folder = this.selectedFolderForModal;
         const explicitPerms = (folder.permissions || []).filter(p => !p.isInherited);
         const inheritedPerms = (folder.permissions || []).filter(p => p.isInherited);
         const allowPerms = (folder.permissions || []).filter(p => p.accessControlType === 'Allow');
         const denyAces = (folder.permissions || []).filter(p => p.accessControlType === 'Deny');
         const issueCount = (folder.criticalCount || 0) + (folder.highCount || 0) + (folder.mediumCount || 0) + (folder.warningCount || 0);
-        const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' : 
-                        folder.riskLevel === 'High' ? '#f59e0b' : 
-                        folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+        const riskColor = folder.riskLevel === 'Critical' ? '#ef4444' :
+            folder.riskLevel === 'High' ? '#f59e0b' :
+                folder.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
 
         return `
             <div class="modal-overlay" onclick="fileShareAuditorInstance.closeFolderPermissionsModal()" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem;">
@@ -2859,20 +2859,20 @@ export class FileShareAuditorPage {
                                 </thead>
                                 <tbody>
                                     ${folder.permissions.map(perm => {
-                                        const hasIssues = (perm.misconfigurations || []).length > 0;
-                                        const permRiskColor = perm.riskLevel === 'Critical' ? '#ef4444' : 
-                                                            perm.riskLevel === 'High' ? '#f59e0b' : 
-                                                            perm.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
-                                        const riskIcon = perm.riskLevel === 'Critical' ? '🔴' : 
-                                                       perm.riskLevel === 'High' ? '🟠' : 
-                                                       perm.riskLevel === 'Medium' ? '🟡' : '🟢';
-                                        const propagationText = perm.propagationFlags || 'None';
-                                        const propagationShort = propagationText.includes('InheritOnly') ? 'Inherit' : 
-                                                               propagationText.includes('NoPropagateInherit') ? 'NoProp' : 
-                                                               propagationText.includes('None') ? 'None' : 'All';
-                                        const rightsStr = perm.fileSystemRights || 'N/A';
-                                        const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
-                                        return `
+            const hasIssues = (perm.misconfigurations || []).length > 0;
+            const permRiskColor = perm.riskLevel === 'Critical' ? '#ef4444' :
+                perm.riskLevel === 'High' ? '#f59e0b' :
+                    perm.riskLevel === 'Medium' ? '#fbbf24' : '#10b981';
+            const riskIcon = perm.riskLevel === 'Critical' ? '🔴' :
+                perm.riskLevel === 'High' ? '🟠' :
+                    perm.riskLevel === 'Medium' ? '🟡' : '🟢';
+            const propagationText = perm.propagationFlags || 'None';
+            const propagationShort = propagationText.includes('InheritOnly') ? 'Inherit' :
+                propagationText.includes('NoPropagateInherit') ? 'NoProp' :
+                    propagationText.includes('None') ? 'None' : 'All';
+            const rightsStr = perm.fileSystemRights || 'N/A';
+            const rightsArray = rightsStr !== 'N/A' ? rightsStr.split(',').map(r => r.trim()).filter(r => r.length > 0) : [];
+            return `
                                         <tr style="${hasIssues ? 'background: rgba(239, 68, 68, 0.03);' : ''}">
                                             <td>
                                                 <strong style="color: ${perm.identityReference && perm.identityReference.includes('CREATOR OWNER') ? '#f59e0b' : '#e2e8f0'}; font-size: 0.75rem; word-break: break-word;" title="${perm.identityReference || 'N/A'}">${perm.identityReference || 'N/A'}</strong>
@@ -2881,16 +2881,16 @@ export class FileShareAuditorPage {
                                                 ${rightsArray.length > 0 ? `
                                                 <div style="display: flex; flex-wrap: wrap; gap: 0.25rem;">
                                                     ${rightsArray.map(right => {
-                                                        const rightColor = right.includes('FullControl') ? '#ef4444' : 
-                                                                         right.includes('Modify') ? '#f59e0b' : 
-                                                                         right.includes('Write') ? '#fbbf24' : 
-                                                                         right.includes('Read') ? '#10b981' : '#94a3b8';
-                                                        return `
+                const rightColor = right.includes('FullControl') ? '#ef4444' :
+                    right.includes('Modify') ? '#f59e0b' :
+                        right.includes('Write') ? '#fbbf24' :
+                            right.includes('Read') ? '#10b981' : '#94a3b8';
+                return `
                                                         <span style="background: ${rightColor}20; color: ${rightColor}; padding: 0.1875rem 0.375rem; border-radius: 3px; font-size: 0.6875rem; font-weight: 600; border: 1px solid ${rightColor}40; font-family: 'Consolas', 'Monaco', monospace;">
                                                             ${right}
                                                         </span>
                                                     `;
-                                                    }).join('')}
+            }).join('')}
                                                 </div>
                                                 ` : `<span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem; color: #cbd5e1; word-break: break-word;" title="${rightsStr}">${rightsStr}</span>`}
                                             </td>
@@ -2914,26 +2914,26 @@ export class FileShareAuditorPage {
                                                 ${hasIssues ? `
                                                 <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                                     ${perm.misconfigurations.map(issue => {
-                                                        const issueColor = issue.match(/Critical:/) ? '#ef4444' : 
-                                                                          issue.match(/High:/) ? '#f59e0b' : 
-                                                                          issue.match(/Warning:/) ? '#fbbf24' : '#94a3b8';
-                                                        const issueIcon = issue.match(/Critical:/) ? 'times-circle' : 
-                                                                          issue.match(/High:/) ? 'exclamation-circle' : 
-                                                                          'info-circle';
-                                                        const shortIssue = issue.replace(/^(Critical|High|Warning):\s*/, '');
-                                                        return `
+                const issueColor = issue.match(/Critical:/) ? '#ef4444' :
+                    issue.match(/High:/) ? '#f59e0b' :
+                        issue.match(/Warning:/) ? '#fbbf24' : '#94a3b8';
+                const issueIcon = issue.match(/Critical:/) ? 'times-circle' :
+                    issue.match(/High:/) ? 'exclamation-circle' :
+                        'info-circle';
+                const shortIssue = issue.replace(/^(Critical|High|Warning):\s*/, '');
+                return `
                                                         <span style="color: ${issueColor}; font-size: 0.6875rem; display: flex; align-items: flex-start; gap: 0.25rem; line-height: 1.3;">
                                                             <i class="fas fa-${issueIcon}" style="margin-top: 0.125rem; flex-shrink: 0; font-size: 0.5625rem;"></i>
                                                             <span style="word-break: break-word;">${shortIssue}</span>
                                                         </span>
                                                     `;
-                                                    }).join('')}
+            }).join('')}
                                                 </div>
                                                 ` : '<span style="color: #10b981; font-size: 0.6875rem;"><i class="fas fa-check" style="font-size: 0.5625rem;"></i></span>'}
                                             </td>
                                         </tr>
                                         `;
-                                    }).join('')}
+        }).join('')}
                                 </tbody>
                             </table>
                         </div>
@@ -2947,7 +2947,7 @@ export class FileShareAuditorPage {
     toggleFolder(folderId) {
         const content = document.querySelector(`.folder-tree-content-${folderId}`);
         const icon = document.querySelector(`.folder-chevron-${folderId}`);
-        
+
         if (content) {
             const currentDisplay = window.getComputedStyle(content).display;
             const isVisible = currentDisplay !== 'none';
@@ -2999,8 +2999,8 @@ export class FileShareAuditorPage {
             this.selectedWarningIssuesModal = null;
         }
         // Only unlock if no other modals are open
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen &&
             this.selectedGroupModal === null && this.selectedUserModal === null) {
             this.unlockBodyScroll();
         }
@@ -3011,9 +3011,9 @@ export class FileShareAuditorPage {
         const isCritical = type === 'critical';
         const selectedModal = isCritical ? this.selectedCriticalIssuesModal : this.selectedWarningIssuesModal;
         if (!selectedModal) return;
-        
-        const issues = isCritical ? 
-            (this.reportData?.folderAnalysis?.summary?.criticalIssues || []) : 
+
+        const issues = isCritical ?
+            (this.reportData?.folderAnalysis?.summary?.criticalIssues || []) :
             (this.reportData?.folderAnalysis?.summary?.warningIssues || []);
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(issues.length / pageSize));
@@ -3032,8 +3032,8 @@ export class FileShareAuditorPage {
     closeGroupModal() {
         this.selectedGroupModal = null;
         // Only unlock if no other modals are open
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen &&
             this.selectedUserModal === null) {
             this.unlockBodyScroll();
         }
@@ -3049,8 +3049,8 @@ export class FileShareAuditorPage {
     closeUserModal() {
         this.selectedUserModal = null;
         // Only unlock if no other modals are open
-        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal && 
-            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen && 
+        if (!this.showCriticalIssuesModal && !this.showWarningIssuesModal &&
+            !this.isRedFlagsModalOpen && !this.isShareDetailsModalOpen &&
             this.selectedGroupModal === null) {
             this.unlockBodyScroll();
         }
@@ -3059,8 +3059,8 @@ export class FileShareAuditorPage {
 
     renderIssuesModal(type) {
         const isCritical = type === 'critical';
-        const issues = isCritical ? (this.reportData?.folderAnalysis?.summary?.criticalIssues || []) : 
-                                    (this.reportData?.folderAnalysis?.summary?.warningIssues || []);
+        const issues = isCritical ? (this.reportData?.folderAnalysis?.summary?.criticalIssues || []) :
+            (this.reportData?.folderAnalysis?.summary?.warningIssues || []);
         const showModal = isCritical ? this.showCriticalIssuesModal : this.showWarningIssuesModal;
         const selectedModal = isCritical ? this.selectedCriticalIssuesModal : this.selectedWarningIssuesModal;
         const title = isCritical ? 'Critical Security Issues' : 'Warning Issues';
@@ -3159,7 +3159,7 @@ export class FileShareAuditorPage {
             }
 
             this.showMessage('Report deleted successfully!', 'success');
-            
+
             // Navigate back to list page
             setTimeout(() => {
                 if (window.appInstance) {
