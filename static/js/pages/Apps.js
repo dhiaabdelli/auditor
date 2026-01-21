@@ -12,12 +12,15 @@ export class AppsPage {
                 infrastructureDiagram: 'Infrastructure Diagram',
                 sshClient: 'SSH Client',
                 sftpClient: 'SFTP Client',
-                ipScanner: 'IP Scanner',
-                packetAnalyzer: 'Packet Analyzer',
-                reportTemplates: 'Reports',
+                ipScanner: 'DeepView Scout',
+                packetAnalyzer: 'DeepView Packet',
+                reportTemplates: 'DeepView Reports',
                 infrastructureInventory: 'Infrastructure Inventory',
                 scriptGenerator: 'Script Generator',
                 batchGenerator: 'Batch Generator',
+                speedtest: 'DeepView Pulse',
+                domainLookup: 'DeepView Domain Lookup',
+                pingTracer: 'DeepView Trace',
                 // App descriptions
                 hypervManagerDesc: 'Manage Hyper-V virtual machines, hosts, and clusters',
                 hypervReportDesc: 'Audit and analyze Hyper-V clusters and hosts',
@@ -27,12 +30,15 @@ export class AppsPage {
                 sshClientDesc: 'Connect to remote servers via SSH',
                 sftpClientDesc: 'Transfer files securely via SFTP',
                 networkToolsDesc: 'Diagnose, troubleshoot, and analyze network connectivity and performance',
-                ipScannerDesc: 'Scan IP ranges to discover active hosts, open ports, and network devices',
-                packetAnalyzerDesc: 'Capture and analyze network packets in real-time with protocol decoding',
+                ipScannerDesc: 'Map, monitor, and analyze network devices across all subnets',
+                packetAnalyzerDesc: 'Real-time packet capture and deep network traffic analysis',
                 reportTemplatesDesc: 'Create and manage document templates for automated report generation',
                 infrastructureInventoryDesc: 'Generate comprehensive infrastructure documentation in Excel format',
                 scriptGeneratorDesc: 'Generate PowerShell and batch scripts',
                 batchGeneratorDesc: 'Create and manage batch operations',
+                speedtestDesc: 'Real-time bandwidth and latency testing for accurate network performance',
+                domainLookupDesc: 'Lookup domain registration, history, and relationships using RDAP securely',
+                pingTracerDesc: 'Continuously trace network paths, monitor connectivity, latency, and performance',
                 subnetCalculator: 'Network Tools',
                 subnetCalculatorDesc: 'IPv4 subnet calculator, converter, range expander, MAC lookup and generator',
                 cryptoTools: 'Crypto Tools',
@@ -41,8 +47,8 @@ export class AppsPage {
                 webToolsDesc: 'OTP generator, JWT parser, keycode info, JSON diff and basic auth',
                 developmentTools: 'Development Tools',
                 developmentToolsDesc: 'Crontab generator, JSON/SQL/XML formatter, chmod calculator, Docker converter',
-                automation: 'Automation',
-                automationDesc: 'Create automated workflows with visual flow builder',
+                automation: 'DeepView Automation',
+                automationDesc: 'Automate IT tasks, workflows, and system operations across your infrastructure',
                 healthMonitor: 'Health Monitor',
                 healthMonitorDesc: 'Monitor the health and status of all application services',
                 // Sections
@@ -50,12 +56,12 @@ export class AppsPage {
                 toolsDesc: 'Network, Crypto, Web, and Development tools',
                 documentation: 'Documentation',
                 documentationDesc: 'Access system documentation and guides',
-                auditor: 'Auditor',
-                auditorDesc: 'Hyper-V, ESXi, vSphere, Windows, and Active Directory auditing and analysis tools',
+                auditor: 'DeepView Insight',
+                auditorDesc: 'Audit and analyze Hyper-V, ESXi, Windows, and Active Directory securely',
                 manager: 'Manager',
                 managerDesc: 'Manage Hyper-V, VMware, KVM, Proxmox, and other virtualization platforms',
-                remote: 'Remote',
-                remoteDesc: 'SSH, SFTP, FTP, PowerShell, and other remote connection tools',
+                remote: 'DeepView Remote',
+                remoteDesc: 'Securely access and manage systems remotely via multiple protocols.',
                 crypto: 'Crypto',
                 development: 'Development',
                 infrastructure: 'Infrastructure Management',
@@ -88,14 +94,21 @@ export class AppsPage {
                 sshClientDesc: 'Se connecter aux serveurs distants via SSH',
                 sftpClientDesc: 'Transférer des fichiers en toute sécurité via SFTP',
                 networkToolsDesc: 'Outils complets de diagnostic et d\'analyse réseau',
-                ipScanner: 'Scanner IP',
-                ipScannerDesc: 'Scanner des plages d\'adresses IP pour découvrir les hôtes actifs, ports ouverts et périphériques réseau',
-                packetAnalyzer: 'Analyseur de Paquets',
-                packetAnalyzerDesc: 'Capturer et analyser les paquets réseau en temps réel avec décodage de protocole',
+                ipScanner: 'DeepView Scout',
+                ipScannerDesc: 'Cartographiez, surveillez et analysez les périphériques réseau sur tous les sous-réseaux',
+                packetAnalyzer: 'DeepView Packet',
+                packetAnalyzerDesc: 'Capture de paquets en temps réel et analyse approfondie du trafic réseau',
+                reportTemplates: 'DeepView Reports',
                 reportTemplatesDesc: 'Créer et gérer des modèles de documents pour la génération automatique de rapports',
                 infrastructureInventoryDesc: 'Générer une documentation complète de l\'infrastructure au format Excel',
                 scriptGeneratorDesc: 'Générer des scripts PowerShell et batch',
+                speedtest: 'DeepView Pulse',
+                domainLookup: 'DeepView Domain Lookup',
+                pingTracer: 'DeepView Trace',
                 batchGeneratorDesc: 'Créer et gérer les opérations par lots',
+                speedtestDesc: 'Tests de bande passante et de latence en temps réel pour une performance réseau précise',
+                domainLookupDesc: 'Consultez l\'enregistrement, l\'historique et les relations des domaines via RDAP en toute sécurité',
+                pingTracerDesc: 'Tracez en continu les chemins réseau, surveillez la connectivité, la latence et les performances',
                 subnetCalculator: 'Outils Réseau',
                 subnetCalculatorDesc: 'Calculateur de sous-réseau IPv4, convertisseur, développeur de plage, recherche et générateur MAC',
                 cryptoTools: 'Outils Crypto',
@@ -104,8 +117,8 @@ export class AppsPage {
                 webToolsDesc: 'Générateur OTP, analyseur JWT, info clavier, diff JSON et authentification de base',
                 developmentTools: 'Outils de Développement',
                 developmentToolsDesc: 'Générateur crontab, formateur JSON/SQL/XML, calculateur chmod, convertisseur Docker',
-                automation: 'Automatisation',
-                automationDesc: 'Créer des workflows automatisés avec un constructeur de flux visuel',
+                automation: 'DeepView Automation',
+                automationDesc: 'Automatisez les tâches informatiques, les flux de travail et les opérations système sur votre infrastructure',
                 healthMonitor: 'Moniteur de Santé',
                 healthMonitorDesc: 'Surveiller la santé et le statut de tous les services de l\'application',
                 // Sections
@@ -113,12 +126,12 @@ export class AppsPage {
                 toolsDesc: 'Outils réseau, crypto, web et développement',
                 documentation: 'Documentation',
                 documentationDesc: 'Accéder à la documentation système et aux guides',
-                auditor: 'Auditeur',
-                auditorDesc: 'Outils d\'audit et d\'analyse Hyper-V, ESXi, vSphere, Windows et Active Directory',
+                auditor: 'DeepView Insight',
+                auditorDesc: 'Auditez et analysez Hyper-V, ESXi, Windows et Active Directory en toute sécurité',
                 manager: 'Gestionnaire',
                 managerDesc: 'Gérer Hyper-V, VMware, KVM, Proxmox et autres plateformes de virtualisation',
-                remote: 'Distant',
-                remoteDesc: 'SSH, SFTP, FTP, PowerShell et autres outils de connexion à distance',
+                remote: 'DeepView Remote',
+                remoteDesc: 'Accédez et gérez vos systèmes à distance de manière sécurisée via plusieurs protocoles.',
                 crypto: 'Crypto',
                 development: 'Développement',
                 infrastructure: 'Gestion d\'Infrastructure',
@@ -218,16 +231,16 @@ export class AppsPage {
             {
                 id: 'ping-tracer',
                 icon: 'fa-route',
-                title: 'Ping Tracer',
-                description: 'Continuously ping each network host between your computer and a destination',
+                title: this.t('pingTracer'),
+                description: this.t('pingTracerDesc'),
                 color: '#6366f1',
                 section: 'networking'
             },
             {
                 id: 'domain-lookup',
                 icon: 'fa-shield-dog',
-                title: 'Domain Lookup',
-                description: 'Look up domain information, registration history, and entity relationships using RDAP',
+                title: this.t('domainLookup'),
+                description: this.t('domainLookupDesc'),
                 color: '#f59e0b',
                 section: 'networking'
             },
@@ -242,8 +255,8 @@ export class AppsPage {
             {
                 id: 'speedtest',
                 icon: 'fa-tachometer-alt',
-                title: 'Speedtest',
-                description: 'Test your internet connection speed and view historical results',
+                title: this.t('speedtest'),
+                description: this.t('speedtestDesc'),
                 color: '#ec4899',
                 section: 'networking'
             },
@@ -268,26 +281,6 @@ export class AppsPage {
                 section: 'tools'
             },
 
-            // Documentation Section
-            {
-                id: 'documentation',
-                icon: 'fa-book',
-                title: this.t('documentation'),
-                description: this.t('documentationDesc'),
-                color: '#8b5cf6',
-                section: 'documentation'
-            },
-
-            // To-Do Manager Section
-            {
-                id: 'todo',
-                icon: 'fa-tasks',
-                title: this.t('todoManager'),
-                description: this.t('todoManagerDesc'),
-                color: '#f59e0b',
-                section: 'productivity'
-            },
-
             // Activity Log
             {
                 id: 'activity-log',
@@ -301,18 +294,15 @@ export class AppsPage {
 
         return `
             <div class="apps-page">
-                <div class="apps-grid">
+                <div class="apps-grid grid-compact">
                     ${apps.map((app, index) => `
                         <div class="app-card" data-app="${app.id}" onclick="appsPageInstance.navigateTo('${app.id}')">
                             <div class="app-icon" style="background: linear-gradient(135deg, ${app.color}15 0%, ${app.color}25 100%);">
                                 <i class="fas ${app.icon}" style="color: ${app.color};"></i>
                             </div>
-                            <div class="app-content">
+                            <div class="app-info">
                                 <h3 class="app-title">${app.title}</h3>
                                 ${app.description ? `<p class="app-description">${app.description}</p>` : ''}
-                            </div>
-                            <div class="app-arrow">
-                                <i class="fas fa-chevron-right"></i>
                             </div>
                         </div>
                     `).join('')}

@@ -7,6 +7,8 @@ export class VeeamAuditorPage {
         this.activeView = 'overview'; // 'overview', 'license', 'database', 'backup-jobs', 'repositories', 'sobrs', 'proxies', 'wan-accelerators', 'managed-servers', 'restore-points'
         this.showRestorePointDetailsModalFlag = false;
         this.selectedRestorePointDetails = null;
+        this.sidebarCollapsed = false;
+        this.expandedCategories = new Set(['environment', 'monitoring']);
         this.translations = {
             en: {
                 title: 'Veeam Backup & Replication Audit',
@@ -113,6 +115,25 @@ export class VeeamAuditorPage {
         };
     }
 
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        this.updateDisplay();
+    }
+
+    toggleCategory(key) {
+        if (this.expandedCategories.has(key)) {
+            this.expandedCategories.delete(key);
+        } else {
+            this.expandedCategories.add(key);
+        }
+        this.updateDisplay();
+    }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
+    }
+
     t(key) {
         return this.translations[this.currentLanguage][key] || key;
     }
@@ -182,100 +203,141 @@ export class VeeamAuditorPage {
         }
 
         return `
-            <div class="page-container-full file-share-auditor-layout">
+            <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
                 <input type="file" id="veeam-report-file-input" accept=".json" style="display: none;" onchange="veeamAuditorInstance.handleFileSelect(event)">
-                <!-- Sidebar Overlay (Mobile) -->
-                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="veeamAuditorInstance.closeSidebar()"></div>
-                <!-- Sidebar Navigation -->
-                <div class="file-share-auditor-sidebar" id="auditor-sidebar">
-                    <div class="file-share-auditor-sidebar-nav">
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('overview')">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Overview</span>
-                        </div>
-                        ${licenseInfo && Object.keys(licenseInfo).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'license' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('license')">
-                            <i class="fas fa-key"></i>
-                            <span>License</span>
-                        </div>
-                        ` : ''}
-                        ${backupServerInfo.databaseType || backupServerInfo.databaseName ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'database' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('database')">
-                            <i class="fas fa-database"></i>
-                            <span>Database</span>
-                        </div>
-                        ` : ''}
-                        ${totalJobs > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'backup-jobs' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('backup-jobs')">
-                            <i class="fas fa-tasks"></i>
-                            <span>Backup Jobs</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${totalJobs})</span>
-                        </div>
-                        ` : ''}
-                        ${repositories.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'repositories' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('repositories')">
-                            <i class="fas fa-hdd"></i>
-                            <span>Repositories</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${repositories.length})</span>
-                        </div>
-                        ` : ''}
-                        ${sobrs.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'sobrs' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('sobrs')">
-                            <i class="fas fa-layer-group"></i>
-                            <span>SOBRs</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${sobrs.length})</span>
-                        </div>
-                        ` : ''}
-                        ${proxies.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'proxies' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('proxies')">
-                            <i class="fas fa-network-wired"></i>
-                            <span>Proxies</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${proxies.length})</span>
-                        </div>
-                        ` : ''}
-                        ${wanAccelerators.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'wan-accelerators' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('wan-accelerators')">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>WAN Accelerators</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${wanAccelerators.length})</span>
-                        </div>
-                        ` : ''}
-                        ${managedServers.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'managed-servers' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('managed-servers')">
-                            <i class="fas fa-server"></i>
-                            <span>Managed Servers</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${managedServers.length})</span>
-                        </div>
-                        ` : ''}
-                        ${totalSessions > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'sessions' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('sessions')">
-                            <i class="fas fa-history"></i>
-                            <span>Session Logs</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${totalSessions})</span>
-                        </div>
-                        ` : ''}
-                        ${restorePoints.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'restore-points' ? 'active' : ''}" 
-                             onclick="veeamAuditorInstance.switchView('restore-points')">
-                            <i class="fas fa-clock"></i>
-                            <span>Restore Points</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${restorePoints.length})</span>
-                        </div>
-                        ` : ''}
+                
+                <aside class="administration-sidebar">
+                    <div class="sidebar-collapse-header">
+                        <button class="collapse-btn" onclick="veeamAuditorInstance.toggleSidebar()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
                     </div>
-                </div>
-                <!-- Main Content -->
-                <div class="file-share-auditor-main">
+                    <nav class="sidebar-nav">
+                        <!-- Environment Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('environment') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="veeamAuditorInstance.toggleCategory('environment')">
+                                <div class="category-title">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>Environment</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('overview')">
+                                    <span>Overview</span>
+                                </button>
+                                ${licenseInfo && Object.keys(licenseInfo).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'license' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('license')">
+                                    <span>License</span>
+                                </button>
+                                ` : ''}
+                                ${backupServerInfo.databaseType || backupServerInfo.databaseName ? `
+                                <button class="nav-item ${this.activeView === 'database' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('database')">
+                                    <span>Database</span>
+                                </button>
+                                ` : ''}
+                                ${totalJobs > 0 ? `
+                                <button class="nav-item ${this.activeView === 'backup-jobs' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('backup-jobs')">
+                                    <span>Backup Jobs (${totalJobs})</span>
+                                </button>
+                                ` : ''}
+                                ${repositories.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'repositories' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('repositories')">
+                                    <span>Repositories (${repositories.length})</span>
+                                </button>
+                                ` : ''}
+                                ${sobrs.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'sobrs' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('sobrs')">
+                                    <span>SOBRs (${sobrs.length})</span>
+                                </button>
+                                ` : ''}
+                                ${proxies.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'proxies' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('proxies')">
+                                    <span>Proxies (${proxies.length})</span>
+                                </button>
+                                ` : ''}
+                                ${wanAccelerators.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'wan-accelerators' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('wan-accelerators')">
+                                    <span>WAN Accel (${wanAccelerators.length})</span>
+                                </button>
+                                ` : ''}
+                                ${managedServers.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'managed-servers' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('managed-servers')">
+                                    <span>Managed Servers (${managedServers.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Monitoring Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('monitoring') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="veeamAuditorInstance.toggleCategory('monitoring')">
+                                <div class="category-title">
+                                    <i class="fas fa-history"></i>
+                                    <span>Monitoring</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${totalSessions > 0 ? `
+                                <button class="nav-item ${this.activeView === 'sessions' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('sessions')">
+                                    <span>Sessions (${totalSessions})</span>
+                                </button>
+                                ` : ''}
+                                ${restorePoints.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'restore-points' ? 'active' : ''}" 
+                                        onclick="veeamAuditorInstance.switchView('restore-points')">
+                                    <span>Restore Points (${restorePoints.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </nav>
+                </aside>
+
+                <main class="administration-content">
+                    <div class="file-share-auditor-main">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
+                            <button class="page-header-back-btn" onclick="veeamAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                                <i class="fas fa-arrow-left" style="font-size: 0.95rem;"></i>
+                            </button>
+                            <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
+                                <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.reportData?.name || this.t('title')}</h2>
+                                <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${veeam.backupServerInfo?.serverName || 'Veeam Backup'}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem; align-items: center;">
+                            <button class="premium-action-btn" onclick="veeamAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+                                <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
+                            </button>
+                            <button class="premium-action-btn" onclick="veeamAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                <i class="fas fa-code" style="font-size: 0.7rem;"></i>
+                                <span>Script</span>
+                            </button>
+                            <button class="premium-action-btn" onclick="veeamAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                <i class="fas fa-file-alt" style="font-size: 0.7rem;"></i>
+                                <span>Plain</span>
+                            </button>
+                            <button class="premium-action-btn" onclick="veeamAuditorInstance.importReport()" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                <i class="fas fa-upload" style="font-size: 0.7rem;"></i>
+                                <span>Import</span>
+                            </button>
+                            <button class="premium-action-btn" onclick="veeamAuditorInstance.deleteReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                                <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                            </button>
+                        </div>
+                    </div>
                     ${this.activeView === 'license' ? this.renderLicenseView(licenseInfo) :
                 this.activeView === 'database' ? this.renderDatabaseView(backupServerInfo) :
                     this.activeView === 'backup-jobs' ? this.renderBackupJobsView(jobInfo) :
@@ -289,7 +351,9 @@ export class VeeamAuditorPage {
                                                     this.renderOverviewView(veeam, data)}
                     ${this.showRestorePointDetailsModalFlag ? this.renderRestorePointDetailsModal() : ''}
                 </div>
-            </div>
+            </main>
+        </div>
+        <div id="report-message" class="message" style="display: none;"></div>
         `;
     }
 
@@ -2485,12 +2549,17 @@ export class VeeamAuditorPage {
     async mount() {
         window.veeamAuditorInstance = this;
         window.veeamAuditorPage = this;
+        document.body.style.overflow = 'hidden';
         const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
         this.reportId = urlParams.get('id');
 
         if (this.reportId) {
             await this.loadReport();
         }
+    }
+
+    async unmount() {
+        document.body.style.overflow = '';
     }
 
     async loadReport() {
@@ -2666,64 +2735,65 @@ export class VeeamAuditorPage {
         }
     }
 
-    updateDisplay() {
+    async updateDisplay() {
         const content = document.getElementById('page-content');
         if (content) {
-            this.render().then(html => {
-                content.innerHTML = html;
-                // Update page navbar title after rendering
-                if (window.pageNavbarInstance) {
-                    window.pageNavbarInstance.updateTitle();
-                }
-                // Draw charts after rendering
-                setTimeout(() => {
-                    this.drawComplianceChart();
-                    this.drawJobsResultChart();
-                    this.drawSessionStatsChart();
-                    this.drawBackupSizesChart();
+            const html = await this.render();
+            content.innerHTML = html;
 
-                    // Redraw charts on window resize/zoom with debounce
-                    let resizeTimeout;
-                    const redrawCharts = () => {
-                        clearTimeout(resizeTimeout);
-                        resizeTimeout = setTimeout(() => {
-                            this.drawComplianceChart();
-                            this.drawJobsResultChart();
-                            this.drawSessionStatsChart();
-                            this.drawBackupSizesChart();
-                        }, 150);
-                    };
+            // Set instance for event handlers
+            window.veeamAuditorInstance = this;
+            window.veeamAuditorPage = this;
 
-                    // Use ResizeObserver for better performance
-                    if (window.ResizeObserver) {
-                        const chartsContainer = document.getElementById('page-content');
-                        if (chartsContainer) {
-                            const resizeObserver = new ResizeObserver(() => {
-                                redrawCharts();
-                            });
-                            resizeObserver.observe(chartsContainer);
+            // Update page navbar title after rendering
+            if (window.pageNavbarInstance) {
+                window.pageNavbarInstance.updateTitle();
+            }
+            // Draw charts after rendering
+            setTimeout(() => {
+                this.drawComplianceChart();
+                this.drawJobsResultChart();
+                this.drawSessionStatsChart();
+                this.drawBackupSizesChart();
 
-                            // Also observe each canvas container individually
-                            const canvasIds = ['complianceChart', 'jobsResultChart', 'sessionStatsChart', 'backupSizesChart'];
-                            canvasIds.forEach(id => {
-                                const canvas = document.getElementById(id);
-                                if (canvas && canvas.parentElement) {
-                                    resizeObserver.observe(canvas.parentElement);
-                                }
-                            });
-                        }
-                    } else {
-                        // Fallback to window resize event
-                        window.addEventListener('resize', redrawCharts);
+                // Redraw charts on window resize/zoom with debounce
+                let resizeTimeout;
+                const redrawCharts = () => {
+                    clearTimeout(resizeTimeout);
+                    resizeTimeout = setTimeout(() => {
+                        this.drawComplianceChart();
+                        this.drawJobsResultChart();
+                        this.drawSessionStatsChart();
+                        this.drawBackupSizesChart();
+                    }, 150);
+                };
+
+                // Use ResizeObserver for better performance
+                if (window.ResizeObserver) {
+                    const chartsContainer = document.getElementById('page-content');
+                    if (chartsContainer) {
+                        const resizeObserver = new ResizeObserver(() => {
+                            redrawCharts();
+                        });
+                        resizeObserver.observe(chartsContainer);
+
+                        // Also observe each canvas container individually
+                        const canvasIds = ['complianceChart', 'jobsResultChart', 'sessionStatsChart', 'backupSizesChart'];
+                        canvasIds.forEach(id => {
+                            const canvas = document.getElementById(id);
+                            if (canvas && canvas.parentElement) {
+                                resizeObserver.observe(canvas.parentElement);
+                            }
+                        });
                     }
-                }, 100);
-                setTimeout(() => {
-                    this.drawInstancesChart();
-                }, 200);
-
-                // Make showJobDetails available globally
-                window.veeamAuditorPage = this;
-            });
+                } else {
+                    // Fallback to window resize event
+                    window.addEventListener('resize', redrawCharts);
+                }
+            }, 100);
+            setTimeout(() => {
+                this.drawInstancesChart();
+            }, 200);
         }
     }
 
@@ -4490,32 +4560,6 @@ export class VeeamAuditorPage {
         }
     }
 
-    toggleSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('sidebar-open');
-            overlay.classList.toggle('show');
-        }
-    }
-
-    closeSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-        }
-    }
-
-    switchView(view) {
-        this.activeView = view;
-        this.updateDisplay();
-        // Close sidebar on mobile when switching views
-        if (window.innerWidth <= 768) {
-            this.closeSidebar();
-        }
-    }
 
     renderRestorePointsView(restorePoints) {
         if (!restorePoints || restorePoints.length === 0) {

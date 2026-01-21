@@ -19,8 +19,7 @@ import { FileShareAuditorListPage } from './pages/FileShareAuditorList.js';
 import { VeeamAuditorPage } from './pages/VeeamAuditor.js';
 import { VeeamAuditorListPage } from './pages/VeeamAuditorList.js';
 // Script Tools
-import { DocumentationPage } from './pages/Documentation.js';
-import { TodoPage } from './pages/Todo.js';
+
 import { InfrastructureDiagramPage } from './pages/InfrastructureDiagram.js';
 import { SSHClientPage } from './pages/SSHClient.js';
 import { SFTPClientPage } from './pages/SFTPClient.js';
@@ -44,6 +43,7 @@ import { HealthMonitorPage } from './pages/HealthMonitor.js';
 import { ActivityLogPage } from './pages/ActivityLog.js';
 import { SettingsPage } from './pages/Settings.js';
 import { WifiManagerPage } from './pages/WifiManager.js';
+import { AdministrationPage } from './pages/Administration.js';
 import { OverviewPage } from './pages/Controller.js';
 
 class App {
@@ -328,7 +328,6 @@ class App {
             // Auditor
             'hyperv-auditor', 'hyperv-auditor-list', 'hyperv-auditor-details', 'esxi-auditor', 'vsphere-auditor', 'windows-auditor', 'windows-server-auditor-list', 'windows-server-auditor-details', 'linux-auditor', 'linux-server-auditor-list', 'linux-server-auditor-details', 'file-share-auditor', 'file-share-auditor-list', 'file-share-auditor-details', 'veeam-auditor-list', 'veeam-auditor-details', 'active-directory-auditor',
             // Script Tools
-            'documentation', 'todo',
             // Diagram Tools
             'infrastructure-diagram',
             // Automation
@@ -350,7 +349,7 @@ class App {
             // Development Tools
             'development-tools',
             // Controller (includes network-overview, wifi-manager, health-monitor, and network-interfaces)
-            'controller', 'network-overview', 'wifi-manager', 'health-monitor', 'network-interfaces',
+            'controller', 'network-overview', 'administration', 'wifi-manager', 'health-monitor', 'network-interfaces',
             // Activity Log
             'activity-log', 'activity-log-sessions',
             // Settings
@@ -980,16 +979,7 @@ class App {
                 page = new HyperVAuditorListPage(); // Placeholder - will be replaced with ActiveDirectoryAuditorPage
                 break;
             // Script Tools
-            case 'documentation':
-                page = new DocumentationPage();
-                // Initialize and load data
-                page.init().then(() => {
-                    page.updateDisplay();
-                });
-                break;
-            case 'todo':
-                page = new TodoPage();
-                break;
+
             case 'infrastructure-diagram':
                 page = new InfrastructureDiagramPage();
                 break;
@@ -1089,11 +1079,14 @@ class App {
                 break;
             case 'controller':
             case 'network-overview':
-            case 'wifi-manager':
             case 'network-interfaces':
                 page = new OverviewPage();
                 // Set instance immediately so onclick handlers work
                 window.overviewInstance = page;
+                break;
+            case 'administration':
+            case 'wifi-manager':
+                page = new AdministrationPage();
                 break;
             case 'activity-log':
             case 'activity-log-sessions':

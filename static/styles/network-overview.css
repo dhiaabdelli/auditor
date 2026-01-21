@@ -241,7 +241,7 @@
     width: 10px;
     left: 2px;
     bottom: 2px;
-    background-color: white;
+    background-color: var(--card-bg);
     -webkit-transition: .4s;
     transition: .4s;
 }

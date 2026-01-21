@@ -57,7 +57,7 @@ export class InfrastructureDiagramPage {
 
     renderListView() {
         const filteredDiagrams = this.getFilteredDiagrams();
-        
+
         return `
             <div class="page-container-full">
                 <div class="page-header">
@@ -87,7 +87,7 @@ export class InfrastructureDiagramPage {
                                    value="${this.escapeHtml(this.searchQuery)}"
                                    oninput="infraDiagramInstance.searchQuery = this.value; infraDiagramInstance.updateDisplay()"
                                    style="padding-left: 2.5rem;">
-                            <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
+                            <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
                         </div>
                         <select id="diagram-sort" class="form-control" style="width: auto;" onchange="infraDiagramInstance.sortBy = this.value; infraDiagramInstance.updateDisplay()">
                             <option value="updated" ${this.sortBy === 'updated' ? 'selected' : ''}>Last Updated</option>
@@ -371,38 +371,38 @@ export class InfrastructureDiagramPage {
                 </div>
 
                 ${(() => {
-                    // Group templates by category
-                    const categories = {
-                        server: [],
-                        san: [],
-                        others: []
-                    };
-                    
-                    (this.deviceTemplates || []).forEach(template => {
-                        const category = template.category || (template.type === 'server' ? 'server' : template.type === 'san' ? 'san' : 'others');
-                        if (categories[category]) {
-                            categories[category].push(template);
-                        } else {
-                            categories.others.push(template);
-                        }
-                    });
-                    
-                    const categoryLabels = {
-                        server: 'Servers',
-                        san: 'SAN',
-                        others: 'Others'
-                    };
-                    
-                    const categoryIcons = {
-                        server: 'fa-server',
-                        san: 'fa-database',
-                        others: 'fa-cube'
-                    };
-                    
-                    return Object.keys(categories).map(category => {
-                        const templates = categories[category];
-                        
-                        return `
+                // Group templates by category
+                const categories = {
+                    server: [],
+                    san: [],
+                    others: []
+                };
+
+                (this.deviceTemplates || []).forEach(template => {
+                    const category = template.category || (template.type === 'server' ? 'server' : template.type === 'san' ? 'san' : 'others');
+                    if (categories[category]) {
+                        categories[category].push(template);
+                    } else {
+                        categories.others.push(template);
+                    }
+                });
+
+                const categoryLabels = {
+                    server: 'Servers',
+                    san: 'SAN',
+                    others: 'Others'
+                };
+
+                const categoryIcons = {
+                    server: 'fa-server',
+                    san: 'fa-database',
+                    others: 'fa-cube'
+                };
+
+                return Object.keys(categories).map(category => {
+                    const templates = categories[category];
+
+                    return `
                             <div class="toolbar-section">
                                 <div class="toolbar-section-header">
                                     <h4><i class="fas ${categoryIcons[category]}"></i> ${categoryLabels[category]}</h4>
@@ -429,8 +429,8 @@ export class InfrastructureDiagramPage {
                                 </div>
                             </div>
                         `;
-                    }).join('');
-                })()}
+                }).join('');
+            })()}
             </div>
         `;
     }
@@ -551,14 +551,14 @@ export class InfrastructureDiagramPage {
 
             return `
                 <div style="margin-bottom: 2rem;">
-                    <h4 style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #e2e8f0; display: flex; align-items: center; gap: 0.5rem;">
+                    <h4 style="margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--header-border); display: flex; align-items: center; gap: 0.5rem;">
                         <i class="fas ${categoryIcons[category]}"></i>
                         ${categoryLabels[category]}
-                        <span style="font-size: 0.875rem; font-weight: normal; color: #64748b;">(${templates.length})</span>
+                        <span style="font-size: 0.875rem; font-weight: normal; color: var(--text-muted);">(${templates.length})</span>
                     </h4>
                     <div class="templates-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
                         ${templates.map(template => `
-                            <div class="template-card" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 1rem; background: white;">
+                            <div class="template-card" style="border: 1px solid var(--header-border); border-radius: 8px; padding: 1rem; background: var(--card-bg);">
                                 <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
                                     <div>
                                         <strong>${this.escapeHtml(template.name)}</strong>
@@ -607,7 +607,7 @@ export class InfrastructureDiagramPage {
             connectors: [],
             metadata: {}
         };
-        
+
         // Set default category based on type if not set
         if (!template.category) {
             if (template.type === 'server') {
@@ -618,7 +618,7 @@ export class InfrastructureDiagramPage {
                 template.category = 'others';
             }
         }
-        
+
         // Use selectedImagePath if available (for new templates or when user selects a new image)
         // Otherwise use template.imagePath (for editing existing templates)
         // Initialize selectedImagePath from template if not already set
@@ -628,7 +628,7 @@ export class InfrastructureDiagramPage {
         const currentImagePath = this.selectedImagePath || template.imagePath || '';
 
         return `
-            <div style="background: #f8fafc; padding: 1rem; border-radius: 8px;">
+            <div style="background: var(--bg); padding: 1rem; border-radius: 8px;">
                 <h4 style="margin-top: 0;">${this.editingTemplate ? 'Edit' : 'Create'} Device Template</h4>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
@@ -1073,11 +1073,11 @@ export class InfrastructureDiagramPage {
         };
 
         try {
-            const url = this.editingTemplate 
+            const url = this.editingTemplate
                 ? '/api/device-templates/update'
                 : '/api/device-templates';
-            
-            const body = this.editingTemplate 
+
+            const body = this.editingTemplate
                 ? { ...template, id: this.editingTemplate.id }
                 : template;
 
@@ -1174,7 +1174,7 @@ export class InfrastructureDiagramPage {
         window.infraDiagramInstance = this;
         await this.loadDiagrams();
         await this.loadDeviceTemplates();
-        
+
         // Check if we're opening a specific diagram (from URL or state)
         const urlParams = new URLSearchParams(window.location.search);
         const diagramId = urlParams.get('id');
@@ -1188,18 +1188,18 @@ export class InfrastructureDiagramPage {
 
     getFilteredDiagrams() {
         let filtered = [...this.diagrams];
-        
+
         // Apply search filter
         if (this.searchQuery) {
             const query = this.searchQuery.toLowerCase();
-            filtered = filtered.filter(d => 
+            filtered = filtered.filter(d =>
                 d.name.toLowerCase().includes(query)
             );
         }
-        
+
         // Apply sorting
         filtered.sort((a, b) => {
-            switch(this.sortBy) {
+            switch (this.sortBy) {
                 case 'name':
                     return (a.name || '').localeCompare(b.name || '');
                 case 'created':
@@ -1209,7 +1209,7 @@ export class InfrastructureDiagramPage {
                     return new Date(b.updatedAt || b.updated_at || 0) - new Date(a.updatedAt || a.updated_at || 0);
             }
         });
-        
+
         return filtered;
     }
 
@@ -1239,14 +1239,14 @@ export class InfrastructureDiagramPage {
                 this.currentDiagram = diagram;
                 this.components = diagram.components || [];
                 this.connections = diagram.connections || [];
-                
+
                 // Restore template references for components
                 this.components.forEach(component => {
                     if (component.templateId && !component.template) {
                         component.template = (this.deviceTemplates || []).find(t => t.id === component.templateId);
                     }
                 });
-                
+
                 this.viewMode = 'editor';
                 this.updateDisplay();
                 // Wait for DOM to update, then init canvas
@@ -1336,7 +1336,7 @@ export class InfrastructureDiagramPage {
             if (response.ok) {
                 const diagramData = await response.json();
                 diagramData.name = newName;
-                
+
                 const saveResponse = await api.fetch('/api/infrastructure-diagrams', {
                     method: 'POST',
                     headers: {
@@ -1409,21 +1409,21 @@ export class InfrastructureDiagramPage {
             return null;
         }
         // Try to find exact match first (e.g., 'server-dell')
-        let template = this.deviceTemplates.find(t => 
-            `${t.type}-${t.vendor}` === type || 
+        let template = this.deviceTemplates.find(t =>
+            `${t.type}-${t.vendor}` === type ||
             `${t.type}-${t.vendor.toLowerCase()}` === type.toLowerCase()
         );
-        
+
         // Fallback to type match (e.g., 'server-generic')
         if (!template) {
             const parts = type.split('-');
             if (parts.length > 1) {
-                template = this.deviceTemplates.find(t => 
+                template = this.deviceTemplates.find(t =>
                     t.type === parts[0] && t.vendor === 'generic'
                 );
             }
         }
-        
+
         return template || null;
     }
 
@@ -1432,10 +1432,10 @@ export class InfrastructureDiagramPage {
         if (!this.canvas) return;
 
         const ctx = this.canvas.getContext('2d');
-        
+
         // Resize canvas to match wrapper size
         this.resizeCanvas();
-        
+
         // Set up canvas event listeners
         this.canvas.addEventListener('mousedown', (e) => this.handleMouseDown(e));
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -1456,14 +1456,14 @@ export class InfrastructureDiagramPage {
 
     resizeCanvas() {
         if (!this.canvas) return;
-        
+
         const wrapper = this.canvas.parentElement;
         if (!wrapper) return;
-        
+
         // Set canvas size to match wrapper
         this.canvas.width = wrapper.clientWidth;
         this.canvas.height = wrapper.clientHeight;
-        
+
         // Redraw after resize
         this.redraw();
     }
@@ -1474,25 +1474,25 @@ export class InfrastructureDiagramPage {
 
         const header = document.querySelector('.app-header');
         const footer = document.querySelector('.app-footer');
-        
+
         if (!header || !footer) return;
 
         const headerHeight = header.offsetHeight || 80;
         const footerTabs = footer.querySelector('.footer-tabs');
         const footerPanel = footer.querySelector('.footer-panel');
-        
+
         const footerTabsHeight = footerTabs ? footerTabs.offsetHeight : 40;
         const isFooterExpanded = footerPanel && footerPanel.classList.contains('expanded');
-        
+
         // When footer is expanded, it goes over the container
         // So we keep the bottom at tabs height
         const bottom = footerTabsHeight;
         const height = `calc(100vh - ${headerHeight}px - ${footerTabsHeight}px)`;
-        
+
         container.style.top = `${headerHeight}px`;
         container.style.bottom = `${bottom}px`;
         container.style.height = height;
-        
+
         // Resize canvas after container height update
         setTimeout(() => this.resizeCanvas(), 0);
     }
@@ -1531,33 +1531,33 @@ export class InfrastructureDiagramPage {
 
     initializePanning() {
         if (!this.canvas) return;
-        
+
         // Panning is handled in handleMouseDown, handleMouseMove, handleMouseUp
         // This method is here for consistency with AutomationPage structure
     }
 
     handleWheel(e) {
         e.preventDefault();
-        
+
         const rect = this.canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
-        
+
         // Get mouse position in world coordinates before zoom
         const worldX = (screenX - this.canvasOffset.x) / this.zoom;
         const worldY = (screenY - this.canvasOffset.y) / this.zoom;
-        
+
         // Zoom step
         const zoomStep = 0.1;
         const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
         const newZoom = Math.max(0.5, Math.min(2.0, this.zoom + delta));
-        
+
         if (Math.abs(newZoom - this.zoom) > 0.001) {
             // Adjust offset to zoom towards mouse position
             this.canvasOffset.x = screenX - worldX * newZoom;
             this.canvasOffset.y = screenY - worldY * newZoom;
             this.zoom = newZoom;
-            
+
             this.updateZoomIndicator();
             this.redraw();
         }
@@ -1608,7 +1608,7 @@ export class InfrastructureDiagramPage {
         const width = component.width || 120;
         const height = component.height || 80;
         const ports = [];
-        
+
         // Top side ports
         for (let i = 0; i < this.portsPerSide; i++) {
             const x = component.x + (width / (this.portsPerSide + 1)) * (i + 1);
@@ -1622,7 +1622,7 @@ export class InfrastructureDiagramPage {
                 componentId: component.id
             });
         }
-        
+
         // Bottom side ports
         for (let i = 0; i < this.portsPerSide; i++) {
             const x = component.x + (width / (this.portsPerSide + 1)) * (i + 1);
@@ -1636,7 +1636,7 @@ export class InfrastructureDiagramPage {
                 componentId: component.id
             });
         }
-        
+
         // Left side ports
         for (let i = 0; i < this.portsPerSide; i++) {
             const x = component.x;
@@ -1650,7 +1650,7 @@ export class InfrastructureDiagramPage {
                 componentId: component.id
             });
         }
-        
+
         // Right side ports
         for (let i = 0; i < this.portsPerSide; i++) {
             const x = component.x + width;
@@ -1664,25 +1664,25 @@ export class InfrastructureDiagramPage {
                 componentId: component.id
             });
         }
-        
+
         return ports;
     }
-    
+
     /**
      * Get all ports for a component
      */
     getComponentPorts(componentId) {
         const component = this.components.find(c => c.id === componentId);
         if (!component) return [];
-        
+
         if (!component.ports || component.ports.length === 0) {
             component.ports = this.generatePorts(component);
         }
-        
+
         // Update port positions based on current component position
         const width = component.width || 120;
         const height = component.height || 80;
-        
+
         component.ports.forEach(port => {
             if (port.side === 'top') {
                 port.x = component.x + (width / (this.portsPerSide + 1)) * (port.index + 1);
@@ -1698,10 +1698,10 @@ export class InfrastructureDiagramPage {
                 port.y = component.y + (height / (this.portsPerSide + 1)) * (port.index + 1);
             }
         });
-        
+
         return component.ports;
     }
-    
+
     /**
      * Get port at world coordinates
      */
@@ -1724,7 +1724,7 @@ export class InfrastructureDiagramPage {
             alert('Template not found');
             return;
         }
-        
+
         // Create component using template
         const component = {
             id: Date.now(),
@@ -1748,7 +1748,7 @@ export class InfrastructureDiagramPage {
     addComponent(type, options = {}) {
         let template = null;
         let componentType = type;
-        
+
         // Check if it's a template-based component
         if (type.startsWith('template-')) {
             const templateId = parseInt(type.replace('template-', ''));
@@ -1757,7 +1757,7 @@ export class InfrastructureDiagramPage {
             // Try to get template for legacy types (for backward compatibility)
             template = this.getDeviceTemplate(type);
         }
-        
+
         const component = {
             id: Date.now(),
             type: componentType,
@@ -1784,7 +1784,7 @@ export class InfrastructureDiagramPage {
             const template = (this.deviceTemplates || []).find(t => t.id === templateId);
             return template ? template.name : type;
         }
-        
+
         const labels = {
             'box': 'Box',
             'vm': 'VM'
@@ -1797,7 +1797,7 @@ export class InfrastructureDiagramPage {
         if (type.startsWith('template-')) {
             return '#6b7280';
         }
-        
+
         const colors = {
             'box': '#3b82f6',
             'vm': '#10b981'
@@ -1839,7 +1839,7 @@ export class InfrastructureDiagramPage {
         const rect = this.canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
-        
+
         // Convert screen coordinates to world coordinates
         const worldX = (screenX - this.canvasOffset.x) / this.zoom;
         const worldY = (screenY - this.canvasOffset.y) / this.zoom;
@@ -1855,7 +1855,7 @@ export class InfrastructureDiagramPage {
             const deleteBtnX = component.x + imgWidth - deleteBtnSize / 2 - 5;
             const deleteBtnY = component.y - deleteBtnSize / 2 + 5;
             const distance = Math.sqrt(Math.pow(x - deleteBtnX, 2) + Math.pow(y - deleteBtnY, 2));
-            
+
             if (distance <= deleteBtnSize / 2) {
                 // Clicked on delete button - prevent dragging
                 e.stopPropagation();
@@ -1875,11 +1875,11 @@ export class InfrastructureDiagramPage {
                 return;
             }
         }
-        
+
         // Check if clicking on empty space for panning
         if (this.selectedTool === 'select' && e.button === 0) {
             const component = this.getComponentAt(x, y);
-            
+
             if (!component && !this.isDragging) {
                 // Start panning on empty space
                 this.isPanning = true;
@@ -1917,7 +1917,7 @@ export class InfrastructureDiagramPage {
         const rect = this.canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
-        
+
         // Handle panning
         if (this.isPanning) {
             this.canvasOffset.x = screenX - this.panStart.x;
@@ -1925,13 +1925,13 @@ export class InfrastructureDiagramPage {
             this.redraw();
             return;
         }
-        
+
         // Convert screen coordinates to world coordinates
         const worldX = (screenX - this.canvasOffset.x) / this.zoom;
         const worldY = (screenY - this.canvasOffset.y) / this.zoom;
         const x = worldX;
         const y = worldY;
-        
+
         // Handle connection dragging (like Automation)
         if (this.connecting && this.connectionStart) {
             this.tempConnectionEnd = {
@@ -1941,7 +1941,7 @@ export class InfrastructureDiagramPage {
             this.redraw();
             return;
         }
-        
+
         // Check which component is hovered (for showing ports)
         let hoveredComponent = null;
         let hoveredPort = null;
@@ -1965,7 +1965,7 @@ export class InfrastructureDiagramPage {
                 break;
             }
         }
-        
+
         // Check if hovering over delete button
         if (this.selectedComponent && !this.isDragging) {
             const component = this.selectedComponent;
@@ -1975,18 +1975,18 @@ export class InfrastructureDiagramPage {
             const deleteBtnX = component.x + imgWidth - deleteBtnSize / 2 - 5;
             const deleteBtnY = component.y - deleteBtnSize / 2 + 5;
             const distance = Math.sqrt(Math.pow(x - deleteBtnX, 2) + Math.pow(y - deleteBtnY, 2));
-            
+
             if (distance <= deleteBtnSize / 2) {
                 this.hoverDeleteButtonComponent = component;
             } else {
                 this.hoverDeleteButtonComponent = null;
             }
         }
-        
+
         // Update hovered component and port
         const componentChanged = this.hoveredComponent?.id !== hoveredComponent?.id;
         const portChanged = this.hoveredPort?.id !== hoveredPort?.id;
-        
+
         if (componentChanged) {
             this.hoveredComponent = hoveredComponent;
             this.redraw(); // Redraw to show/hide all ports for the component
@@ -1997,7 +1997,7 @@ export class InfrastructureDiagramPage {
                 this.redraw(); // Redraw to highlight/unhighlight port
             }
         }
-        
+
         // Update cursor style
         if (this.isPanning) {
             this.canvas.style.cursor = 'grabbing';
@@ -2010,7 +2010,7 @@ export class InfrastructureDiagramPage {
         } else {
             this.canvas.style.cursor = this.selectedTool === 'select' ? 'grab' : 'crosshair';
         }
-        
+
         if (this.isDragging && this.selectedComponent && !this.connecting) {
             this.selectedComponent.x = x - this.dragOffset.x;
             this.selectedComponent.y = y - this.dragOffset.y;
@@ -2024,7 +2024,7 @@ export class InfrastructureDiagramPage {
             this.isPanning = false;
             this.canvas.style.cursor = this.selectedTool === 'select' ? 'grab' : 'crosshair';
         }
-        
+
         // Handle connection end (like Automation)
         if (this.connecting && this.connectionStart) {
             const rect = this.canvas.getBoundingClientRect();
@@ -2032,11 +2032,11 @@ export class InfrastructureDiagramPage {
             const screenY = e.clientY - rect.top;
             const worldX = (screenX - this.canvasOffset.x) / this.zoom;
             const worldY = (screenY - this.canvasOffset.y) / this.zoom;
-            
+
             const targetPort = this.getPortAt(worldX, worldY);
             if (targetPort) {
                 // Completing a connection
-                if (this.connectionStart.componentId !== targetPort.componentId || 
+                if (this.connectionStart.componentId !== targetPort.componentId ||
                     this.connectionStart.portId !== targetPort.id) {
                     // Create connection between ports
                     this.connections.push({
@@ -2053,7 +2053,7 @@ export class InfrastructureDiagramPage {
             this.cleanupConnection();
             this.isDragging = false;
         }
-        
+
         if (this.selectedTool === 'connect' && this.connectionStart) {
             const rect = this.canvas.getBoundingClientRect();
             const screenX = e.clientX - rect.left;
@@ -2061,7 +2061,7 @@ export class InfrastructureDiagramPage {
             const worldX = (screenX - this.canvasOffset.x) / this.zoom;
             const worldY = (screenY - this.canvasOffset.y) / this.zoom;
             const target = this.getComponentAt(worldX, worldY);
-            
+
             if (target && target !== this.connectionStart) {
                 // Allow multiple connections between same components
                 this.connections.push({
@@ -2073,7 +2073,7 @@ export class InfrastructureDiagramPage {
             }
             this.connectionStart = null;
         }
-        
+
         this.isDragging = false;
         this.redraw();
     }
@@ -2082,13 +2082,13 @@ export class InfrastructureDiagramPage {
         const rect = this.canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
-        
+
         // Convert screen coordinates to world coordinates
         const worldX = (screenX - this.canvasOffset.x) / this.zoom;
         const worldY = (screenY - this.canvasOffset.y) / this.zoom;
         const x = worldX;
         const y = worldY;
-        
+
         // Check if clicking on delete button
         if (this.selectedComponent) {
             const component = this.selectedComponent;
@@ -2098,7 +2098,7 @@ export class InfrastructureDiagramPage {
             const deleteBtnX = component.x + imgWidth - deleteBtnSize / 2 - 5;
             const deleteBtnY = component.y - deleteBtnSize / 2 + 5;
             const distance = Math.sqrt(Math.pow(x - deleteBtnX, 2) + Math.pow(y - deleteBtnY, 2));
-            
+
             if (distance <= deleteBtnSize / 2) {
                 // Clicked on delete button
                 e.stopPropagation();
@@ -2108,7 +2108,7 @@ export class InfrastructureDiagramPage {
                 return;
             }
         }
-        
+
         // Check if clicking on connection delete button
         if (this.connectionDeleteButtons && this.selectedTool === 'select') {
             for (const btn of this.connectionDeleteButtons) {
@@ -2120,7 +2120,7 @@ export class InfrastructureDiagramPage {
                 }
             }
         }
-        
+
         // Check if clicking on a connection
         if (this.selectedTool === 'select' && this.connectionPaths) {
             const clickedConnection = this.getConnectionAt(x, y);
@@ -2137,9 +2137,9 @@ export class InfrastructureDiagramPage {
                 return;
             }
         }
-        
+
         // Port clicks are handled in handleMouseDown, not here
-        
+
         if (this.selectedTool === 'select') {
             const component = this.getComponentAt(x, y);
             if (component) {
@@ -2151,34 +2151,34 @@ export class InfrastructureDiagramPage {
                 // Don't cancel connection on empty space click - allow dragging
             }
         }
-        
+
         // Cancel connection on empty space click (not during drag)
         if (!this.isDragging && this.connecting && !this.getComponentAt(x, y)) {
             this.cleanupConnection();
         }
-        
+
         // Handle component selection/deletion with Ctrl+Click
         if (e.ctrlKey && this.selectedComponent) {
             this.deleteComponent(this.selectedComponent.id);
         }
-        
+
         this.redraw();
     }
-    
+
     getConnectionAt(x, y) {
         if (!this.connectionPaths) return null;
-        
+
         const clickTolerance = 10; // Pixels
-        
+
         for (const pathData of this.connectionPaths) {
             const path = pathData.pathData || pathData.points;
             if (!path) continue;
-            
+
             // Handle simple paths
             if (path && path.type === 'simple') {
                 // Check both segments of the L-shape
                 const { start, corner, end } = path;
-                
+
                 // Check first segment (start to corner)
                 const A1 = x - start.x;
                 const B1 = y - start.y;
@@ -2194,7 +2194,7 @@ export class InfrastructureDiagramPage {
                 if (dist1 <= clickTolerance) {
                     return pathData.connection;
                 }
-                
+
                 // Check second segment (corner to end)
                 const A2 = x - corner.x;
                 const B2 = y - corner.y;
@@ -2215,23 +2215,23 @@ export class InfrastructureDiagramPage {
                 for (let i = 0; i < path.length - 1; i++) {
                     const p1 = path[i];
                     const p2 = path[i + 1];
-                    
+
                     // Calculate distance from point to line segment
                     const A = x - p1.x;
                     const B = y - p1.y;
                     const C = p2.x - p1.x;
                     const D = p2.y - p1.y;
-                    
+
                     const dot = A * C + B * D;
                     const lenSq = C * C + D * D;
                     let param = -1;
-                    
+
                     if (lenSq !== 0) {
                         param = dot / lenSq;
                     }
-                    
+
                     let xx, yy;
-                    
+
                     if (param < 0) {
                         xx = p1.x;
                         yy = p1.y;
@@ -2242,21 +2242,21 @@ export class InfrastructureDiagramPage {
                         xx = p1.x + param * C;
                         yy = p1.y + param * D;
                     }
-                    
+
                     const dx = x - xx;
                     const dy = y - yy;
                     const distance = Math.sqrt(dx * dx + dy * dy);
-                    
+
                     if (distance <= clickTolerance) {
                         return pathData.connection;
                     }
                 }
             }
         }
-        
+
         return null;
     }
-    
+
     deleteConnection(connectionId) {
         this.connections = this.connections.filter(c => c.id !== connectionId);
         if (this.selectedConnection?.id === connectionId) {
@@ -2287,7 +2287,7 @@ export class InfrastructureDiagramPage {
 
     redraw() {
         if (!this.canvas) return;
-        
+
         const ctx = this.canvas.getContext('2d');
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
@@ -2328,7 +2328,7 @@ export class InfrastructureDiagramPage {
         connectionGroups.forEach((conns, key) => {
             // Sort connections by creation order
             conns.sort((a, b) => (a.id || 0) - (b.id || 0));
-            
+
             // Draw each connection with sequential offset
             conns.forEach((conn, index) => {
                 // Center connections around 0, spacing them evenly
@@ -2337,7 +2337,7 @@ export class InfrastructureDiagramPage {
                 this.drawConnection(ctx, conn, adjustedIndex, totalConns, index + 1, null, 0);
             });
         });
-        
+
         // Draw temporary connection line while dragging (like Automation)
         if (this.connecting && this.connectionStart && this.tempConnectionEnd) {
             const fromComponent = this.components.find(c => c.id === this.connectionStart.componentId);
@@ -2359,7 +2359,7 @@ export class InfrastructureDiagramPage {
                         }
                     };
                     const style = styles[connectionType] || styles.network;
-                    
+
                     // Draw temporary connection as boxes (like final connections)
                     const boxWidth = 5; // Reduced from 8
                     const halfWidth = boxWidth / 2;
@@ -2368,7 +2368,7 @@ export class InfrastructureDiagramPage {
                     ctx.lineWidth = 1;
                     ctx.setLineDash([]);
                     ctx.globalAlpha = 0.6;
-                    
+
                     const pathData = this.createLShapedPath(
                         { x: fromPort.x, y: fromPort.y },
                         { x: this.tempConnectionEnd.x, y: this.tempConnectionEnd.y },
@@ -2376,11 +2376,11 @@ export class InfrastructureDiagramPage {
                         fromPort.side, // Pass the source port side
                         null // No destination side for temporary connection
                     );
-                    
+
                     if (pathData.type === 'triple') {
                         // Triple path for top/bottom: start -> down/up -> up/down -> horizontal -> end
                         const { start, corner1, corner2, corner3, end } = pathData;
-                        
+
                         // First segment: from start to corner1 (vertical into component)
                         const v1StartY = Math.min(start.y, corner1.y);
                         const v1EndY = Math.max(start.y, corner1.y);
@@ -2389,7 +2389,7 @@ export class InfrastructureDiagramPage {
                             ctx.fillRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                             ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                         }
-                        
+
                         // Second segment: from corner1 to corner2 (vertical away from component)
                         const v2StartY = Math.min(corner1.y, corner2.y);
                         const v2EndY = Math.max(corner1.y, corner2.y);
@@ -2398,7 +2398,7 @@ export class InfrastructureDiagramPage {
                             ctx.fillRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
                             ctx.strokeRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
                         }
-                        
+
                         // Third segment: from corner2 to corner3 (horizontal)
                         const h3StartX = Math.min(corner2.x, corner3.x);
                         const h3EndX = Math.max(corner2.x, corner3.x);
@@ -2407,7 +2407,7 @@ export class InfrastructureDiagramPage {
                             ctx.fillRect(h3StartX, corner2.y - halfWidth, h3Length, boxWidth);
                             ctx.strokeRect(h3StartX, corner2.y - halfWidth, h3Length, boxWidth);
                         }
-                        
+
                         // Fourth segment: from corner3 to end (vertical to destination)
                         const v4StartY = Math.min(corner3.y, end.y);
                         const v4EndY = Math.max(corner3.y, end.y);
@@ -2419,7 +2419,7 @@ export class InfrastructureDiagramPage {
                     } else if (pathData.type === 'double') {
                         // Double L-shape for temporary connection
                         const { start, corner1, corner2, end } = pathData;
-                        
+
                         // First segment
                         const dx1 = corner1.x - start.x;
                         const dy1 = corner1.y - start.y;
@@ -2440,7 +2440,7 @@ export class InfrastructureDiagramPage {
                                 ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                             }
                         }
-                        
+
                         // Second segment
                         const dx2 = corner2.x - corner1.x;
                         const dy2 = corner2.y - corner1.y;
@@ -2461,7 +2461,7 @@ export class InfrastructureDiagramPage {
                                 ctx.strokeRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
                             }
                         }
-                        
+
                         // Third segment
                         const dx3 = end.x - corner2.x;
                         const dy3 = end.y - corner2.y;
@@ -2488,7 +2488,7 @@ export class InfrastructureDiagramPage {
                         const dx = end.x - start.x;
                         const dy = end.y - start.y;
                         const isHorizontalFirst = Math.abs(dx) > Math.abs(dy);
-                        
+
                         if (isHorizontalFirst) {
                             const h1StartX = Math.min(start.x, corner.x);
                             const h1EndX = Math.max(start.x, corner.x);
@@ -2497,7 +2497,7 @@ export class InfrastructureDiagramPage {
                                 ctx.fillRect(h1StartX, start.y - halfWidth, h1Length, boxWidth);
                                 ctx.strokeRect(h1StartX, start.y - halfWidth, h1Length, boxWidth);
                             }
-                            
+
                             const vStartY = Math.min(start.y, end.y);
                             const vEndY = Math.max(start.y, end.y);
                             const vLength = vEndY - vStartY;
@@ -2505,7 +2505,7 @@ export class InfrastructureDiagramPage {
                                 ctx.fillRect(corner.x - halfWidth, vStartY, boxWidth, vLength);
                                 ctx.strokeRect(corner.x - halfWidth, vStartY, boxWidth, vLength);
                             }
-                            
+
                             const h2StartX = Math.min(corner.x, end.x);
                             const h2EndX = Math.max(corner.x, end.x);
                             const h2Length = h2EndX - h2StartX;
@@ -2521,7 +2521,7 @@ export class InfrastructureDiagramPage {
                                 ctx.fillRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                                 ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                             }
-                            
+
                             const hStartX = Math.min(start.x, end.x);
                             const hEndX = Math.max(start.x, end.x);
                             const hLength = hEndX - hStartX;
@@ -2529,7 +2529,7 @@ export class InfrastructureDiagramPage {
                                 ctx.fillRect(hStartX, corner.y - halfWidth, hLength, boxWidth);
                                 ctx.strokeRect(hStartX, corner.y - halfWidth, hLength, boxWidth);
                             }
-                            
+
                             const v2StartY = Math.min(corner.y, end.y);
                             const v2EndY = Math.max(corner.y, end.y);
                             const v2Length = v2EndY - v2StartY;
@@ -2539,7 +2539,7 @@ export class InfrastructureDiagramPage {
                             }
                         }
                     }
-                    
+
                     ctx.globalAlpha = 1.0;
                 }
             }
@@ -2549,7 +2549,7 @@ export class InfrastructureDiagramPage {
         this.components.forEach(component => {
             this.drawComponent(ctx, component);
         });
-        
+
         // Restore transform
         ctx.restore();
     }
@@ -2592,7 +2592,7 @@ export class InfrastructureDiagramPage {
 
     drawComponent(ctx, component) {
         const isSelected = this.selectedComponent?.id === component.id;
-        
+
         // Get template - check if component has template stored, or look it up
         let template = component.template;
         if (!template && component.templateId) {
@@ -2602,12 +2602,12 @@ export class InfrastructureDiagramPage {
             // Fallback to legacy lookup by type
             template = this.getDeviceTemplate(component.type);
         }
-        
+
         let img = null;
         if (template && template.imagePath) {
             // Try to get image from cache
             img = this.deviceImages[template.imagePath];
-            
+
             // If image not loaded yet, try to load it
             if (!img) {
                 const newImg = new Image();
@@ -2632,48 +2632,48 @@ export class InfrastructureDiagramPage {
             // Draw device image
             const imgWidth = component.width || template.width || 120;
             const imgHeight = component.height || template.height || 80;
-            
+
             // Reset shadow before drawing image
             ctx.shadowColor = 'transparent';
             ctx.shadowBlur = 0;
             ctx.shadowOffsetX = 0;
             ctx.shadowOffsetY = 0;
-            
+
             // Draw image with border
             ctx.drawImage(img, component.x, component.y, imgWidth, imgHeight);
-            
+
             // Selection border removed for cleaner template appearance
-            
+
             // Draw delete button when selected
             if (isSelected) {
                 const deleteBtnSize = 28;
                 const deleteBtnX = component.x + imgWidth - deleteBtnSize / 2 - 5;
                 const deleteBtnY = component.y - deleteBtnSize / 2 + 5;
                 const isHovered = this.hoverDeleteButtonComponent?.id === component.id;
-                
+
                 // Draw delete button shadow
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 2;
-                
+
                 // Draw delete button background (darker when hovered)
                 ctx.fillStyle = isHovered ? '#dc2626' : '#ef4444';
                 ctx.beginPath();
                 ctx.arc(deleteBtnX, deleteBtnY, deleteBtnSize / 2, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Reset shadow
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
-                
+
                 // Draw delete button border
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2.5;
                 ctx.stroke();
-                
+
                 // Draw X icon
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 3;
@@ -2685,7 +2685,7 @@ export class InfrastructureDiagramPage {
                 ctx.lineTo(deleteBtnX - iconSize / 2, deleteBtnY + iconSize / 2);
                 ctx.stroke();
             }
-            
+
             // Draw label below image
             if (component.label) {
                 ctx.fillStyle = '#1f2937';
@@ -2705,12 +2705,12 @@ export class InfrastructureDiagramPage {
 
                     // Draw port indicator
                     ctx.fillStyle = port.color || '#00ff00';
-                    ctx.fillRect(portX - portW/2, portY - portH/2, portW, portH);
-                    
+                    ctx.fillRect(portX - portW / 2, portY - portH / 2, portW, portH);
+
                     // Draw port border
                     ctx.strokeStyle = '#000000';
                     ctx.lineWidth = 1;
-                    ctx.strokeRect(portX - portW/2, portY - portH/2, portW, portH);
+                    ctx.strokeRect(portX - portW / 2, portY - portH / 2, portW, portH);
                 });
             }
 
@@ -2783,37 +2783,37 @@ export class InfrastructureDiagramPage {
             labelLines.forEach((line, index) => {
                 ctx.fillText(line, component.x + (component.width || 120) / 2, labelY + (index * 12));
             });
-            
+
             // Draw delete button when selected (for non-template components)
             if (isSelected) {
                 const deleteBtnSize = 28;
                 const deleteBtnX = component.x + component.width - deleteBtnSize / 2 - 5;
                 const deleteBtnY = component.y - deleteBtnSize / 2 + 5;
                 const isHovered = this.hoverDeleteButtonComponent?.id === component.id;
-                
+
                 // Draw delete button shadow
                 ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
                 ctx.shadowBlur = 4;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 2;
-                
+
                 // Draw delete button background (darker when hovered)
                 ctx.fillStyle = isHovered ? '#dc2626' : '#ef4444';
                 ctx.beginPath();
                 ctx.arc(deleteBtnX, deleteBtnY, deleteBtnSize / 2, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Reset shadow
                 ctx.shadowColor = 'transparent';
                 ctx.shadowBlur = 0;
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
-                
+
                 // Draw delete button border
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2.5;
                 ctx.stroke();
-                
+
                 // Draw X icon
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 3;
@@ -2826,35 +2826,35 @@ export class InfrastructureDiagramPage {
                 ctx.stroke();
             }
         }
-        
+
         // Draw ports when component is hovered, selected, or when connecting
         // Show ALL ports for the component, not just the one being hovered
-        const shouldShowPorts = this.hoveredComponent?.id === component.id || 
-                               this.selectedComponent?.id === component.id ||
-                               this.connecting ||
-                               this.connectionStart?.componentId === component.id;
-        
+        const shouldShowPorts = this.hoveredComponent?.id === component.id ||
+            this.selectedComponent?.id === component.id ||
+            this.connecting ||
+            this.connectionStart?.componentId === component.id;
+
         if (shouldShowPorts) {
             const ports = this.getComponentPorts(component.id);
             // Draw ALL ports for this component
             ports.forEach(port => {
-                const isConnectingFrom = this.connectionStart && 
-                    this.connectionStart.componentId === port.componentId && 
+                const isConnectingFrom = this.connectionStart &&
+                    this.connectionStart.componentId === port.componentId &&
                     this.connectionStart.portId === port.id;
                 const isHovered = this.hoveredPort?.id === port.id;
                 const isConnecting = this.connecting && port.componentId === component.id;
-                
+
                 // Port circle - smaller size
                 ctx.fillStyle = isConnectingFrom ? '#3b82f6' : (isHovered ? '#60a5fa' : '#6b7280');
                 ctx.beginPath();
                 ctx.arc(port.x, port.y, this.portSize, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 // Port border - thinner for smaller ports
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = isHovered || isConnectingFrom ? 2 : 1.5;
                 ctx.stroke();
-                
+
                 // Highlight when connecting and hovering
                 if (isConnecting && isHovered && !isConnectingFrom) {
                     ctx.strokeStyle = '#10b981';
@@ -2922,16 +2922,16 @@ export class InfrastructureDiagramPage {
         if (connection.fromPort && connection.toPort) {
             const fromComponent = this.components.find(c => c.id === connection.fromComponent);
             const toComponent = this.components.find(c => c.id === connection.toComponent);
-            
+
             if (!fromComponent || !toComponent) return;
-            
+
             const fromPorts = this.getComponentPorts(fromComponent.id);
             const toPorts = this.getComponentPorts(toComponent.id);
             const fromPort = fromPorts.find(p => p.id === connection.fromPort);
             const toPort = toPorts.find(p => p.id === connection.toPort);
-            
+
             if (!fromPort || !toPort) return;
-            
+
             // Draw connection from port to port
             const connectionType = connection.type || 'network';
             const styles = {
@@ -2947,13 +2947,13 @@ export class InfrastructureDiagramPage {
                 }
             };
             const style = styles[connectionType] || styles.network;
-            
+
             // Use port side information to determine routing direction
             // Check if path intersects any components and route around them
-            const allComponents = this.components.filter(c => 
+            const allComponents = this.components.filter(c =>
                 c.id !== fromComponent.id && c.id !== toComponent.id
             );
-            
+
             // Create path with port side information
             let pathData = this.createLShapedPath(
                 { x: fromPort.x, y: fromPort.y },
@@ -2962,25 +2962,25 @@ export class InfrastructureDiagramPage {
                 fromPort.side, // Pass the source port side
                 toPort.side    // Pass the destination port side
             );
-            
+
             // Check if path intersects any components and adjust if needed
             const margin = 10;
             const blocking = allComponents.filter(comp => {
                 if (pathData.type === 'triple') {
                     const { start, corner1, corner2, corner3, end } = pathData;
                     return this.lineIntersectsRect(start.x, start.y, corner1.x, corner1.y, comp, margin) ||
-                           this.lineIntersectsRect(corner1.x, corner1.y, corner2.x, corner2.y, comp, margin) ||
-                           this.lineIntersectsRect(corner2.x, corner2.y, corner3.x, corner3.y, comp, margin) ||
-                           this.lineIntersectsRect(corner3.x, corner3.y, end.x, end.y, comp, margin);
+                        this.lineIntersectsRect(corner1.x, corner1.y, corner2.x, corner2.y, comp, margin) ||
+                        this.lineIntersectsRect(corner2.x, corner2.y, corner3.x, corner3.y, comp, margin) ||
+                        this.lineIntersectsRect(corner3.x, corner3.y, end.x, end.y, comp, margin);
                 } else if (pathData.type === 'double') {
                     const { start, corner1, corner2, end } = pathData;
                     return this.lineIntersectsRect(start.x, start.y, corner1.x, corner1.y, comp, margin) ||
-                           this.lineIntersectsRect(corner1.x, corner1.y, corner2.x, corner2.y, comp, margin) ||
-                           this.lineIntersectsRect(corner2.x, corner2.y, end.x, end.y, comp, margin);
+                        this.lineIntersectsRect(corner1.x, corner1.y, corner2.x, corner2.y, comp, margin) ||
+                        this.lineIntersectsRect(corner2.x, corner2.y, end.x, end.y, comp, margin);
                 }
                 return false;
             });
-            
+
             // If path intersects components, increase the offset to route around
             if (blocking.length > 0) {
                 const increasedOffset = 30; // Larger offset to go around components
@@ -3005,9 +3005,9 @@ export class InfrastructureDiagramPage {
                     }
                 }
             }
-            
+
             this.renderConnectionPath(ctx, pathData, style, connection);
-            
+
             // Store path for interaction
             if (!this.connectionPaths) {
                 this.connectionPaths = [];
@@ -3020,15 +3020,15 @@ export class InfrastructureDiagramPage {
             });
             return;
         }
-        
+
         // Legacy connection handling (for backward compatibility)
         const from = this.components.find(c => c.id === connection.from);
         const to = this.components.find(c => c.id === connection.to);
-        
+
         if (!from || !to) return;
 
         const connectionType = connection.type || 'network';
-        
+
         // Connection styling - clean and minimal
         const styles = {
             network: {
@@ -3043,49 +3043,49 @@ export class InfrastructureDiagramPage {
             }
         };
         const style = styles[connectionType] || styles.network;
-        
+
         // Ensure width and height are valid numbers
         const fromWidth = from.width || 120;
         const fromHeight = from.height || 80;
         const toWidth = to.width || 120;
         const toHeight = to.height || 80;
-        
+
         // Calculate component centers
         const fromCenterX = from.x + fromWidth / 2;
         const fromCenterY = from.y + fromHeight / 2;
         const toCenterX = to.x + toWidth / 2;
         const toCenterY = to.y + toHeight / 2;
-        
+
         const dx = toCenterX - fromCenterX;
         const dy = toCenterY - fromCenterY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         if (distance === 0) return;
-        
+
         // Calculate spacing for multiple connections between same components
         const offsetSpacing = 25; // Spacing between individual connections
         const currentOffset = index * offsetSpacing;
-        
+
         // Calculate perpendicular vector for offset
         const perpX = -dy / distance;
         const perpY = dx / distance;
-        
+
         // Determine best connection points using smart port selection
         const connectionPoints = this.calculateConnectionPoints(
             from, to, dx, dy, currentOffset, perpX, perpY
         );
-        
+
         const startPoint = connectionPoints.start;
         const endPoint = connectionPoints.end;
-        
+
         // Calculate optimal routing path with offset to maintain separation throughout
         const pathPoints = this.calculateOptimalPath(
             startPoint, endPoint, from, to, this.components, currentOffset, perpX, perpY
         );
-        
+
         // Draw the connection
         this.renderConnectionPath(ctx, pathPoints, style, connection);
-        
+
         // Store path for interaction
         if (!this.connectionPaths) {
             this.connectionPaths = [];
@@ -3097,7 +3097,7 @@ export class InfrastructureDiagramPage {
             pathData: pathPoints
         });
     }
-    
+
     /**
      * Calculate optimal connection points on components
      */
@@ -3107,21 +3107,21 @@ export class InfrastructureDiagramPage {
         const fromHeight = from.height || 80;
         const toWidth = to.width || 120;
         const toHeight = to.height || 80;
-        
+
         // Calculate component centers
         const fromCenterX = from.x + fromWidth / 2;
         const fromCenterY = from.y + fromHeight / 2;
         const toCenterX = to.x + toWidth / 2;
         const toCenterY = to.y + toHeight / 2;
-        
+
         // Determine alignment type - more strict threshold
         const isVertical = Math.abs(dx) < Math.abs(dy) * 0.3;
-        
+
         // Inset to account for transparent areas in images - connect inside the visible component
         const inset = 15; // Distance from edge to start connection inside component
-        
+
         let startX, startY, endX, endY;
-        
+
         if (isVertical) {
             // Vertical alignment - always use TOP edge (not inside component)
             if (dy > 0) {
@@ -3130,7 +3130,7 @@ export class InfrastructureDiagramPage {
                 // Clamp to component width bounds
                 startX = Math.max(from.x + inset, Math.min(from.x + fromWidth - inset, startX));
                 startY = from.y; // TOP edge (not inside)
-                
+
                 endX = toCenterX + perpX * offset;
                 // Clamp to component width bounds
                 endX = Math.max(to.x + inset, Math.min(to.x + toWidth - inset, endX));
@@ -3141,7 +3141,7 @@ export class InfrastructureDiagramPage {
                 // Clamp to component width bounds
                 startX = Math.max(from.x + inset, Math.min(from.x + fromWidth - inset, startX));
                 startY = from.y; // TOP edge (not inside)
-                
+
                 endX = toCenterX + perpX * offset;
                 // Clamp to component width bounds
                 endX = Math.max(to.x + inset, Math.min(to.x + toWidth - inset, endX));
@@ -3155,12 +3155,12 @@ export class InfrastructureDiagramPage {
                 startY = fromCenterY + perpY * offset;
                 // Clamp to component height bounds (with inset)
                 startY = Math.max(from.y + inset, Math.min(from.y + fromHeight - inset, startY));
-                
+
                 // Enter at top or bottom of destination (prefer top if destination is below, bottom if above)
                 endX = toCenterX + perpX * offset;
                 // Clamp to component width bounds (with inset)
                 endX = Math.max(to.x + inset, Math.min(to.x + toWidth - inset, endX));
-                
+
                 // Choose top or bottom based on vertical position
                 if (dy > 0) {
                     // Destination is below - enter at top
@@ -3175,12 +3175,12 @@ export class InfrastructureDiagramPage {
                 startY = fromCenterY + perpY * offset;
                 // Clamp to component height bounds (with inset)
                 startY = Math.max(from.y + inset, Math.min(from.y + fromHeight - inset, startY));
-                
+
                 // Enter at top or bottom of destination (prefer top if destination is below, bottom if above)
                 endX = toCenterX + perpX * offset;
                 // Clamp to component width bounds (with inset)
                 endX = Math.max(to.x + inset, Math.min(to.x + toWidth - inset, endX));
-                
+
                 // Choose top or bottom based on vertical position
                 if (dy > 0) {
                     // Destination is below - enter at top
@@ -3191,35 +3191,35 @@ export class InfrastructureDiagramPage {
                 }
             }
         }
-        
+
         return {
             start: { x: startX, y: startY },
             end: { x: endX, y: endY }
         };
     }
-    
+
     /**
      * Calculate optimal routing path - smart but simple
      */
     calculateOptimalPath(start, end, fromComp, toComp, allComponents, offset = 0, perpX = 0, perpY = 0, fromSide = null, toSide = null) {
         const margin = 30;
-        
+
         // Check if direct line is clear
-        const blocking = allComponents.filter(comp => 
+        const blocking = allComponents.filter(comp =>
             comp.id !== fromComp.id && comp.id !== toComp.id &&
             this.lineIntersectsRect(start.x, start.y, end.x, end.y, comp, margin)
         );
-        
+
         // If no obstacles, use double L-shape with port side information
         if (blocking.length === 0) {
             return this.createLShapedPath(start, end, 20, offset, perpX, perpY, fromSide, toSide);
         }
-        
+
         // Route around obstacles with simplified paths
         // For now, use the port-based path even with obstacles
         return this.createLShapedPath(start, end, 20, offset, perpX, perpY, fromSide, toSide);
     }
-    
+
     /**
      * Check if component is in the path between two points
      */
@@ -3228,15 +3228,15 @@ export class InfrastructureDiagramPage {
         const maxX = Math.max(start.x, end.x) + margin;
         const minY = Math.min(start.y, end.y) - margin;
         const maxY = Math.max(start.y, end.y) + margin;
-        
+
         const compLeft = comp.x - margin;
         const compRight = comp.x + comp.width + margin;
         const compTop = comp.y - margin;
         const compBottom = comp.y + comp.height + margin;
-        
+
         return !(compRight < minX || compLeft > maxX || compBottom < minY || compTop > maxY);
     }
-    
+
     /**
      * Create a double L-shaped path (Z/N shape) with two corners
      * From side: vertical -> horizontal -> vertical (up/down based on destination)
@@ -3245,11 +3245,11 @@ export class InfrastructureDiagramPage {
     createLShapedPath(start, end, minBend, offset = 0, perpX = 0, perpY = 0, fromSide = null, toSide = null) {
         const dx = end.x - start.x;
         const dy = end.y - start.y;
-        
+
         // Apply offset to create parallel paths
         const offsetX = perpX * offset;
         const offsetY = perpY * offset;
-        
+
         // Determine if connection is from side (left/right) or top/bottom
         // Use port side information if available, otherwise fall back to position-based detection
         let isFromSide;
@@ -3258,7 +3258,7 @@ export class InfrastructureDiagramPage {
         } else {
             isFromSide = Math.abs(dx) > Math.abs(dy);
         }
-        
+
         if (isFromSide) {
             // From side (left/right): vertical -> horizontal -> vertical
             // First: go vertical from source (up if destination is above, down if below)
@@ -3268,13 +3268,13 @@ export class InfrastructureDiagramPage {
                 x: start.x + offsetX,
                 y: start.y + (dy > 0 ? verticalDistance : -verticalDistance) + offsetY
             };
-            
+
             // Second: go horizontal toward destination (at the same Y as corner1)
             const corner2 = {
                 x: end.x + offsetX,
                 y: corner1.y + offsetY
             };
-            
+
             return {
                 type: 'double',
                 start: start,
@@ -3287,7 +3287,7 @@ export class InfrastructureDiagramPage {
             // Always start from top edge, go horizontally, then vertically to destination
             const minHorizontalOffset = 40; // Minimum distance to go horizontally before turning
             const horizontalDistance = Math.abs(dx);
-            
+
             // If components are directly above/below (dx is very small), use a fixed offset
             // Otherwise, use a percentage of the horizontal distance
             let horizontalOffset;
@@ -3298,18 +3298,18 @@ export class InfrastructureDiagramPage {
                 // Use at least 50% of horizontal distance, but not less than minimum
                 horizontalOffset = Math.max(minHorizontalOffset, horizontalDistance * 0.5);
             }
-            
+
             // Determine direction: go right if destination is to the right, left if to the left
             // If destination is directly above/below (dx ≈ 0), go right by default
             const goRight = dx > 0 || (Math.abs(dx) < 10);
-            
+
             // First corner: go horizontally from top edge (L-shape)
             // This creates the horizontal segment of the L
             const corner1 = {
                 x: start.x + (goRight ? horizontalOffset : -horizontalOffset) + offsetX,
                 y: start.y + offsetY // Stay at top edge level
             };
-            
+
             // Second corner: go horizontally to align with destination X, then vertical
             // This ensures we have a full horizontal run before turning vertical
             let corner2X = end.x + offsetX;
@@ -3323,7 +3323,7 @@ export class InfrastructureDiagramPage {
                 x: corner2X,
                 y: corner1.y + offsetY // Stay at same Y level (top edge level)
             };
-            
+
             return {
                 type: 'double',
                 start: start,
@@ -3333,7 +3333,7 @@ export class InfrastructureDiagramPage {
             };
         }
     }
-    
+
     /**
      * Route around obstacles with simple L-shaped paths
      */
@@ -3342,7 +3342,7 @@ export class InfrastructureDiagramPage {
         const dy = end.y - start.y;
         const offsetX = perpX * offset;
         const offsetY = perpY * offset;
-        
+
         // Find the bounding box of all obstacles
         let minX = Infinity, maxX = -Infinity;
         let minY = Infinity, maxY = -Infinity;
@@ -3352,9 +3352,9 @@ export class InfrastructureDiagramPage {
             minY = Math.min(minY, obs.y - margin);
             maxY = Math.max(maxY, obs.y + obs.height + margin);
         });
-        
+
         const strategies = [];
-        
+
         // Strategy 1: Route above - simple L-shape
         if (dy !== 0 && start.y > minY) {
             const routeY = minY - 30;
@@ -3368,7 +3368,7 @@ export class InfrastructureDiagramPage {
                 strategies.push({ path: path1, cost: this.simplePathCost(path1) });
             }
         }
-        
+
         // Strategy 2: Route below - simple L-shape
         if (dy !== 0 && end.y < maxY) {
             const routeY = maxY + 30;
@@ -3382,7 +3382,7 @@ export class InfrastructureDiagramPage {
                 strategies.push({ path: path2, cost: this.simplePathCost(path2) });
             }
         }
-        
+
         // Strategy 3: Route left - simple L-shape
         if (dx !== 0 && start.x > minX) {
             const routeX = minX - 30;
@@ -3396,7 +3396,7 @@ export class InfrastructureDiagramPage {
                 strategies.push({ path: path3, cost: this.simplePathCost(path3) });
             }
         }
-        
+
         // Strategy 4: Route right - simple L-shape
         if (dx !== 0 && end.x < maxX) {
             const routeX = maxX + 30;
@@ -3410,17 +3410,17 @@ export class InfrastructureDiagramPage {
                 strategies.push({ path: path4, cost: this.simplePathCost(path4) });
             }
         }
-        
+
         // Select shortest clear path
         if (strategies.length > 0) {
             strategies.sort((a, b) => a.cost - b.cost);
             return strategies[0].path;
         }
-        
+
         // Fallback: simple L-shaped path
         return this.createLShapedPath(start, end, minBend, offset, perpX, perpY);
     }
-    
+
     /**
      * Check if simple path is clear of obstacles
      */
@@ -3466,7 +3466,7 @@ export class InfrastructureDiagramPage {
         }
         return false;
     }
-    
+
     /**
      * Calculate cost of simple path
      */
@@ -3477,7 +3477,7 @@ export class InfrastructureDiagramPage {
         const d2 = Math.sqrt((end.x - corner.x) ** 2 + (end.y - corner.y) ** 2);
         return d1 + d2;
     }
-    
+
     /**
      * Check if path is clear of obstacles
      */
@@ -3485,7 +3485,7 @@ export class InfrastructureDiagramPage {
         for (let i = 0; i < path.length - 1; i++) {
             const p1 = path[i];
             const p2 = path[i + 1];
-            
+
             for (const obs of obstacles) {
                 if (this.lineIntersectsRect(p1.x, p1.y, p2.x, p2.y, obs, margin)) {
                     return false;
@@ -3494,7 +3494,7 @@ export class InfrastructureDiagramPage {
         }
         return true;
     }
-    
+
     /**
      * Check if line segment intersects rectangle
      */
@@ -3503,15 +3503,15 @@ export class InfrastructureDiagramPage {
         const right = rect.x + rect.width + margin;
         const top = rect.y - margin;
         const bottom = rect.y + rect.height + margin;
-        
+
         // Liang-Barsky algorithm
         let t0 = 0, t1 = 1;
         const dx = x2 - x1;
         const dy = y2 - y1;
-        
+
         const p = [-dx, dx, -dy, dy];
         const q = [x1 - left, right - x1, y1 - top, bottom - y1];
-        
+
         for (let i = 0; i < 4; i++) {
             if (p[i] === 0) {
                 if (q[i] < 0) return false;
@@ -3524,10 +3524,10 @@ export class InfrastructureDiagramPage {
                 }
             }
         }
-        
+
         return t0 < t1;
     }
-    
+
     /**
      * Calculate path cost (total length)
      */
@@ -3540,28 +3540,28 @@ export class InfrastructureDiagramPage {
         }
         return cost;
     }
-    
+
     /**
      * Render connection path with smooth curves
      */
     renderConnectionPath(ctx, pathData, style, connection) {
         if (!pathData) return;
-        
+
         // Set style - box connections
         const isSelected = this.selectedConnection && this.selectedConnection.id === connection.id;
         const boxWidth = 5; // Width of the connection box (reduced from 8)
         const halfWidth = boxWidth / 2;
-        
+
         ctx.fillStyle = isSelected ? '#ef4444' : style.color;
         ctx.strokeStyle = isSelected ? '#dc2626' : this.darkenColor(style.color, 0.2);
         ctx.lineWidth = 1;
         ctx.setLineDash([]); // No dashes for boxes
-        
+
         // Draw boxes along the path
         if (pathData.type === 'triple') {
             // Triple path for top/bottom: start -> down/up -> up/down -> horizontal -> end
             const { start, corner1, corner2, corner3, end } = pathData;
-            
+
             // First segment: from start to corner1 (vertical into component)
             const v1StartY = Math.min(start.y, corner1.y);
             const v1EndY = Math.max(start.y, corner1.y);
@@ -3570,7 +3570,7 @@ export class InfrastructureDiagramPage {
                 ctx.fillRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                 ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
             }
-            
+
             // Second segment: from corner1 to corner2 (vertical away from component)
             const v2StartY = Math.min(corner1.y, corner2.y);
             const v2EndY = Math.max(corner1.y, corner2.y);
@@ -3579,7 +3579,7 @@ export class InfrastructureDiagramPage {
                 ctx.fillRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
                 ctx.strokeRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
             }
-            
+
             // Third segment: from corner2 to corner3 (horizontal)
             const h3StartX = Math.min(corner2.x, corner3.x);
             const h3EndX = Math.max(corner2.x, corner3.x);
@@ -3588,7 +3588,7 @@ export class InfrastructureDiagramPage {
                 ctx.fillRect(h3StartX, corner2.y - halfWidth, h3Length, boxWidth);
                 ctx.strokeRect(h3StartX, corner2.y - halfWidth, h3Length, boxWidth);
             }
-            
+
             // Fourth segment: from corner3 to end (vertical to destination)
             const v4StartY = Math.min(corner3.y, end.y);
             const v4EndY = Math.max(corner3.y, end.y);
@@ -3600,7 +3600,7 @@ export class InfrastructureDiagramPage {
         } else if (pathData.type === 'double') {
             // Double L-shape (Z/N shape) with two corners
             const { start, corner1, corner2, end } = pathData;
-            
+
             // First segment: from start to corner1
             const dx1 = corner1.x - start.x;
             const dy1 = corner1.y - start.y;
@@ -3623,7 +3623,7 @@ export class InfrastructureDiagramPage {
                     ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                 }
             }
-            
+
             // Second segment: from corner1 to corner2
             const dx2 = corner2.x - corner1.x;
             const dy2 = corner2.y - corner1.y;
@@ -3646,7 +3646,7 @@ export class InfrastructureDiagramPage {
                     ctx.strokeRect(corner1.x - halfWidth, v2StartY, boxWidth, v2Length);
                 }
             }
-            
+
             // Third segment: from corner2 to end
             const dx3 = end.x - corner2.x;
             const dy3 = end.y - corner2.y;
@@ -3675,7 +3675,7 @@ export class InfrastructureDiagramPage {
             const dx = end.x - start.x;
             const dy = end.y - start.y;
             const isHorizontalFirst = Math.abs(dx) > Math.abs(dy);
-            
+
             if (isHorizontalFirst) {
                 const h1StartX = Math.min(start.x, corner.x);
                 const h1EndX = Math.max(start.x, corner.x);
@@ -3684,7 +3684,7 @@ export class InfrastructureDiagramPage {
                     ctx.fillRect(h1StartX, start.y - halfWidth, h1Length, boxWidth);
                     ctx.strokeRect(h1StartX, start.y - halfWidth, h1Length, boxWidth);
                 }
-                
+
                 const vStartY = Math.min(start.y, end.y);
                 const vEndY = Math.max(start.y, end.y);
                 const vLength = vEndY - vStartY;
@@ -3692,7 +3692,7 @@ export class InfrastructureDiagramPage {
                     ctx.fillRect(corner.x - halfWidth, vStartY, boxWidth, vLength);
                     ctx.strokeRect(corner.x - halfWidth, vStartY, boxWidth, vLength);
                 }
-                
+
                 const h2StartX = Math.min(corner.x, end.x);
                 const h2EndX = Math.max(corner.x, end.x);
                 const h2Length = h2EndX - h2StartX;
@@ -3708,7 +3708,7 @@ export class InfrastructureDiagramPage {
                     ctx.fillRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                     ctx.strokeRect(start.x - halfWidth, v1StartY, boxWidth, v1Length);
                 }
-                
+
                 const hStartX = Math.min(start.x, end.x);
                 const hEndX = Math.max(start.x, end.x);
                 const hLength = hEndX - hStartX;
@@ -3716,7 +3716,7 @@ export class InfrastructureDiagramPage {
                     ctx.fillRect(hStartX, corner.y - halfWidth, hLength, boxWidth);
                     ctx.strokeRect(hStartX, corner.y - halfWidth, hLength, boxWidth);
                 }
-                
+
                 const v2StartY = Math.min(corner.y, end.y);
                 const v2EndY = Math.max(corner.y, end.y);
                 const v2Length = v2EndY - v2StartY;
@@ -3732,7 +3732,7 @@ export class InfrastructureDiagramPage {
                 const p2 = pathData[i + 1];
                 const dx = p2.x - p1.x;
                 const dy = p2.y - p1.y;
-                
+
                 if (Math.abs(dx) > Math.abs(dy)) {
                     // Horizontal segment
                     const startX = Math.min(p1.x, p2.x);
@@ -3748,7 +3748,7 @@ export class InfrastructureDiagramPage {
                 }
             }
         }
-        
+
         // Draw delete button on hover
         if (this.hoverDeleteButtonConnection && this.hoverDeleteButtonConnection.id === connection.id) {
             let midPoint;
@@ -3759,13 +3759,13 @@ export class InfrastructureDiagramPage {
                 const midIndex = Math.floor(pathData.length / 2);
                 midPoint = pathData[midIndex];
             }
-            
+
             if (midPoint) {
                 ctx.fillStyle = '#ef4444';
                 ctx.beginPath();
                 ctx.arc(midPoint.x, midPoint.y, 12, 0, Math.PI * 2);
                 ctx.fill();
-                
+
                 ctx.strokeStyle = '#ffffff';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -3791,21 +3791,21 @@ export class InfrastructureDiagramPage {
         const fromY = from.y + from.height / 2;
         const toX = to.x + to.width / 2;
         const toY = to.y + to.height / 2;
-        
+
         const dx = toX - fromX;
         const dy = toY - fromY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         // Calculate perpendicular vector for offset
         const perpX = -dy / distance;
         const perpY = dx / distance;
-        
+
         // Calculate label position (middle point between components, offset perpendicularly)
         const midX = (fromX + toX) / 2;
         const midY = (fromY + toY) / 2;
         const labelX = midX + perpX * offset;
         const labelY = midY + perpY * offset;
-        
+
         // Connection styling based on type
         const styles = {
             network: {
@@ -3819,25 +3819,25 @@ export class InfrastructureDiagramPage {
                 dashPattern: [8, 4]
             }
         };
-        
+
         const style = styles[connectionType] || styles.network;
         const labelPrefix = connectionType === 'fiber' ? 'Fiber Channel' : 'Ethernet';
         const labelText = `${labelPrefix} (${count})`;
-        
+
         // Calculate rotation angle based on connection direction
         const angle = Math.atan2(dy, dx);
-        
+
         // Draw label background
         ctx.save();
         ctx.translate(labelX, labelY);
         ctx.rotate(angle);
-        
+
         ctx.font = 'bold 11px Arial';
         const textMetrics = ctx.measureText(labelText);
         const textWidth = textMetrics.width;
         const textHeight = 14;
         const padding = 6;
-        
+
         // Draw background rectangle with rounded corners
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.strokeStyle = style.color;
@@ -3860,13 +3860,13 @@ export class InfrastructureDiagramPage {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-        
+
         // Draw text
         ctx.fillStyle = style.color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(labelText, 0, 0);
-        
+
         ctx.restore();
     }
 
@@ -3885,21 +3885,21 @@ export class InfrastructureDiagramPage {
         const fromY = from.y + from.height / 2;
         const toX = to.x + to.width / 2;
         const toY = to.y + to.height / 2;
-        
+
         const dx = toX - fromX;
         const dy = toY - fromY;
         const distance = Math.sqrt(dx * dx + dy * dy);
-        
+
         // Calculate perpendicular vector for offset
         const perpX = -dy / distance;
         const perpY = dx / distance;
-        
+
         // Calculate label position (middle point between components, offset perpendicularly)
         const midX = (fromX + toX) / 2;
         const midY = (fromY + toY) / 2;
         const labelX = midX + perpX * offset;
         const labelY = midY + perpY * offset;
-        
+
         // Connection styling based on type
         const styles = {
             network: {
@@ -3913,23 +3913,23 @@ export class InfrastructureDiagramPage {
                 dashPattern: [8, 4]
             }
         };
-        
+
         const style = styles[connectionType] || styles.network;
         const labelPrefix = connectionType === 'fiber' ? 'Fiber Channel' : 'Ethernet';
         const labelText = `${labelPrefix} (${count})`;
-        
+
         // Calculate rotation angle based on connection direction
         let rotationAngle = Math.atan2(dy, dx);
         // Rotate 90 degrees to make text perpendicular to connection
         rotationAngle += Math.PI / 2;
-        
+
         // Save context state
         ctx.save();
-        
+
         // Rotate context for vertical text
         ctx.translate(labelX, labelY);
         ctx.rotate(rotationAngle);
-        
+
         // Draw label background
         ctx.font = 'bold 11px Arial';
         ctx.textAlign = 'center';
@@ -3938,7 +3938,7 @@ export class InfrastructureDiagramPage {
         const labelPadding = 6;
         const labelWidth = metrics.width + labelPadding * 2;
         const labelHeight = 18;
-        
+
         ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
         ctx.strokeStyle = style.color;
         ctx.lineWidth = 2;
@@ -3959,11 +3959,11 @@ export class InfrastructureDiagramPage {
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
-        
+
         // Draw label text
         ctx.fillStyle = style.color;
         ctx.fillText(labelText, 0, 0);
-        
+
         // Restore context state
         ctx.restore();
     }
@@ -4019,7 +4019,7 @@ export class InfrastructureDiagramPage {
             });
 
             if (!response.ok) throw new Error('Failed to save diagram');
-            
+
             this.closeSaveModal();
             await this.loadDiagrams();
             alert('Diagram saved successfully!');
@@ -4059,7 +4059,7 @@ export class InfrastructureDiagramPage {
                 const error = await response.text();
                 throw new Error(error);
             }
-            
+
             await this.loadDiagrams();
             if (this.currentDiagramId === id) {
                 this.backToList();
@@ -4094,7 +4094,7 @@ export class InfrastructureDiagramPage {
         this.canvas.style.cursor = 'crosshair';
         this.redraw();
     }
-    
+
     cleanupConnection() {
         // Clean up connection state (like Automation)
         this.connecting = false;
@@ -4110,13 +4110,13 @@ export class InfrastructureDiagramPage {
             this.footerObserver.disconnect();
             this.footerObserver = null;
         }
-        
+
         // Remove resize listener
         if (this.resizeHandler) {
             window.removeEventListener('resize', this.resizeHandler);
             this.resizeHandler = null;
         }
-        
+
         // Clean up connection state
         this.cleanupConnection();
     }

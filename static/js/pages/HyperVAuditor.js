@@ -28,6 +28,7 @@ export class HyperVAuditorPage {
         this.showServicesModalFlag = false;
         this.selectedServicesModal = null; // { hostName, hostIndex, page }
         this.loadingReports = false;
+        this.viewMode = localStorage.getItem('hyperv-auditor-details-view-mode') || 'list';
         this.overview = {
             upNodes: 0,
             totalNodes: 0,
@@ -53,7 +54,7 @@ export class HyperVAuditorPage {
             expandedRows: new Set()
         };
         this.refreshInterval = null;
-        
+
         // Translations
         this.translations = {
             en: {
@@ -208,7 +209,7 @@ export class HyperVAuditorPage {
             },
             fr: {
                 title: 'Auditeur Hyper-V',
-                subtitle: 'Inventaires et analyses avancés pour les clusters et hôtes Hyper-V',
+                subtitle: 'Audits et analyses avancés pour les clusters et hôtes Hyper-V',
                 summary: 'Résumé',
                 configuration: 'Configuration',
                 targetType: 'Type de Cible',
@@ -353,9 +354,33 @@ export class HyperVAuditorPage {
                 level: 'Niveau',
                 viewAllErrors: 'Voir Tout',
                 details: 'Détails',
-                close: 'Fermer'
+                close: 'Fermer',
+                deleting: 'Suppression...'
             }
         };
+        this.activeView = 'summary';
+        this.sidebarCollapsed = false;
+        this.expandedCategories = new Set(['environment', 'resources', 'hosts-details']);
+    }
+
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        this.updateDisplay();
+    }
+
+    toggleCategory(key) {
+        if (this.expandedCategories.has(key)) {
+            this.expandedCategories.delete(key);
+        } else {
+            this.expandedCategories.add(key);
+        }
+        this.updateDisplay();
+    }
+
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
     }
 
     t(key) {
@@ -364,7 +389,7 @@ export class HyperVAuditorPage {
 
     translateStatus(value) {
         if (!value && value !== 0) return 'N/A';
-        
+
         // Handle numeric cluster resource states
         const numericStateMap = {
             0: 'Inherited',
@@ -376,13 +401,13 @@ export class HyperVAuditorPage {
             6: 'Online Pending',
             7: 'Offline Pending'
         };
-        
+
         // Check if it's a numeric state
         const numValue = parseInt(value);
         if (!isNaN(numValue) && numericStateMap[numValue]) {
             value = numericStateMap[numValue];
         }
-        
+
         const normalized = value.toString().trim().toLowerCase();
         const statusMap = {
             en: {
@@ -447,7 +472,7 @@ export class HyperVAuditorPage {
 
     translateQuorumType(value) {
         if (!value && value !== 0) return 'N/A';
-        
+
         const quorumTypeMap = {
             0: 'Node Majority',
             1: 'Node and Disk Majority',
@@ -456,32 +481,157 @@ export class HyperVAuditorPage {
             4: 'Cloud Witness',
             5: 'Unknown'
         };
-        
+
         const numValue = parseInt(value);
         if (!isNaN(numValue) && quorumTypeMap[numValue]) {
             return quorumTypeMap[numValue];
         }
-        
+
         return value;
     }
 
     async render() {
         const reportId = this.getReportIdFromURL();
-        
-        return `
-            <div class="page-container-full">
-                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="hyperVAuditorInstance.handleFileSelect(event)">
 
-                ${!this.selectedReport ? `
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="empty-state">
-                                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--gray-light); margin-bottom: 1rem;"></i>
-                                <p>${this.t('loadingReport')}</p>
+        return `
+            <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
+                <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="hyperVAuditorInstance.handleFileSelect(event)">
+                
+                <aside class="administration-sidebar">
+                    <div class="sidebar-collapse-header">
+                        <button class="collapse-btn" onclick="hyperVAuditorInstance.toggleSidebar()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <!-- Environment Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('environment') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('environment')">
+                                <div class="category-title">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>Environment</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'summary' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('summary')">
+                                    <span>Summary</span>
+                                </button>
+                                ${this.clusterName ? `
+                                <button class="nav-item ${this.activeView === 'cluster' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('cluster')">
+                                    <span>Cluster Overview</span>
+                                </button>
+                                ` : ''}
+                                ${this.hosts.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'hosts' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('hosts')">
+                                    <span>Hyper-V Hosts (${this.hosts.length})</span>
+                                </button>
+                                ` : ''}
+                                ${this.clusterName ? `
+                                <button class="nav-item ${this.activeView === 'storage' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('storage')">
+                                    <span>Cluster Storage</span>
+                                </button>
+                                ` : ''}
                             </div>
                         </div>
+
+                        <!-- Resources Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('resources') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('resources')">
+                                <div class="category-title">
+                                    <i class="fas fa-cubes"></i>
+                                    <span>Resources</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'vms' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('vms')">
+                                    <span>Virtual Machines (${this.vms.length || this.hosts.reduce((acc, h) => acc + (h.vms?.length || 0), 0)})</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hosts Details Category -->
+                        ${this.hosts.length > 0 ? `
+                        <div class="sidebar-category ${this.expandedCategories.has('hosts-details') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('hosts-details')">
+                                <div class="category-title">
+                                    <i class="fas fa-server"></i>
+                                    <span>Host Details</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${this.hosts.map((host, idx) => `
+                                <button class="nav-item ${this.activeView === 'host-' + idx ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('host-${idx}')">
+                                    <span>${host.name}</span>
+                                </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </nav>
+                </aside>
+
+                <main class="administration-content" style="padding: 0;">
+                    <div class="file-share-auditor-main premium-auditor-container" style="height: 100%; display: flex; flex-direction: column; gap: 0; padding: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
+                                <button class="page-header-back-btn" onclick="hyperVAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                                    <i class="fas fa-arrow-left" style="font-size: 0.9rem;"></i>
+                                </button>
+                                <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
+                                    <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.selectedReport?.name || this.t('title')}</h2>
+                                    <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${this.clusterName || this.hosts?.[0]?.name || 'Hyper-V Audit'}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <div class="view-mode-switch" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); padding: 3px; border-radius: 10px; height: 32px; display: flex; align-items: center;">
+                                    <button class="view-mode-btn ${this.viewMode === 'grid' ? 'active' : ''}" onclick="hyperVAuditorInstance.setViewMode('grid')" title="Grid View" style="border-radius: 6px; width: 26px; height: 26px; font-size: 0.75rem;">
+                                        <i class="fas fa-th-large"></i>
+                                    </button>
+                                    <button class="view-mode-btn ${this.viewMode === 'list' ? 'active' : ''}" onclick="hyperVAuditorInstance.setViewMode('list')" title="List View" style="border-radius: 6px; width: 26px; height: 26px; font-size: 0.75rem;">
+                                        <i class="fas fa-list"></i>
+                                    </button>
+                                </div>
+                                <button class="premium-action-btn" onclick="hyperVAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+                                    <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <button class="premium-action-btn" onclick="hyperVAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-code" style="font-size: 0.7rem;"></i>
+                                    <span>Script</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="document.getElementById('report-file-input').click()" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-upload" style="font-size: 0.7rem;"></i>
+                                    <span>Import</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="hyperVAuditorInstance.deleteReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="audit-content" style="padding: 1.5rem; overflow-y: auto; flex: 1;">
+                            ${!this.selectedReport ? `
+                                <div class="card" style="margin: 1.5rem;">
+                                    <div class="card-body">
+                                        <div class="empty-state">
+                                            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--gray-light); margin-bottom: 1rem;"></i>
+                                            <p>${this.t('loadingReport')}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ` : this.renderReportDetails()}
+                        </div>
                     </div>
-                ` : this.renderReportDetails()}
+                </main>
 
                 <div id="report-message" class="message" style="display: none;"></div>
                 
@@ -508,10 +658,39 @@ export class HyperVAuditorPage {
     }
 
     renderReportDetails() {
+        if (this.activeView === 'summary') {
+            return !this.clusterName && this.hosts.length > 0 ? this.renderSummary() : this.clusterName ? this.renderClusterOverview() : '';
+        }
+        if (this.activeView === 'cluster') {
+            return this.clusterName ? this.renderClusterOverview() : '';
+        }
+        if (this.activeView === 'hosts') {
+            return this.hosts.length > 0 ? (this.viewMode === 'grid' ? this.renderHostsGrid() : this.renderHostsTable()) : '';
+        }
+        if (this.activeView === 'storage') {
+            return this.clusterName ? `
+                ${this.renderCSVTable()}
+                ${this.renderQuorumTable()}
+            ` : '';
+        }
+        if (this.activeView === 'vms') {
+            return this.clusterName ? this.renderAllVMsByHost() : '';
+        }
+
+        if (this.activeView.startsWith('host-')) {
+            const hostIndex = parseInt(this.activeView.split('-')[1]);
+            const host = this.hosts[hostIndex];
+            if (host) {
+                // We need to render segments of renderServerSections for a specific host
+                // Actually, let's just use CSS to show/hide sections, or a filtered version of renderServerSections
+                return this.renderServerSections(hostIndex);
+            }
+        }
+
         return `
             ${!this.clusterName && this.hosts.length > 0 ? this.renderSummary() : ''}
             ${this.clusterName ? this.renderClusterOverview() : ''}
-            ${this.hosts.length > 0 ? this.renderHostsTable() : ''}
+            ${this.hosts.length > 0 ? (this.viewMode === 'grid' ? this.renderHostsGrid() : this.renderHostsTable()) : ''}
             ${this.clusterName ? this.renderCSVTable() : ''}
             ${this.clusterName ? this.renderQuorumTable() : ''}
             ${this.clusterName ? this.renderAllVMsByHost() : ''}
@@ -564,13 +743,13 @@ export class HyperVAuditorPage {
 
     renderFeatureDetailsModal() {
         if (!this.selectedFeature) return '';
-        
+
         const role = this.selectedFeature.role;
         const featureType = role.featureType || 'Feature';
-        const typeIcon = featureType === 'Role' ? 'fa-server' : 
-                        featureType === 'Role Service' ? 'fa-cog' : 'fa-puzzle-piece';
+        const typeIcon = featureType === 'Role' ? 'fa-server' :
+            featureType === 'Role Service' ? 'fa-cog' : 'fa-puzzle-piece';
         const typeClass = featureType.toLowerCase().replace(/\s+/g, '-');
-        
+
         return `
             <div class="modal-overlay" onclick="hyperVAuditorInstance.closeFeatureModal()">
                 <div class="modal-container modal-compact" onclick="event.stopPropagation()">
@@ -629,13 +808,13 @@ export class HyperVAuditorPage {
 
     renderErrorsModal() {
         if (!this.showErrorsModalFlag || !this.selectedErrorsModal) return '';
-        
+
         const { type, title, hostIndex, page } = this.selectedErrorsModal;
         let errors = [];
         let badgeClass = '';
         let iconClass = 'fa-exclamation-triangle';
         let errorClass = '';
-        
+
         // Get the appropriate errors based on type
         if (type === 'cluster') {
             errors = this.clusterErrors || [];
@@ -651,14 +830,14 @@ export class HyperVAuditorPage {
             iconClass = 'fa-server';
             errorClass = 'hyperv-error';
         }
-        
+
         // Pagination (matching Installed Drivers pattern)
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(errors.length / pageSize));
         const currentPage = Math.min(Math.max(page || 0, 0), totalPages - 1);
         const start = currentPage * pageSize;
         const pageItems = errors.slice(start, start + pageSize);
-        
+
         return `
             <div class="modal-overlay" onclick="hyperVAuditorInstance.closeErrorsModal()">
                 <div class="modal-container modal-wide" onclick="event.stopPropagation()">
@@ -687,11 +866,10 @@ export class HyperVAuditorPage {
                                             <span class="error-item-modern-time"><i class="fas fa-clock"></i> ${error.time}</span>
                                             ${error.source ? `<span class="error-item-modern-source"><i class="fas fa-tag"></i> ${error.source}</span>` : ''}
                                             ${error.level ? `<span class="error-item-modern-level"><i class="fas fa-info-circle"></i> ${error.level}</span>` : ''}
-                                            ${error.logName ? `<span class="error-item-modern-log"><i class="fas fa-book"></i> ${
-                                                type === 'cluster' ? error.logName.replace('Microsoft-Windows-FailoverClustering', 'Cluster') :
-                                                type === 'hyperv' ? error.logName.replace('Microsoft-Windows-Hyper-V-', 'HV-') :
-                                                error.logName
-                                            }</span>` : ''}
+                                            ${error.logName ? `<span class="error-item-modern-log"><i class="fas fa-book"></i> ${type === 'cluster' ? error.logName.replace('Microsoft-Windows-FailoverClustering', 'Cluster') :
+                type === 'hyperv' ? error.logName.replace('Microsoft-Windows-Hyper-V-', 'HV-') :
+                    error.logName
+                }</span>` : ''}
                                             ${error.node ? `<span class="error-item-modern-node"><i class="fas fa-server"></i> ${error.node}</span>` : ''}
                                         </div>
                                     </div>
@@ -717,10 +895,10 @@ export class HyperVAuditorPage {
 
     renderUpdatesModal() {
         if (!this.showUpdatesModalFlag || !this.selectedUpdatesModal) return '';
-        
+
         const { hostName, hostIndex } = this.selectedUpdatesModal;
         const updates = this.hosts[hostIndex]?.windowsUpdates || [];
-        
+
         return `
             <div class="modal-overlay" onclick="hyperVAuditorInstance.closeUpdatesModal()">
                 <div class="modal-container modal-wide" onclick="event.stopPropagation()">
@@ -995,9 +1173,9 @@ export class HyperVAuditorPage {
 
     renderGroupMembersModal() {
         if (!this.showGroupMembersModalFlag || !this.selectedGroupModal) return '';
-        
+
         const { name, members, description } = this.selectedGroupModal;
-        
+
         return `
             <div class="modal-overlay" onclick="hyperVAuditorInstance.closeGroupMembersModal()">
                 <div class="modal-container modal-compact" onclick="event.stopPropagation()">
@@ -1101,7 +1279,7 @@ export class HyperVAuditorPage {
 
     renderClusterOverview() {
         if (!this.clusterName && !this.clusterInfo) return '';
-        
+
         const ov = this.overview;
         const totalVProc = this.vms.reduce((sum, vm) => sum + (vm.vCPU || 0), 0);
         const vpLpRatio = ov.totalLP > 0 ? (totalVProc / ov.totalLP).toFixed(2) : '0.00';
@@ -1112,7 +1290,7 @@ export class HyperVAuditorPage {
         const healthPercent = ov.totalNodes > 0 ? Math.round((ov.upNodes / ov.totalNodes) * 100) : 0;
         const healthLabel = healthPercent >= 95 ? this.t('healthy') || 'Excellent' :
             healthPercent >= 80 ? this.t('warning') || 'Stable' :
-            this.t('error') || 'Attention';
+                this.t('error') || 'Attention';
         const memoryPercent = ov.totalMemory.value > 0 ? (ov.usedMemory.value / ov.totalMemory.value) * 100 : 0;
         const storagePercent = ov.totalStorage.value > 0 ? (ov.usedStorage.value / ov.totalStorage.value) * 100 : 0;
         const vmDensity = ov.totalNodes > 0 ? (ov.totalVm / ov.totalNodes).toFixed(1) : '0.0';
@@ -1124,7 +1302,7 @@ export class HyperVAuditorPage {
             return acc;
         }, { total: 0, used: 0 }) || { total: 0, used: 0 };
         const csvPercent = csvUtil.total > 0 ? Math.round((csvUtil.used / csvUtil.total) * 100) : 0;
-        
+
         return `
             <section class="cluster-overview-modern">
                 <div class="cluster-header-card">
@@ -1277,173 +1455,195 @@ export class HyperVAuditorPage {
         `;
     }
 
+    renderHostsGrid() {
+        return `
+            <div style="margin-top: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-left: 0.5rem;">
+                    <i class="fas fa-th-large" style="color: #60a5fa; font-size: 1.25rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.125rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
+                </div>
+                <div class="reports-grid-modern" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+                    ${this.hosts.map((host, idx) => {
+            const isUp = host.status !== 'offline';
+            const isClustered = host.isClustered;
+
+            let memTotal = 0;
+            if (typeof host.memory?.total === 'number') memTotal = host.memory.total;
+            else if (typeof host.totalMemory === 'number') memTotal = host.totalMemory;
+            else {
+                const match = host.totalMemory?.toString().match(/([\d.]+)/);
+                if (match) memTotal = parseFloat(match[1]);
+            }
+
+            return `
+                            <div class="report-card-modern" onclick="hyperVAuditorInstance.switchView('host-${idx}')">
+                                <div class="report-card-header-modern" style="gap: 1rem;">
+                                    <div class="premium-icon-box" style="width: 42px; height: 42px; border-radius: 10px; background: ${isUp ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'}; font-size: 1.1rem; box-shadow: 0 4px 10px ${isUp ? 'rgba(16, 185, 129, 0.2)' : 'rgba(239, 68, 68, 0.2)'};">
+                                        <i class="fas fa-server"></i>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; overflow: hidden;">
+                                        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${host.name}</h3>
+                                        <div style="display: flex; align-items: center; gap: 0.375rem; margin-top: 0.125rem;">
+                                            <span class="premium-status-badge ${isUp ? 'success' : 'empty'}" style="padding: 0.125rem 0.5rem; font-size: 0.65rem;">
+                                                ${isUp ? 'Online' : 'Offline'}
+                                            </span>
+                                            <span style="font-size: 0.7rem; color: #64748b;">• ${isClustered ? 'Clustered' : 'Standalone'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem; padding: 1rem; background: rgba(15, 23, 42, 0.3); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                        <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Workload</span>
+                                        <span style="color: #60a5fa; font-weight: 700; font-size: 1rem;">${host.vms?.length || 0} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">VMs</small></span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                        <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Memory</span>
+                                        <span style="color: #ffffff; font-weight: 700; font-size: 1rem;">${memTotal ? Math.round(memTotal) : 'N/A'} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">GB</small></span>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                                        <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Compute</span>
+                                        <span style="color: #ffffff; font-weight: 700; font-size: 1rem;">${host.logicalProcessor || host.socketCount || 'N/A'} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">LP</small></span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; justify-content: flex-end;">
+                                        <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #60a5fa; transition: all 0.3s;" class="card-arrow-icon">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+        }).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    setViewMode(mode) {
+        this.viewMode = mode;
+        localStorage.setItem('hyperv-auditor-details-view-mode', mode);
+        this.updateDisplay();
+    }
+
     renderHostsTable() {
         return `
-            <div class="compact-table-section">
-                <div class="section-header-compact">
-                    <h3 class="section-title-compact"><i class="fas fa-server"></i> ${this.t('hyperVHosts')}</h3>
+            <div style="margin-top: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-left: 0.5rem;">
+                    <i class="fas fa-server" style="color: #60a5fa; font-size: 1.25rem;"></i>
+                    <h3 style="margin: 0; font-size: 1.125rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
                 </div>
-                <div class="table-wrapper-compact">
-                    <table class="table-compact">
+                <div style="overflow-x: auto;">
+                    <table class="audit-table-v2">
                         <thead>
                             <tr>
-                                <th><i class="fas fa-server"></i> ${this.t('hostname')}</th>
-                                <th><i class="fas fa-industry"></i> ${this.t('manufacturerModel')}</th>
-                                <th><i class="fas fa-windows"></i> ${this.t('osVersion')}</th>
-                                <th><i class="fas fa-heartbeat"></i> ${this.t('state')}</th>
-                                <th><i class="fas fa-clock"></i> ${this.t('uptime')}</th>
-                                <th><i class="fas fa-network-wired"></i> ${this.t('domain')}</th>
-                                <th><i class="fas fa-desktop"></i> ${this.t('vmCount')}</th>
-                                <th><i class="fas fa-microchip"></i> ${this.t('processorsLabel')}</th>
-                                <th><i class="fas fa-memory"></i> ${this.t('memoryLabel')}</th>
+                                <th>${this.t('hostname')}</th>
+                                <th>${this.t('manufacturerModel')}</th>
+                                <th>${this.t('osVersion')}</th>
+                                <th>${this.t('state')}</th>
+                                <th>${this.t('vmCount')}</th>
+                                <th>CPU</th>
+                                <th>RAM</th>
+                                <th style="text-align: right;">${this.t('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
-                                ${this.hosts.map(host => {
-                                    // Processor info
-                                    let processorInfo = 'N/A';
-                                    if (host.processor) {
-                                        const manufacturer = host.processor.manufacturer || '';
-                                        const name = host.processor.name || 'N/A';
-                                        const clockSpeed = host.processor.maxClockSpeed ? `${host.processor.maxClockSpeed} GHz` : '';
-                                        processorInfo = [manufacturer, name, clockSpeed].filter(Boolean).join(' ') || 'N/A';
-                                    } else if (host.hardware?.processor) {
-                                        processorInfo = host.hardware.processor;
-                                    }
-                                    
-                                    const logicalProcessor = host.logicalProcessor || 0;
-                                    const socketCount = host.socketCount || 0;
-                                    const hyperThreading = host.processor?.hyperThreading ? 
-                                        `<span class="tooltip-trigger" title="Hyper-Threading: Enabled">HT</span>` : '';
-                                    
-                                    // Memory info - handle both number and string formats
-                                    let memTotal = 'N/A';
-                                    let memUsed = 'N/A';
-                                    let memFree = 'N/A';
-                                    
-                                    if (typeof host.memory?.total === 'number') {
-                                        memTotal = host.memory.total.toFixed(1);
-                                    } else if (typeof host.totalMemory === 'number') {
-                                        memTotal = host.totalMemory.toFixed(1);
-                                    } else if (host.totalMemory) {
-                                        // Parse string like "31.15 GB" or just "31.15"
-                                        const memMatch = host.totalMemory.toString().match(/([\d.]+)/);
-                                        if (memMatch) {
-                                            memTotal = parseFloat(memMatch[1]).toFixed(1);
-                                        }
-                                    }
-                                    
-                                    if (typeof host.memory?.used === 'number') {
-                                        memUsed = host.memory.used.toFixed(1);
-                                    } else if (typeof host.usedMemory === 'number') {
-                                        memUsed = host.usedMemory.toFixed(1);
-                                    } else if (host.usedMemory) {
-                                        const memMatch = host.usedMemory.toString().match(/([\d.]+)/);
-                                        if (memMatch) {
-                                            memUsed = parseFloat(memMatch[1]).toFixed(1);
-                                        }
-                                    }
-                                    
-                                    if (typeof host.memory?.free === 'number') {
-                                        memFree = host.memory.free.toFixed(1);
-                                    } else if (typeof host.freeMemory === 'number') {
-                                        memFree = host.freeMemory.toFixed(1);
-                                    } else if (host.freeMemory) {
-                                        const memMatch = host.freeMemory.toString().match(/([\d.]+)/);
-                                        if (memMatch) {
-                                            memFree = parseFloat(memMatch[1]).toFixed(1);
-                                        }
-                                    }
-                                    
-                                    const isClustered = host.isClustered ? 'Clustered' : 'Standalone';
-                                    // For clustered nodes, show clusterNodeState if available and not Unknown
-                                    // If Unknown but host is online, show status instead
-                                    let clusterStateInfo = '';
-                                    if (host.isClustered) {
-                                        if (host.clusterNodeState && host.clusterNodeState !== 'Unknown') {
-                                            clusterStateInfo = ` • ${host.clusterNodeState}`;
-                                        } else if (host.status && host.status !== 'offline') {
-                                            // Show status if cluster state is unknown but host is online
-                                            clusterStateInfo = ` • ${host.status.charAt(0).toUpperCase() + host.status.slice(1)}`;
-                                        } else if (host.state && host.state !== 'Down') {
-                                            clusterStateInfo = ` • ${host.state}`;
-                                        }
-                                    }
-                                    
-                                    return `
+                                ${this.hosts.map((host, idx) => {
+            // Processor info
+            let processorInfo = 'N/A';
+            if (host.processor) {
+                const manufacturer = host.processor.manufacturer || '';
+                const name = host.processor.name || 'N/A';
+                const clockSpeed = host.processor.maxClockSpeed ? `${host.processor.maxClockSpeed} GHz` : '';
+                processorInfo = [manufacturer, name, clockSpeed].filter(Boolean).join(' ') || 'N/A';
+            } else if (host.hardware?.processor) {
+                processorInfo = host.hardware.processor;
+            }
+
+            const logicalProcessor = host.logicalProcessor || 0;
+            const socketCount = host.socketCount || 0;
+            const hyperThreading = host.processor?.hyperThreading ?
+                `<span class="tooltip-trigger" title="Hyper-Threading: Enabled">HT</span>` : '';
+
+            // Memory info
+            let memTotal = 'N/A';
+            if (typeof host.memory?.total === 'number') memTotal = host.memory.total.toFixed(1);
+            else if (typeof host.totalMemory === 'number') memTotal = host.totalMemory.toFixed(1);
+            else if (host.totalMemory) {
+                const memMatch = host.totalMemory.toString().match(/([\d.]+)/);
+                if (memMatch) memTotal = parseFloat(memMatch[1]).toFixed(1);
+            }
+
+            const isClustered = host.isClustered ? 'Clustered' : 'Standalone';
+            let clusterStateInfo = '';
+            if (host.isClustered) {
+                if (host.clusterNodeState && host.clusterNodeState !== 'Unknown') {
+                    clusterStateInfo = ` • ${host.clusterNodeState}`;
+                } else if (host.status && host.status !== 'offline') {
+                    clusterStateInfo = ` • ${host.status.charAt(0).toUpperCase() + host.status.slice(1)}`;
+                } else if (host.state && host.state !== 'Down') {
+                    clusterStateInfo = ` • ${host.state}`;
+                }
+            }
+
+            return `
                                         <tr>
                                             <td>
-                                                <strong>${host.name}</strong><br>
-                                                <small>${isClustered}${clusterStateInfo}</small>
-                                            </td>
-                                            <td>
-                                                ${host.hardware?.manufacturer || 'N/A'}, ${host.hardware?.model || 'N/A'}
-                                            </td>
-                                            <td>${host.osVersion || 'N/A'}</td>
-                                            <td>
-                                                ${(() => {
-                                                    // Priority: error > status > clusterNodeState > state
-                                                    let hostStatus = 'up';
-                                                    
-                                                    // If there's an error, definitely offline
-                                                    if (host.error) {
-                                                        hostStatus = 'offline';
-                                                    }
-                                                    // Check status field (from PowerShell script)
-                                                    else if (host.status) {
-                                                        hostStatus = host.status.toLowerCase();
-                                                    }
-                                                    // For clustered nodes, check clusterNodeState
-                                                    else if (host.isClustered && host.clusterNodeState) {
-                                                        const clusterState = host.clusterNodeState.toLowerCase();
-                                                        if (clusterState === 'down' || clusterState === 'paused' || clusterState === 'failed') {
-                                                            hostStatus = 'offline';
-                                                        } else {
-                                                            hostStatus = clusterState;
-                                                        }
-                                                    }
-                                                    // Fall back to state field
-                                                    else if (host.state) {
-                                                        const stateLower = host.state.toLowerCase();
-                                                        hostStatus = (stateLower === 'down') ? 'offline' : stateLower;
-                                                    }
-                                                    
-                                                    const statusClass = hostStatus;
-                                                    const statusText = hostStatus === 'offline' ? 'Offline' : this.translateStatus(hostStatus);
-                                                    const errorTooltip = host.error ? ` title="Error: ${host.error.replace(/"/g, '&quot;')}"` : '';
-                                                    return `<span class="status-badge status-${statusClass}"${errorTooltip}>${statusText}</span>`;
-                                                })()}
-                                            </td>
-                                            <td>${host.uptime || 'N/A'}</td>
-                                            <td>${host.domain || 'N/A'}</td>
-                                            <td>
-                                                <strong>${host.totalVm || 0}</strong> ${this.t('total')}<br>
-                                                <small>${host.runningVm || 0} ${this.translateStatus('Running')}</small>
-                                            </td>
-                                            <td>
-                                                ${logicalProcessor > 0 ? `
-                                                <div class="tooltip-trigger" title="Sockets: ${socketCount}&#10;Logical: ${logicalProcessor}${host.processor?.hyperThreading ? '&#10;Hyper-Threading: Enabled' : ''}">
-                                                    ${logicalProcessor} LP
-                                                    ${socketCount > 0 ? ` (${socketCount} Sockets)` : ''}
-                                                    ${hyperThreading}
+                                                <div style="display: flex; flex-direction: column;">
+                                                    <span style="font-weight: 700; color: #ffffff; font-size: 0.9375rem;">${host.name}</span>
+                                                    <span style="font-size: 0.75rem; color: #64748b;">${isClustered}${clusterStateInfo}</span>
                                                 </div>
-                                                ` : '<span class="text-muted">N/A</span>'}
-                                                ${processorInfo !== 'N/A' ? ` <small>${processorInfo}</small>` : ''}
                                             </td>
                                             <td>
-                                                ${memTotal !== 'N/A' ? `<strong>${memTotal} GB</strong> ${this.t('total')}` : '<strong>N/A</strong>'}
+                                                <div style="font-size: 0.8125rem; color: #94a3b8;">
+                                                    ${host.hardware?.manufacturer || 'N/A'}<br>
+                                                    <span style="font-size: 0.75rem;">${host.hardware?.model || 'N/A'}</span>
+                                                </div>
+                                            </td>
+                                            <td><span style="font-size: 0.8125rem;">${host.osVersion || 'N/A'}</span></td>
+                                            <td>
                                                 ${(() => {
-                                                    const parts = [];
-                                                    if (memUsed !== 'N/A') parts.push(`${memUsed} GB ${this.t('used')}`);
-                                                    if (memFree !== 'N/A') parts.push(`${memFree} GB ${this.t('free')}`);
-                                                    return parts.length ? `<br><small>${parts.join(', ')}</small>` : '';
-                                                })()}
+                    let hostStatus = 'up';
+                    if (host.error) hostStatus = 'offline';
+                    else if (host.status) hostStatus = host.status.toLowerCase();
+                    else if (host.isClustered && host.clusterNodeState) {
+                        const clusterState = host.clusterNodeState.toLowerCase();
+                        hostStatus = (clusterState === 'down' || clusterState === 'paused' || clusterState === 'failed') ? 'offline' : clusterState;
+                    }
+                    else if (host.state) {
+                        const stateLower = host.state.toLowerCase();
+                        hostStatus = (stateLower === 'down') ? 'offline' : stateLower;
+                    }
+                    const statusClass = hostStatus === 'offline' ? 'empty' : (hostStatus === 'up' ? 'success' : 'empty');
+                    const statusText = hostStatus.charAt(0).toUpperCase() + hostStatus.slice(1);
+                    return `<span class="premium-status-badge ${statusClass}"><i class="fas fa-${statusClass === 'success' ? 'check-circle' : 'exclamation-circle'}"></i> ${statusText}</span>`;
+                })()}
+                                            </td>
+                                            <td>
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.125rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8125rem;">
+                                                    ${host.vms?.length || 0}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <div style="font-size: 0.8125rem;">
+                                                    <span style="color: #ffffff; font-weight: 600;">${host.logicalProcessor || host.socketCount || 'N/A'}</span>
+                                                    <span style="color: #64748b; font-size: 0.7rem;"> LP</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div style="font-size: 0.8125rem;">
+                                                    <span style="color: #ffffff; font-weight: 600;">${memTotal ? Math.round(memTotal) : 'N/A'}</span>
+                                                    <span style="color: #64748b; font-size: 0.7rem;"> GB</span>
+                                                </div>
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <button class="premium-action-btn" style="height: 32px; padding: 0 0.75rem;" onclick="hyperVAuditorInstance.switchView('host-${idx}')">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                     `;
-                                }).join('')}
-                            </tbody>
-                        </table>
+        }).join('')}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         `;
@@ -1451,7 +1651,7 @@ export class HyperVAuditorPage {
 
     renderDisksTable() {
         const allDisks = [];
-        
+
         // Add quorum physical disks (showing the actual physical disk, not the volume)
         if (this.quorumDisks && Array.isArray(this.quorumDisks)) {
             this.quorumDisks.forEach(qd => {
@@ -1474,7 +1674,7 @@ export class HyperVAuditorPage {
                 }
             });
         }
-        
+
         // Add cluster disks
         if (this.clusterDisks && Array.isArray(this.clusterDisks)) {
             this.clusterDisks.forEach(cd => {
@@ -1495,7 +1695,7 @@ export class HyperVAuditorPage {
                 });
             });
         }
-        
+
         // Add host disks
         this.hosts.forEach(host => {
             if (host.disks && Array.isArray(host.disks)) {
@@ -1518,7 +1718,7 @@ export class HyperVAuditorPage {
                 });
             }
         });
-        
+
         // Deduplicate disks by uniqueId
         const diskMap = new Map();
         allDisks.forEach(disk => {
@@ -1538,7 +1738,7 @@ export class HyperVAuditorPage {
                 if (!group.busType && disk.busType) group.busType = disk.busType;
             }
         });
-        
+
         const deduplicatedDisks = Array.from(diskMap.values()).map(group => {
             const owners = group.owners;
             const aggregated = { ...group };
@@ -1546,9 +1746,9 @@ export class HyperVAuditorPage {
             delete aggregated.owners;
             return aggregated;
         });
-        
+
         if (deduplicatedDisks.length === 0) return '';
-        
+
         return `
             <div class="compact-table-section">
                 <div class="section-header-compact">
@@ -1571,8 +1771,8 @@ export class HyperVAuditorPage {
                         </thead>
                         <tbody>
                                 ${deduplicatedDisks.map(disk => {
-                                    const sizeTooltip = `Total: ${disk.size.toFixed(2)} GB&#10;Allocated: ${disk.allocated.toFixed(2)} GB&#10;Unallocated: ${disk.unallocated.toFixed(2)} GB`;
-                                    return `
+            const sizeTooltip = `Total: ${disk.size.toFixed(2)} GB&#10;Allocated: ${disk.allocated.toFixed(2)} GB&#10;Unallocated: ${disk.unallocated.toFixed(2)} GB`;
+            return `
                                         <tr${disk.isQuorum ? ' class="quorum-disk-row"' : ''}>
                                             <td>
                                                 ${disk.isQuorum ? '<i class="fas fa-shield-alt" style="color: #3b82f6; margin-right: 0.5rem;"></i>' : ''}
@@ -1601,7 +1801,7 @@ export class HyperVAuditorPage {
                                             <td>${disk.busType}</td>
                                         </tr>
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                 </div>
@@ -1635,14 +1835,14 @@ export class HyperVAuditorPage {
                         </thead>
                         <tbody>
                                 ${this.clusterSharedVolumes.map(csv => {
-                                    const size = parseFloat(csv.size) || 0;
-                                    const sizeRemaining = parseFloat(csv.sizeRemaining) || 0;
-                                    const used = size - sizeRemaining;
-                                    const freePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : 0;
-                                    const usedPercent = size > 0 ? ((used / size) * 100).toFixed(1) : 0;
-                                    const sizeTooltip = `Total: ${size.toFixed(2)} GB&#10;Used: ${used.toFixed(2)} GB (${usedPercent}%)&#10;Free: ${sizeRemaining.toFixed(2)} GB (${freePercent}%)`;
-                                    
-                                    return `
+            const size = parseFloat(csv.size) || 0;
+            const sizeRemaining = parseFloat(csv.sizeRemaining) || 0;
+            const used = size - sizeRemaining;
+            const freePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : 0;
+            const usedPercent = size > 0 ? ((used / size) * 100).toFixed(1) : 0;
+            const sizeTooltip = `Total: ${size.toFixed(2)} GB&#10;Used: ${used.toFixed(2)} GB (${usedPercent}%)&#10;Free: ${sizeRemaining.toFixed(2)} GB (${freePercent}%)`;
+
+            return `
                                         <tr>
                                             <td>
                                                 <strong>${csv.name || 'N/A'}</strong>
@@ -1673,7 +1873,7 @@ export class HyperVAuditorPage {
                                             <td>${csv.fileSystem || 'N/A'}</td>
                                         </tr>
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                 </div>
@@ -1708,14 +1908,14 @@ export class HyperVAuditorPage {
                         </thead>
                         <tbody>
                                 ${this.quorumDisks.map(quorum => {
-                                    const size = parseFloat(quorum.size) || 0;
-                                    const sizeRemaining = parseFloat(quorum.sizeRemaining) || 0;
-                                    const used = size - sizeRemaining;
-                                    const freePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : 0;
-                                    const usedPercent = size > 0 ? ((used / size) * 100).toFixed(1) : 0;
-                                    const sizeTooltip = `Total: ${size.toFixed(2)} GB&#10;Used: ${used.toFixed(2)} GB (${usedPercent}%)&#10;Free: ${sizeRemaining.toFixed(2)} GB (${freePercent}%)`;
-                                    
-                                    return `
+            const size = parseFloat(quorum.size) || 0;
+            const sizeRemaining = parseFloat(quorum.sizeRemaining) || 0;
+            const used = size - sizeRemaining;
+            const freePercent = size > 0 ? ((sizeRemaining / size) * 100).toFixed(1) : 0;
+            const usedPercent = size > 0 ? ((used / size) * 100).toFixed(1) : 0;
+            const sizeTooltip = `Total: ${size.toFixed(2)} GB&#10;Used: ${used.toFixed(2)} GB (${usedPercent}%)&#10;Free: ${sizeRemaining.toFixed(2)} GB (${freePercent}%)`;
+
+            return `
                                         <tr class="quorum-disk-row">
                                             <td>
                                                 <strong><i class="fas fa-shield-alt" style="color: #3b82f6; margin-right: 0.5rem;"></i>${quorum.name || 'N/A'}</strong>
@@ -1758,7 +1958,7 @@ export class HyperVAuditorPage {
                                             </td>
                                         </tr>
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                 </div>
@@ -1769,7 +1969,7 @@ export class HyperVAuditorPage {
 
     renderVolumesTable() {
         const allVolumes = [];
-        
+
         // Add host volumes (exclude CSVs - they have their own table now)
         this.hosts.forEach(host => {
             if (host.volumes && Array.isArray(host.volumes)) {
@@ -1791,7 +1991,7 @@ export class HyperVAuditorPage {
                 });
             }
         });
-        
+
         // Deduplicate volumes by uniqueId
         const volumeMap = new Map();
         allVolumes.forEach(volume => {
@@ -1809,7 +2009,7 @@ export class HyperVAuditorPage {
                 group.isCSV = group.isCSV || volume.isCSV;
             }
         });
-        
+
         const deduplicatedVolumes = Array.from(volumeMap.values()).map(group => {
             const owners = group.owners;
             const aggregated = { ...group };
@@ -1817,9 +2017,9 @@ export class HyperVAuditorPage {
             delete aggregated.owners;
             return aggregated;
         });
-        
+
         if (deduplicatedVolumes.length === 0) return '';
-        
+
         return `
             <div class="compact-table-section">
                 <div class="section-header-compact">
@@ -1842,9 +2042,9 @@ export class HyperVAuditorPage {
                         </thead>
                         <tbody>
                                 ${deduplicatedVolumes.map(vol => {
-                                    const sizeTooltip = `Total: ${vol.size.toFixed(2)} GB&#10;Used: ${vol.used.toFixed(2)} GB&#10;Free: ${vol.sizeRemaining.toFixed(2)} GB`;
-                                    const freePercent = vol.size > 0 ? ((vol.sizeRemaining / vol.size) * 100).toFixed(1) : 0;
-                                    return `
+            const sizeTooltip = `Total: ${vol.size.toFixed(2)} GB&#10;Used: ${vol.used.toFixed(2)} GB&#10;Free: ${vol.sizeRemaining.toFixed(2)} GB`;
+            const freePercent = vol.size > 0 ? ((vol.sizeRemaining / vol.size) * 100).toFixed(1) : 0;
+            return `
                                         <tr>
                                             <td>
                                                 <strong>${vol.name}</strong>
@@ -1871,7 +2071,7 @@ export class HyperVAuditorPage {
                                             <td>${vol.fileSystem}</td>
                                         </tr>
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                 </div>
@@ -1882,7 +2082,7 @@ export class HyperVAuditorPage {
     renderAllVMsByHost() {
         // Only show for clusters
         if (!this.clusterName || this.vms.length === 0) return '';
-        
+
         return `
             <div class="compact-table-section all-vms-table-section">
                 <div class="section-header-compact">
@@ -1907,20 +2107,20 @@ export class HyperVAuditorPage {
                         </thead>
                         <tbody>
                             ${this.vms.map((vm, vmIndex) => {
-                                const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
-                                const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
-                                const memMax = typeof vm.memory?.max === 'number' ? `${vm.memory.max.toFixed(1)} GB` : (vm.memory?.max || '');
-                                const memAssigned = typeof vm.memory?.assigned === 'number' ? `${vm.memory.assigned.toFixed(1)} GB` : (vm.memory?.assigned || '');
-                                const checkpointExists = vm.checkpoint?.exists || false;
-                                const checkpointCount = vm.checkpoint?.count || 0;
-                                
-                                const replicaState = vm.replica?.state || 'Disabled';
-                                const replicaHealth = vm.replica?.health || 'N/A';
-                                const replicaMode = vm.replica?.mode || 'N/A';
-                                
-                                const rowId = `all-vm-${vmIndex}`;
-                                
-                                return `
+            const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
+            const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
+            const memMax = typeof vm.memory?.max === 'number' ? `${vm.memory.max.toFixed(1)} GB` : (vm.memory?.max || '');
+            const memAssigned = typeof vm.memory?.assigned === 'number' ? `${vm.memory.assigned.toFixed(1)} GB` : (vm.memory?.assigned || '');
+            const checkpointExists = vm.checkpoint?.exists || false;
+            const checkpointCount = vm.checkpoint?.count || 0;
+
+            const replicaState = vm.replica?.state || 'Disabled';
+            const replicaHealth = vm.replica?.health || 'N/A';
+            const replicaMode = vm.replica?.mode || 'N/A';
+
+            const rowId = `all-vm-${vmIndex}`;
+
+            return `
                                 <tr class="data-row ${this.filters.expandedRows.has(rowId) ? 'expanded' : ''}" 
                                     onclick="hyperVAuditorInstance.toggleRow('${rowId}')">
                                     <td>
@@ -1953,37 +2153,37 @@ export class HyperVAuditorPage {
                                         </div>
                                     </td>
                                     <td>
-                                        ${checkpointExists ? 
-                                            `<span class="checkpoint-count-text"><i class="fas fa-camera"></i> ${checkpointCount}</span>` : 
-                                            `<span class="text-muted">${this.t('none')}</span>`
-                                        }
+                                        ${checkpointExists ?
+                    `<span class="checkpoint-count-text"><i class="fas fa-camera"></i> ${checkpointCount}</span>` :
+                    `<span class="text-muted">${this.t('none')}</span>`
+                }
                                     </td>
                                     <td>
-                                        ${replicaState !== 'Disabled' ? 
-                                            `<span class="replica-state-text replica-${(replicaHealth || 'unknown').toLowerCase()}">${this.translateStatus(replicaState)}</span>` : 
-                                            `<span class="text-muted">${this.t('disabled')}</span>`
-                                        }
+                                        ${replicaState !== 'Disabled' ?
+                    `<span class="replica-state-text replica-${(replicaHealth || 'unknown').toLowerCase()}">${this.translateStatus(replicaState)}</span>` :
+                    `<span class="text-muted">${this.t('disabled')}</span>`
+                }
                                     </td>
                                     <td>
                                         ${(() => {
-                                            let totalSize = 0;
-                                            let totalMaxSize = 0;
-                                            if (vm.disks && Array.isArray(vm.disks)) {
-                                                vm.disks.forEach(disk => {
-                                                    const currentSize = typeof disk.currentSize === 'number' ? disk.currentSize : 0;
-                                                    const maxSize = typeof disk.maxSize === 'number' ? disk.maxSize : 0;
-                                                    totalSize += currentSize;
-                                                    totalMaxSize += maxSize;
-                                                });
-                                            }
-                                            
-                                            const avhdxTotalSize = typeof vm.avhdxTotalSize === 'number' ? vm.avhdxTotalSize : 0;
-                                            const totalWithAvhdx = totalSize + avhdxTotalSize;
-                                            
-                                            const totalSizeText = totalWithAvhdx > 0 ? `${totalWithAvhdx.toFixed(1)} GB` : (totalSize > 0 ? `${totalSize.toFixed(1)} GB` : 'N/A');
-                                            const diskCount = vm.disks && Array.isArray(vm.disks) ? vm.disks.length : 0;
-                                            
-                                            return `
+                    let totalSize = 0;
+                    let totalMaxSize = 0;
+                    if (vm.disks && Array.isArray(vm.disks)) {
+                        vm.disks.forEach(disk => {
+                            const currentSize = typeof disk.currentSize === 'number' ? disk.currentSize : 0;
+                            const maxSize = typeof disk.maxSize === 'number' ? disk.maxSize : 0;
+                            totalSize += currentSize;
+                            totalMaxSize += maxSize;
+                        });
+                    }
+
+                    const avhdxTotalSize = typeof vm.avhdxTotalSize === 'number' ? vm.avhdxTotalSize : 0;
+                    const totalWithAvhdx = totalSize + avhdxTotalSize;
+
+                    const totalSizeText = totalWithAvhdx > 0 ? `${totalWithAvhdx.toFixed(1)} GB` : (totalSize > 0 ? `${totalSize.toFixed(1)} GB` : 'N/A');
+                    const diskCount = vm.disks && Array.isArray(vm.disks) ? vm.disks.length : 0;
+
+                    return `
                                                 <div class="disk-total-display">
                                                     <div class="disk-total-size">
                                                         <i class="fas fa-hdd"></i>
@@ -1993,21 +2193,21 @@ export class HyperVAuditorPage {
                                                     <div class="disk-total-count">${diskCount} disk${diskCount !== 1 ? 's' : ''}</div>
                                                 </div>
                                             `;
-                                        })()}
+                })()}
                                     </td>
                                     <td>
                                         ${(() => {
-                                            const adapterCount = vm.networkAdapters && Array.isArray(vm.networkAdapters) ? vm.networkAdapters.length : 0;
-                                            const connectedCount = vm.networkAdapters && Array.isArray(vm.networkAdapters) ? vm.networkAdapters.filter(a => a.connection === 'Connected').length : 0;
-                                            
-                                            return adapterCount > 0 ? `
+                    const adapterCount = vm.networkAdapters && Array.isArray(vm.networkAdapters) ? vm.networkAdapters.length : 0;
+                    const connectedCount = vm.networkAdapters && Array.isArray(vm.networkAdapters) ? vm.networkAdapters.filter(a => a.connection === 'Connected').length : 0;
+
+                    return adapterCount > 0 ? `
                                                 <div class="network-count-display">
                                                     <i class="fas fa-network-wired"></i>
                                                     <span class="network-count-value">${adapterCount}</span>
                                                     ${connectedCount > 0 ? `<span class="network-connected-indicator">(${connectedCount})</span>` : ''}
                                                 </div>
                                             ` : '<span class="text-muted">N/A</span>';
-                                        })()}
+                })()}
                                     </td>
                                 </tr>
                                 ${this.filters.expandedRows.has(rowId) ? `
@@ -2032,24 +2232,24 @@ export class HyperVAuditorPage {
                                                                     <span class="vm-config-detail-compact"><i class="fas fa-ethernet"></i> ${adapter.switch || 'N/A'}</span>
                                                                     ${adapter.vlan && adapter.vlan !== 'N/A' ? `<span class="vm-config-detail-compact"><i class="fas fa-tag"></i> VLAN ${adapter.vlan}</span>` : ''}
                                                                     ${(() => {
-                                                                        let ipDisplay = '';
-                                                                        if (adapter.ipAddresses && Array.isArray(adapter.ipAddresses) && adapter.ipAddresses.length > 0) {
-                                                                            const ipList = adapter.ipAddresses.map(ipInfo => {
-                                                                                if (typeof ipInfo === 'string') {
-                                                                                    return ipInfo;
-                                                                                } else if (ipInfo.ip) {
-                                                                                    return ipInfo.prefixLength ? `${ipInfo.ip}/${ipInfo.prefixLength}` : ipInfo.ip;
-                                                                                }
-                                                                                return '';
-                                                                            }).filter(Boolean);
-                                                                            if (ipList.length > 0) {
-                                                                                ipDisplay = ipList.join(', ');
-                                                                            }
-                                                                        } else if (adapter.ip && adapter.ip !== 'N/A') {
-                                                                            ipDisplay = adapter.ip;
-                                                                        }
-                                                                        return ipDisplay ? `<span class="vm-config-detail-compact"><i class="fas fa-network-wired"></i> <strong>${ipDisplay}</strong></span>` : '';
-                                                                    })()}
+                        let ipDisplay = '';
+                        if (adapter.ipAddresses && Array.isArray(adapter.ipAddresses) && adapter.ipAddresses.length > 0) {
+                            const ipList = adapter.ipAddresses.map(ipInfo => {
+                                if (typeof ipInfo === 'string') {
+                                    return ipInfo;
+                                } else if (ipInfo.ip) {
+                                    return ipInfo.prefixLength ? `${ipInfo.ip}/${ipInfo.prefixLength}` : ipInfo.ip;
+                                }
+                                return '';
+                            }).filter(Boolean);
+                            if (ipList.length > 0) {
+                                ipDisplay = ipList.join(', ');
+                            }
+                        } else if (adapter.ip && adapter.ip !== 'N/A') {
+                            ipDisplay = adapter.ip;
+                        }
+                        return ipDisplay ? `<span class="vm-config-detail-compact"><i class="fas fa-network-wired"></i> <strong>${ipDisplay}</strong></span>` : '';
+                    })()}
                                                                     ${adapter.macAddress ? `<span class="vm-config-detail-compact"><i class="fas fa-fingerprint"></i> ${adapter.macAddress}</span>` : ''}
                                                                     ${adapter.deviceType ? `<span class="vm-config-detail-compact"><i class="fas fa-desktop"></i> ${adapter.deviceType}</span>` : ''}
                                                                 </div>
@@ -2065,9 +2265,9 @@ export class HyperVAuditorPage {
                                                     </div>
                                                     <div class="vm-config-body-compact">
                                                         ${vm.disks && Array.isArray(vm.disks) && vm.disks.length > 0 ? vm.disks.map(disk => {
-                                                            const diskSize = typeof disk.currentSize === 'number' ? `${disk.currentSize.toFixed(1)} GB` : (disk.currentSize || 'N/A');
-                                                            const diskMax = typeof disk.maxSize === 'number' ? `${disk.maxSize.toFixed(1)} GB` : (disk.maxSize || 'N/A');
-                                                            return `
+                        const diskSize = typeof disk.currentSize === 'number' ? `${disk.currentSize.toFixed(1)} GB` : (disk.currentSize || 'N/A');
+                        const diskMax = typeof disk.maxSize === 'number' ? `${disk.maxSize.toFixed(1)} GB` : (disk.maxSize || 'N/A');
+                        return `
                                                             <div class="vm-config-item-compact ${disk.fileExists === false ? 'disk-missing' : ''}">
                                                                 <div class="vm-config-item-header-compact">
                                                                     <span class="vm-config-item-name-compact">${disk.name || 'N/A'}</span>
@@ -2086,7 +2286,7 @@ export class HyperVAuditorPage {
                                                                 ${disk.path && disk.path !== 'Pass-through' ? `<div class="vm-config-path-compact"><i class="fas fa-folder"></i> ${disk.path}</div>` : ''}
                                                             </div>
                                                         `;
-                                                        }).join('') : '<div class="vm-config-item-compact"><span class="text-muted">No disks</span></div>'}
+                    }).join('') : '<div class="vm-config-item-compact"><span class="text-muted">No disks</span></div>'}
                                                     </div>
                                                 </div>
                                                 <!-- Memory & Integration Services -->
@@ -2108,21 +2308,21 @@ export class HyperVAuditorPage {
                                                         <div class="vm-config-item-compact">
                                                             <div class="vm-config-item-details-compact">
                                                                 ${(() => {
-                                                                    const state = vm.integrationServices.state || 'N/A';
-                                                                    let icon = 'fa-check-circle';
-                                                                    let icsClass = 'ics-uptodate';
-                                                                    if (state === 'UpdateRequired') {
-                                                                        icon = 'fa-exclamation-triangle';
-                                                                        icsClass = 'ics-updaterequired';
-                                                                    } else if (state === 'MayBeRequired') {
-                                                                        icon = 'fa-question-circle';
-                                                                        icsClass = 'ics-mayberequired';
-                                                                    } else if (state === 'NotDetected') {
-                                                                        icon = 'fa-times-circle';
-                                                                        icsClass = 'ics-notdetected';
-                                                                    }
-                                                                    return `<span class="vm-config-detail-compact"><i class="fas ${icon}"></i> <span class="${icsClass}">ICS: ${state}</span></span><span class="vm-config-detail-compact"><i class="fas fa-code-branch"></i> v${vm.integrationServices.version || 'N/A'}</span>`;
-                                                                })()}
+                            const state = vm.integrationServices.state || 'N/A';
+                            let icon = 'fa-check-circle';
+                            let icsClass = 'ics-uptodate';
+                            if (state === 'UpdateRequired') {
+                                icon = 'fa-exclamation-triangle';
+                                icsClass = 'ics-updaterequired';
+                            } else if (state === 'MayBeRequired') {
+                                icon = 'fa-question-circle';
+                                icsClass = 'ics-mayberequired';
+                            } else if (state === 'NotDetected') {
+                                icon = 'fa-times-circle';
+                                icsClass = 'ics-notdetected';
+                            }
+                            return `<span class="vm-config-detail-compact"><i class="fas ${icon}"></i> <span class="${icsClass}">ICS: ${state}</span></span><span class="vm-config-detail-compact"><i class="fas fa-code-branch"></i> v${vm.integrationServices.version || 'N/A'}</span>`;
+                        })()}
                                                             </div>
                                                         </div>
                                                         ` : ''}
@@ -2137,9 +2337,9 @@ export class HyperVAuditorPage {
                                                     </div>
                                                     <div class="vm-config-body-compact">
                                                         ${vm.checkpoint.chain && vm.checkpoint.chain.length > 0 ? vm.checkpoint.chain.map((cp, cpIndex) => {
-                                                            const totalDiskSize = cp.disks && cp.disks.length > 0 ? 
-                                                                cp.disks.reduce((sum, d) => sum + (typeof d.currentSize === 'number' ? d.currentSize : 0), 0) : 0;
-                                                            return `
+                            const totalDiskSize = cp.disks && cp.disks.length > 0 ?
+                                cp.disks.reduce((sum, d) => sum + (typeof d.currentSize === 'number' ? d.currentSize : 0), 0) : 0;
+                            return `
                                                             <div class="vm-config-item-compact">
                                                                 <div class="vm-config-item-header-compact">
                                                                     <span class="vm-config-item-name-compact"><i class="fas fa-camera"></i> ${cp.name}</span>
@@ -2151,18 +2351,18 @@ export class HyperVAuditorPage {
                                                                 ${cp.disks && Array.isArray(cp.disks) && cp.disks.length > 0 ? `
                                                                 <div class="vm-config-item-details-compact">
                                                                     ${cp.disks.map((disk, diskIdx) => {
-                                                                        const diskSize = typeof disk.currentSize === 'number' ? disk.currentSize.toFixed(1) : 
-                                                                            (typeof disk.currentSize === 'string' ? disk.currentSize.replace(' GB', '') : 'N/A');
-                                                                        const diskMax = typeof disk.maxSize === 'number' ? disk.maxSize.toFixed(1) : 
-                                                                            (typeof disk.maxSize === 'string' ? disk.maxSize.replace(' GB', '') : 'N/A');
-                                                                        const diskName = disk.name || disk.path || `Disk ${diskIdx + 1}`;
-                                                                        return `<span class="vm-config-detail-compact"><i class="fas fa-hdd"></i> ${diskName}: ${diskSize}/${diskMax} GB</span>`;
-                                                                    }).join('')}
+                                const diskSize = typeof disk.currentSize === 'number' ? disk.currentSize.toFixed(1) :
+                                    (typeof disk.currentSize === 'string' ? disk.currentSize.replace(' GB', '') : 'N/A');
+                                const diskMax = typeof disk.maxSize === 'number' ? disk.maxSize.toFixed(1) :
+                                    (typeof disk.maxSize === 'string' ? disk.maxSize.replace(' GB', '') : 'N/A');
+                                const diskName = disk.name || disk.path || `Disk ${diskIdx + 1}`;
+                                return `<span class="vm-config-detail-compact"><i class="fas fa-hdd"></i> ${diskName}: ${diskSize}/${diskMax} GB</span>`;
+                            }).join('')}
                                                                 </div>
                                                                 ` : ''}
                                                             </div>
                                                             `;
-                                                        }).join('') : ''}
+                        }).join('') : ''}
                                                     </div>
                                                 </div>
                                                 ` : ''}
@@ -2194,7 +2394,7 @@ export class HyperVAuditorPage {
                                 </tr>
                                 ` : ''}
                                     `;
-                                }).join('')}
+        }).join('')}
                             </tbody>
                         </table>
                 </div>
@@ -2202,8 +2402,8 @@ export class HyperVAuditorPage {
         `;
     }
 
-    renderServerSections() {
-        const sectionHeader = this.hosts.length > 0 ? `
+    renderServerSections(specificHostIndex = null) {
+        const sectionHeader = this.hosts.length > 0 && specificHostIndex === null ? `
             <div class="hosts-section-divider">
                 <div class="divider-line"></div>
                 <div class="divider-content">
@@ -2214,32 +2414,39 @@ export class HyperVAuditorPage {
                 <div class="divider-line"></div>
             </div>
         ` : '';
-        
-        return sectionHeader + this.hosts.map((host, hostIndex) => {
+
+        const hostsToRender = specificHostIndex !== null ? [this.hosts[specificHostIndex]].filter(h => h) : this.hosts;
+
+        return sectionHeader + hostsToRender.map((host, idx) => {
+            const actualIndex = specificHostIndex !== null ? specificHostIndex : idx;
             const hostVMs = this.vms.filter(vm => vm.host === host.name);
             const hostErrors = host.systemErrors || [];
             const hypervErrors = host.hypervErrors || [];
             const totalErrors = hostErrors.length + hypervErrors.length;
-            
+
+            // Safe string helpers
+            const safeLower = (s) => (s && typeof s === 'string') ? s.toLowerCase() : String(s || '').toLowerCase();
+            const safeEscape = (s) => (s && typeof s === 'string') ? s.replace(/"/g, '&quot;') : '';
+
             // Check if host is offline - Priority: error > status > clusterNodeState > state
             let hostStatus = 'online';
             if (host.error) {
                 hostStatus = 'offline';
             } else if (host.status) {
-                hostStatus = host.status.toLowerCase();
+                hostStatus = safeLower(host.status);
             } else if (host.isClustered && host.clusterNodeState) {
-                const clusterState = host.clusterNodeState.toLowerCase();
+                const clusterState = safeLower(host.clusterNodeState);
                 if (clusterState === 'down' || clusterState === 'paused' || clusterState === 'failed') {
                     hostStatus = 'offline';
                 } else {
                     hostStatus = clusterState;
                 }
             } else if (host.state) {
-                const stateLower = host.state.toLowerCase();
+                const stateLower = safeLower(host.state);
                 hostStatus = (stateLower === 'down') ? 'offline' : stateLower;
             }
             const isOffline = hostStatus === 'offline';
-            
+
             return `
                 <div class="server-card-wrapper ${isOffline ? 'server-offline' : ''}">
                     <div class="server-header-modern">
@@ -2252,28 +2459,11 @@ export class HyperVAuditorPage {
                                 <div style="display: flex; align-items: center; gap: 0.75rem;">
                                     <h3 class="server-title-modern">${host.name}</h3>
                                     ${(() => {
-                                        // Priority: error > status > clusterNodeState > state
-                                        let hostStatus = 'online';
-                                        if (host.error) {
-                                            hostStatus = 'offline';
-                                        } else if (host.status) {
-                                            hostStatus = host.status.toLowerCase();
-                                        } else if (host.isClustered && host.clusterNodeState) {
-                                            const clusterState = host.clusterNodeState.toLowerCase();
-                                            if (clusterState === 'down' || clusterState === 'paused' || clusterState === 'failed') {
-                                                hostStatus = 'offline';
-                                            } else {
-                                                hostStatus = clusterState;
-                                            }
-                                        } else if (host.state) {
-                                            const stateLower = host.state.toLowerCase();
-                                            hostStatus = (stateLower === 'down') ? 'offline' : stateLower;
-                                        }
-                                        const statusClass = hostStatus;
-                                        const statusText = hostStatus === 'offline' ? 'Offline' : (hostStatus === 'online' ? 'Online' : this.translateStatus(hostStatus));
-                                        const errorTooltip = host.error ? ` title="Server is offline. Error: ${host.error.replace(/"/g, '&quot;')}"` : '';
-                                        return `<span class="status-badge status-${statusClass}"${errorTooltip} style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">${statusText}</span>`;
-                                    })()}
+                    const statusClass = hostStatus;
+                    const statusText = hostStatus === 'offline' ? 'Offline' : (hostStatus === 'online' ? 'Online' : this.translateStatus(hostStatus));
+                    const errorTooltip = host.error ? ` title="Server is offline. Error: ${safeEscape(host.error)}"` : '';
+                    return `<span class="status-badge status-${statusClass}"${errorTooltip} style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">${statusText}</span>`;
+                })()}
                                 </div>
                                 <div class="server-meta-modern">
                                     <span class="server-meta-item" title="${host.osVersionString || host.osVersion || 'Unknown'}">
@@ -2282,7 +2472,7 @@ export class HyperVAuditorPage {
                                     </span>
                                     <span class="server-meta-item"><i class="fas fa-clock"></i> ${host.uptime || 'N/A'}</span>
                                     <span class="server-meta-item"><i class="fas fa-network-wired"></i> ${host.domain || 'N/A'}</span>
-                                    ${host.error ? `<span class="server-meta-item" style="color: #dc2626;" title="${host.error.replace(/"/g, '&quot;')}"><i class="fas fa-exclamation-circle"></i> Error</span>` : ''}
+                                    ${host.error ? `<span class="server-meta-item" style="color: #dc2626;" title="${safeEscape(host.error)}"><i class="fas fa-exclamation-circle"></i> Error</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -2290,14 +2480,14 @@ export class HyperVAuditorPage {
                             ${totalErrors > 0 ? `
                                 <div class="server-errors-group">
                                     ${hostErrors.length > 0 ? `
-                                    <button class="server-error-btn system-error-btn" onclick="hyperVAuditorInstance.showErrorsModal('system', 'System Errors - ${host.name}', ${hostIndex})">
+                                    <button class="server-error-btn system-error-btn" onclick="hyperVAuditorInstance.showErrorsModal('system', 'System Errors - ${host.name}', ${actualIndex})">
                                         <i class="fas fa-exclamation-triangle"></i>
                                         <span class="error-count">${hostErrors.length}</span>
                                         <span class="error-type">System</span>
                                     </button>
                                     ` : ''}
                                     ${hypervErrors.length > 0 ? `
-                                    <button class="server-error-btn hyperv-error-btn" onclick="hyperVAuditorInstance.showErrorsModal('hyperv', 'Hyper-V Errors - ${host.name}', ${hostIndex})">
+                                    <button class="server-error-btn hyperv-error-btn" onclick="hyperVAuditorInstance.showErrorsModal('hyperv', 'Hyper-V Errors - ${host.name}', ${actualIndex})">
                                         <i class="fas fa-server"></i>
                                         <span class="error-count">${hypervErrors.length}</span>
                                         <span class="error-type">Hyper-V</span>
@@ -2429,19 +2619,19 @@ export class HyperVAuditorPage {
                                     <div class="hardware-info-modern">
                                         <span class="hardware-label-modern">Install Date</span>
                                         <span class="hardware-value-modern">${(() => {
-                                            try {
-                                                let dateStr = host.osInstallDate;
-                                                if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
-                                                    const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
-                                                    const date = new Date(timestamp);
-                                                    return date.toLocaleDateString();
-                                                }
-                                                const date = new Date(dateStr);
-                                                return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
-                                            } catch (e) {
-                                                return host.osInstallDate;
-                                            }
-                                        })()}</span>
+                        try {
+                            let dateStr = host.osInstallDate;
+                            if (typeof dateStr === 'string' && dateStr.match(/^\/Date\((\d+)\)\/$/)) {
+                                const timestamp = parseInt(dateStr.match(/^\/Date\((\d+)\)\/$/)[1]);
+                                const date = new Date(timestamp);
+                                return date.toLocaleDateString();
+                            }
+                            const date = new Date(dateStr);
+                            return isNaN(date.getTime()) ? dateStr : date.toLocaleDateString();
+                        } catch (e) {
+                            return host.osInstallDate;
+                        }
+                    })()}</span>
                                     </div>
                                 </div>
                                 ` : ''}
@@ -2454,22 +2644,22 @@ export class HyperVAuditorPage {
                                         <span class="hardware-label-modern">Activation Status</span>
                                         <span class="hardware-value-modern">
                                             ${(() => {
-                                                const status = host.windowsActivation.licenseStatus || 'Unknown';
-                                                const isActivated = host.windowsActivation.isActivated;
-                                                const statusLower = status.toLowerCase();
-                                                
-                                                // Determine status type for better styling
-                                                let statusType = 'warning';
-                                                if (isActivated === true || statusLower.includes('licensed') || statusLower.includes('activated')) {
-                                                    statusType = 'success';
-                                                } else if (isActivated === false || statusLower.includes('unlicensed') || statusLower.includes('non-genuine') || statusLower.includes('inactive')) {
-                                                    statusType = 'error';
-                                                } else if (statusLower.includes('grace') || statusLower.includes('notification')) {
-                                                    statusType = 'warning';
-                                                }
-                                                
-                                                return `<span class="activation-status activation-${statusType}">${status}</span>`;
-                                            })()}
+                        const status = host.windowsActivation.licenseStatus || 'Unknown';
+                        const isActivated = host.windowsActivation.isActivated;
+                        const statusLower = status.toLowerCase();
+
+                        // Determine status type for better styling
+                        let statusType = 'warning';
+                        if (isActivated === true || statusLower.includes('licensed') || statusLower.includes('activated')) {
+                            statusType = 'success';
+                        } else if (isActivated === false || statusLower.includes('unlicensed') || statusLower.includes('non-genuine') || statusLower.includes('inactive')) {
+                            statusType = 'error';
+                        } else if (statusLower.includes('grace') || statusLower.includes('notification')) {
+                            statusType = 'warning';
+                        }
+
+                        return `<span class="activation-status activation-${statusType}">${status}</span>`;
+                    })()}
                                         </span>
                                     </div>
                                 </div>
@@ -2510,13 +2700,13 @@ export class HyperVAuditorPage {
                             </h4>
                             <div class="roles-grid-modern">
                                 ${host.serverRoles.map((role, roleIndex) => {
-                                    const featureType = role.featureType || 'Feature';
-                                    const typeClass = featureType.toLowerCase().replace(/\s+/g, '-');
-                                    const typeIcon = featureType === 'Role' ? 'fa-server' : 
-                                                    featureType === 'Role Service' ? 'fa-cog' : 'fa-puzzle-piece';
-                                    const roleId = `role-${hostIndex}-${roleIndex}`;
-                                    return `
-                                    <div class="role-item-modern role-type-${typeClass}" onclick="hyperVAuditorInstance.showFeatureModal(${hostIndex}, ${roleIndex})" style="cursor: pointer;">
+                        const featureType = role.featureType || 'Feature';
+                        const typeClass = featureType.toLowerCase().replace(/\s+/g, '-');
+                        const typeIcon = featureType === 'Role' ? 'fa-server' :
+                            featureType === 'Role Service' ? 'fa-cog' : 'fa-puzzle-piece';
+                        const roleId = `role-${actualIndex}-${roleIndex}`;
+                        return `
+                                    <div class="role-item-modern role-type-${typeClass}" onclick="hyperVAuditorInstance.showFeatureModal(${actualIndex}, ${roleIndex})" style="cursor: pointer;">
                                         <div class="role-header-modern">
                                             <i class="fas ${typeIcon} role-type-icon"></i>
                                             <div class="role-name-modern">${role.displayName || role.name || 'Unknown'}</div>
@@ -2525,7 +2715,7 @@ export class HyperVAuditorPage {
                                         <div class="role-type-label">${featureType}</div>
                                     </div>
                                 `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                         </div>
                         ` : ''}
@@ -2539,12 +2729,12 @@ export class HyperVAuditorPage {
                             </h4>
                             <div class="network-adapters-grid">
                                 ${host.networkAdapters.filter(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed)).map(adapter => {
-                                    // Ensure boolean values for display
-                                    const isSET = adapter.isSET === true || adapter.isSET === 'true' || adapter.isSET === 1;
-                                    const isTeamed = adapter.isTeamed === true || adapter.isTeamed === 'true' || adapter.isTeamed === 1;
-                                    const isVirtual = adapter.isVirtual === true || adapter.isVirtual === 'true' || adapter.isVirtual === 1;
-                                    
-                                    return `
+                        // Ensure boolean values for display
+                        const isSET = adapter.isSET === true || adapter.isSET === 'true' || adapter.isSET === 1;
+                        const isTeamed = adapter.isTeamed === true || adapter.isTeamed === 'true' || adapter.isTeamed === 1;
+                        const isVirtual = adapter.isVirtual === true || adapter.isVirtual === 'true' || adapter.isVirtual === 1;
+
+                        return `
                                     <div class="network-adapter-card ${isVirtual ? 'virtual-adapter' : ''} ${adapter.status === 'Up' ? 'adapter-up' : 'adapter-down'} ${isSET ? 'set-adapter' : ''} ${isTeamed && !isSET ? 'teamed-adapter' : ''}">
                                         <div class="adapter-card-header">
                                             <div class="adapter-icon ${isVirtual ? 'virtual-icon' : isSET ? 'set-icon' : isTeamed ? 'team-icon' : 'physical-icon'}">
@@ -2691,7 +2881,7 @@ export class HyperVAuditorPage {
                                         </div>
                                     </div>
                                 `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                         </div>
                         ` : ''}
@@ -3014,8 +3204,8 @@ export class HyperVAuditorPage {
                             </h4>
                             <div class="groups-grid-modern">
                                 ${host.localGroups.map((group, groupIndex) => {
-                                    const members = Array.isArray(group.members) ? group.members : [];
-                                    return `
+                        const members = Array.isArray(group.members) ? group.members : [];
+                        return `
                                     <div class="group-card-modern" onclick="hyperVAuditorInstance.showGroupMembersModal('${group.name}', ${JSON.stringify(members).replace(/"/g, '&quot;')}, '${(group.description || '').replace(/'/g, "\\'")}')">
                                         <div class="group-card-header">
                                             <div class="group-icon-modern">
@@ -3054,7 +3244,7 @@ export class HyperVAuditorPage {
                                         </div>
                                     </div>
                                     `;
-                                }).join('')}
+                    }).join('')}
                             </div>
                         </div>
                         ` : ''}
@@ -3125,7 +3315,7 @@ export class HyperVAuditorPage {
                                 <i class="fas fa-microchip"></i> Installed Drivers
                                 <span class="update-count-pill">${host.drivers.length}</span>
                                 ${host.drivers.length > 20 ? `
-                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showDriversModal('${host.name}', ${hostIndex})">
+                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showDriversModal('${host.name}', ${actualIndex})">
                                     View all (${host.drivers.length}) <i class="fas fa-chevron-right"></i>
                                 </button>
                                 ` : ''}
@@ -3164,7 +3354,7 @@ export class HyperVAuditorPage {
                                 <i class="fas fa-box"></i> Installed Applications
                                 <span class="update-count-pill">${host.installedApplications.length}</span>
                                 ${host.installedApplications.length > 20 ? `
-                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showApplicationsModal('${host.name}', ${hostIndex})">
+                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showApplicationsModal('${host.name}', ${actualIndex})">
                                     View all (${host.installedApplications.length}) <i class="fas fa-chevron-right"></i>
                                 </button>
                                 ` : ''}
@@ -3201,7 +3391,7 @@ export class HyperVAuditorPage {
                                 <i class="fas fa-cogs"></i> Services
                                 <span class="update-count-pill">${host.services.length}</span>
                                 ${host.services.length > 20 ? `
-                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showServicesModal('${host.name}', ${hostIndex})">
+                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showServicesModal('${host.name}', ${actualIndex})">
                                     View all (${host.services.length}) <i class="fas fa-chevron-right"></i>
                                 </button>
                                 ` : ''}
@@ -3241,7 +3431,7 @@ export class HyperVAuditorPage {
                                     <span class="update-count-pill">${host.windowsUpdates.length}</span>
                                 </div>
                                 ${host.windowsUpdates.length > 10 ? `
-                                    <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showUpdatesModal('${host.name}', ${hostIndex})">
+                                    <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showUpdatesModal('${host.name}', ${actualIndex})">
                                         View All <i class="fas fa-chevron-right"></i>
                                     </button>
                                 ` : ''}
@@ -3261,10 +3451,10 @@ export class HyperVAuditorPage {
                                         </div>
                                         <div class="update-card-body">
                                             <div class="update-description">
-                                                ${(update.description || 'N/A').length > 80 ? 
-                                                    (update.description || 'N/A').substring(0, 80) + '...' : 
-                                                    (update.description || 'N/A')
-                                                }
+                                                ${(update.description || 'N/A').length > 80 ?
+                            (update.description || 'N/A').substring(0, 80) + '...' :
+                            (update.description || 'N/A')
+                        }
                                             </div>
                                             ${update.installedBy && update.installedBy !== 'N/A' ? `
                                             <div class="update-installer">
@@ -3302,25 +3492,25 @@ export class HyperVAuditorPage {
                                             <th>${this.t('network')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="vm-table-${hostIndex}">
+                                    <tbody id="vm-table-${actualIndex}">
                                         ${hostVMs.map((vm, vmIndex) => {
-                                            const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
-                                            const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
-                                            const memMax = typeof vm.memory?.max === 'number' ? `${vm.memory.max.toFixed(1)} GB` : (vm.memory?.max || '');
-                                            const memAssigned = typeof vm.memory?.assigned === 'number' ? `${vm.memory.assigned.toFixed(1)} GB` : (vm.memory?.assigned || '');
-                                            const checkpointExists = vm.checkpoint?.exists || false;
-                                            const checkpointCount = vm.checkpoint?.count || 0;
-                                            
-                                            const replicaState = vm.replica?.state || 'Disabled';
-                                            const replicaHealth = vm.replica?.health || 'N/A';
-                                            
-                                            return `
-                                            <tr class="data-row ${this.filters.expandedRows.has(`vm-${hostIndex}-${vmIndex}`) ? 'expanded' : ''}" 
-                                                onclick="hyperVAuditorInstance.toggleRow('vm-${hostIndex}-${vmIndex}')">
+                            const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
+                            const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
+                            const memMax = typeof vm.memory?.max === 'number' ? `${vm.memory.max.toFixed(1)} GB` : (vm.memory?.max || '');
+                            const memAssigned = typeof vm.memory?.assigned === 'number' ? `${vm.memory.assigned.toFixed(1)} GB` : (vm.memory?.assigned || '');
+                            const checkpointExists = vm.checkpoint?.exists || false;
+                            const checkpointCount = vm.checkpoint?.count || 0;
+
+                            const replicaState = vm.replica?.state || 'Disabled';
+                            const replicaHealth = vm.replica?.health || 'N/A';
+
+                            return `
+                                            <tr class="data-row ${this.filters.expandedRows.has(`vm-${actualIndex}-${vmIndex}`) ? 'expanded' : ''}" 
+                                                onclick="hyperVAuditorInstance.toggleRow('vm-${actualIndex}-${vmIndex}')">
                                                 <td>
                                                     <div class="row-header">
                                                         <strong>${vm.name}</strong>
-                                                        <i class="fas fa-chevron-${this.filters.expandedRows.has(`vm-${hostIndex}-${vmIndex}`) ? 'down' : 'right'} expand-icon"></i>
+                                                        <i class="fas fa-chevron-${this.filters.expandedRows.has(`vm-${actualIndex}-${vmIndex}`) ? 'down' : 'right'} expand-icon"></i>
                                                     </div>
                                                     ${vm.configurationXmlPath ? `<div><small class="text-muted"><i class="fas fa-file-code"></i> Config</small></div>` : ''}
                                                 </td>
@@ -3347,38 +3537,38 @@ export class HyperVAuditorPage {
                                                     </div>
                                                 </td>
                                                 <td>
-                                                        ${checkpointExists ? 
-                                                            `<span class="checkpoint-count-text"><i class="fas fa-camera"></i> ${checkpointCount}</span>` : 
-                                                            `<span class="text-muted">${this.t('none')}</span>`
-                                                    }
+                                                        ${checkpointExists ?
+                                    `<span class="checkpoint-count-text"><i class="fas fa-camera"></i> ${checkpointCount}</span>` :
+                                    `<span class="text-muted">${this.t('none')}</span>`
+                                }
                                                 </td>
                                                 <td>
-                                                    ${replicaState !== 'Disabled' ? 
-                                                        `<span class="replica-state-text replica-${replicaHealth.toLowerCase()}">${this.translateStatus(replicaState)}</span>` : 
-                                                        `<span class="text-muted">${this.t('disabled')}</span>`
-                                                    }
+                                                    ${replicaState !== 'Disabled' ?
+                                    `<span class="replica-state-text replica-${replicaHealth.toLowerCase()}">${this.translateStatus(replicaState)}</span>` :
+                                    `<span class="text-muted">${this.t('disabled')}</span>`
+                                }
                                                 </td>
                                                 <td>
                                                     ${(() => {
-                                                        // Calculate total disk size (base disks + AVHDX)
-                                                        let totalSize = 0;
-                                                        let totalMaxSize = 0;
-                                                        vm.disks.forEach(disk => {
-                                                            const currentSize = typeof disk.currentSize === 'number' ? disk.currentSize : 0;
-                                                            const maxSize = typeof disk.maxSize === 'number' ? disk.maxSize : 0;
-                                                            totalSize += currentSize;
-                                                            totalMaxSize += maxSize;
-                                                        });
-                                                        
-                                                        // Add AVHDX total size if available
-                                                        const avhdxTotalSize = typeof vm.avhdxTotalSize === 'number' ? vm.avhdxTotalSize : 0;
-                                                        const totalWithAvhdx = totalSize + avhdxTotalSize;
-                                                        
-                                                        const totalSizeText = totalWithAvhdx > 0 ? `${totalWithAvhdx.toFixed(1)} GB` : (totalSize > 0 ? `${totalSize.toFixed(1)} GB` : 'N/A');
-                                                        const totalMaxText = totalMaxSize > 0 ? `${totalMaxSize.toFixed(1)} GB` : 'N/A';
-                                                        const diskCount = vm.disks.length;
-                                                        
-                                                        return `
+                                    // Calculate total disk size (base disks + AVHDX)
+                                    let totalSize = 0;
+                                    let totalMaxSize = 0;
+                                    vm.disks.forEach(disk => {
+                                        const currentSize = typeof disk.currentSize === 'number' ? disk.currentSize : 0;
+                                        const maxSize = typeof disk.maxSize === 'number' ? disk.maxSize : 0;
+                                        totalSize += currentSize;
+                                        totalMaxSize += maxSize;
+                                    });
+
+                                    // Add AVHDX total size if available
+                                    const avhdxTotalSize = typeof vm.avhdxTotalSize === 'number' ? vm.avhdxTotalSize : 0;
+                                    const totalWithAvhdx = totalSize + avhdxTotalSize;
+
+                                    const totalSizeText = totalWithAvhdx > 0 ? `${totalWithAvhdx.toFixed(1)} GB` : (totalSize > 0 ? `${totalSize.toFixed(1)} GB` : 'N/A');
+                                    const totalMaxText = totalMaxSize > 0 ? `${totalMaxSize.toFixed(1)} GB` : 'N/A';
+                                    const diskCount = vm.disks.length;
+
+                                    return `
                                                             <div class="disk-total-display">
                                                                 <div class="disk-total-size">
                                                                     <i class="fas fa-hdd"></i>
@@ -3388,24 +3578,24 @@ export class HyperVAuditorPage {
                                                                 <div class="disk-total-count">${diskCount} disk${diskCount !== 1 ? 's' : ''}</div>
                                                             </div>
                                                         `;
-                                                    })()}
+                                })()}
                                                 </td>
                                                 <td>
                                                     ${(() => {
-                                                        const adapterCount = vm.networkAdapters ? vm.networkAdapters.length : 0;
-                                                        const connectedCount = vm.networkAdapters ? vm.networkAdapters.filter(a => a.connection === 'Connected').length : 0;
-                                                        
-                                                        return `
+                                    const adapterCount = vm.networkAdapters ? vm.networkAdapters.length : 0;
+                                    const connectedCount = vm.networkAdapters ? vm.networkAdapters.filter(a => a.connection === 'Connected').length : 0;
+
+                                    return `
                                                             <div class="network-count-display">
                                                                 <i class="fas fa-network-wired"></i>
                                                                 <span class="network-count-value">${adapterCount}</span>
                                                                 ${connectedCount > 0 ? `<span class="network-connected-indicator">(${connectedCount})</span>` : ''}
                                                             </div>
                                                         `;
-                                                    })()}
+                                })()}
                                                 </td>
                                             </tr>
-                                            ${this.filters.expandedRows.has(`vm-${hostIndex}-${vmIndex}`) ? `
+                                            ${this.filters.expandedRows.has(`vm-${actualIndex}-${vmIndex}`) ? `
                                             <tr class="expanded-row">
                                                 <td colspan="11">
                                                     <div class="expanded-content-compact">
@@ -3427,25 +3617,25 @@ export class HyperVAuditorPage {
                                                                                 <span class="vm-config-detail-compact"><i class="fas fa-ethernet"></i> ${adapter.switch || 'N/A'}</span>
                                                                                 ${adapter.vlan && adapter.vlan !== 'N/A' ? `<span class="vm-config-detail-compact"><i class="fas fa-tag"></i> VLAN ${adapter.vlan}</span>` : ''}
                                                                                 ${(() => {
-                                                                                    // Display IP addresses - prefer ipAddresses array if available, fallback to ip
-                                                                                    let ipDisplay = '';
-                                                                                    if (adapter.ipAddresses && Array.isArray(adapter.ipAddresses) && adapter.ipAddresses.length > 0) {
-                                                                                        const ipList = adapter.ipAddresses.map(ipInfo => {
-                                                                                            if (typeof ipInfo === 'string') {
-                                                                                                return ipInfo;
-                                                                                            } else if (ipInfo.ip) {
-                                                                                                return ipInfo.prefixLength ? `${ipInfo.ip}/${ipInfo.prefixLength}` : ipInfo.ip;
-                                                                                            }
-                                                                                            return '';
-                                                                                        }).filter(Boolean);
-                                                                                        if (ipList.length > 0) {
-                                                                                            ipDisplay = ipList.join(', ');
-                                                                                        }
-                                                                                    } else if (adapter.ip && adapter.ip !== 'N/A') {
-                                                                                        ipDisplay = adapter.ip;
-                                                                                    }
-                                                                                    return ipDisplay ? `<span class="vm-config-detail-compact"><i class="fas fa-network-wired"></i> <strong>${ipDisplay}</strong></span>` : '';
-                                                                                })()}
+                                        // Display IP addresses - prefer ipAddresses array if available, fallback to ip
+                                        let ipDisplay = '';
+                                        if (adapter.ipAddresses && Array.isArray(adapter.ipAddresses) && adapter.ipAddresses.length > 0) {
+                                            const ipList = adapter.ipAddresses.map(ipInfo => {
+                                                if (typeof ipInfo === 'string') {
+                                                    return ipInfo;
+                                                } else if (ipInfo.ip) {
+                                                    return ipInfo.prefixLength ? `${ipInfo.ip}/${ipInfo.prefixLength}` : ipInfo.ip;
+                                                }
+                                                return '';
+                                            }).filter(Boolean);
+                                            if (ipList.length > 0) {
+                                                ipDisplay = ipList.join(', ');
+                                            }
+                                        } else if (adapter.ip && adapter.ip !== 'N/A') {
+                                            ipDisplay = adapter.ip;
+                                        }
+                                        return ipDisplay ? `<span class="vm-config-detail-compact"><i class="fas fa-network-wired"></i> <strong>${ipDisplay}</strong></span>` : '';
+                                    })()}
                                                                                 ${adapter.macAddress ? `<span class="vm-config-detail-compact"><i class="fas fa-fingerprint"></i> ${adapter.macAddress}</span>` : ''}
                                                                                 ${adapter.deviceType ? `<span class="vm-config-detail-compact"><i class="fas fa-desktop"></i> ${adapter.deviceType}</span>` : ''}
                                                                             </div>
@@ -3461,9 +3651,9 @@ export class HyperVAuditorPage {
                                                                 </div>
                                                                 <div class="vm-config-body-compact">
                                                                     ${vm.disks.map(disk => {
-                                                                        const diskSize = typeof disk.currentSize === 'number' ? `${disk.currentSize.toFixed(1)} GB` : (disk.currentSize || 'N/A');
-                                                                        const diskMax = typeof disk.maxSize === 'number' ? `${disk.maxSize.toFixed(1)} GB` : (disk.maxSize || 'N/A');
-                                                                        return `
+                                        const diskSize = typeof disk.currentSize === 'number' ? `${disk.currentSize.toFixed(1)} GB` : (disk.currentSize || 'N/A');
+                                        const diskMax = typeof disk.maxSize === 'number' ? `${disk.maxSize.toFixed(1)} GB` : (disk.maxSize || 'N/A');
+                                        return `
                                                                         <div class="vm-config-item-compact ${disk.fileExists === false ? 'disk-missing' : ''}">
                                                                             <div class="vm-config-item-header-compact">
                                                                                 <span class="vm-config-item-name-compact">${disk.name || 'N/A'}</span>
@@ -3482,7 +3672,7 @@ export class HyperVAuditorPage {
                                                                             ${disk.path && disk.path !== 'Pass-through' ? `<div class="vm-config-path-compact"><i class="fas fa-folder"></i> ${disk.path}</div>` : ''}
                                                                         </div>
                                                                     `;
-                                                                    }).join('')}
+                                    }).join('')}
                                                                 </div>
                                                             </div>
                                                             <!-- Memory & Integration Services -->
@@ -3504,21 +3694,21 @@ export class HyperVAuditorPage {
                                                                     <div class="vm-config-item-compact">
                                                                         <div class="vm-config-item-details-compact">
                                                                             ${(() => {
-                                                                                const state = vm.integrationServices.state || 'N/A';
-                                                                                let icon = 'fa-check-circle';
-                                                                                let icsClass = 'ics-uptodate';
-                                                                                if (state === 'UpdateRequired') {
-                                                                                    icon = 'fa-exclamation-triangle';
-                                                                                    icsClass = 'ics-updaterequired';
-                                                                                } else if (state === 'MayBeRequired') {
-                                                                                    icon = 'fa-question-circle';
-                                                                                    icsClass = 'ics-mayberequired';
-                                                                                } else if (state === 'NotDetected') {
-                                                                                    icon = 'fa-times-circle';
-                                                                                    icsClass = 'ics-notdetected';
-                                                                                }
-                                                                                return `<span class="vm-config-detail-compact"><i class="fas ${icon}"></i> <span class="${icsClass}">ICS: ${state}</span></span><span class="vm-config-detail-compact"><i class="fas fa-code-branch"></i> v${vm.integrationServices.version || 'N/A'}</span>`;
-                                                                            })()}
+                                            const state = vm.integrationServices.state || 'N/A';
+                                            let icon = 'fa-check-circle';
+                                            let icsClass = 'ics-uptodate';
+                                            if (state === 'UpdateRequired') {
+                                                icon = 'fa-exclamation-triangle';
+                                                icsClass = 'ics-updaterequired';
+                                            } else if (state === 'MayBeRequired') {
+                                                icon = 'fa-question-circle';
+                                                icsClass = 'ics-mayberequired';
+                                            } else if (state === 'NotDetected') {
+                                                icon = 'fa-times-circle';
+                                                icsClass = 'ics-notdetected';
+                                            }
+                                            return `<span class="vm-config-detail-compact"><i class="fas ${icon}"></i> <span class="${icsClass}">ICS: ${state}</span></span><span class="vm-config-detail-compact"><i class="fas fa-code-branch"></i> v${vm.integrationServices.version || 'N/A'}</span>`;
+                                        })()}
                                                                         </div>
                                                                     </div>
                                                                     ` : ''}
@@ -3533,9 +3723,9 @@ export class HyperVAuditorPage {
                                                                 </div>
                                                                 <div class="vm-config-body-compact">
                                                                     ${vm.checkpoint.chain && vm.checkpoint.chain.length > 0 ? vm.checkpoint.chain.map((cp, cpIndex) => {
-                                                                        const totalDiskSize = cp.disks && cp.disks.length > 0 ? 
-                                                                            cp.disks.reduce((sum, d) => sum + (typeof d.currentSize === 'number' ? d.currentSize : 0), 0) : 0;
-                                                                        return `
+                                            const totalDiskSize = cp.disks && cp.disks.length > 0 ?
+                                                cp.disks.reduce((sum, d) => sum + (typeof d.currentSize === 'number' ? d.currentSize : 0), 0) : 0;
+                                            return `
                                                                         <div class="vm-config-item-compact">
                                                                             <div class="vm-config-item-header-compact">
                                                                                 <span class="vm-config-item-name-compact"><i class="fas fa-camera"></i> ${cp.name}</span>
@@ -3547,18 +3737,18 @@ export class HyperVAuditorPage {
                                                                             ${cp.disks && Array.isArray(cp.disks) && cp.disks.length > 0 ? `
                                                                             <div class="vm-config-item-details-compact">
                                                                                 ${cp.disks.map((disk, diskIdx) => {
-                                                                                    const diskSize = typeof disk.currentSize === 'number' ? disk.currentSize.toFixed(1) : 
-                                                                                        (typeof disk.currentSize === 'string' ? disk.currentSize.replace(' GB', '') : 'N/A');
-                                                                                    const diskMax = typeof disk.maxSize === 'number' ? disk.maxSize.toFixed(1) : 
-                                                                                        (typeof disk.maxSize === 'string' ? disk.maxSize.replace(' GB', '') : 'N/A');
-                                                                                    const diskName = disk.name || disk.path || `Disk ${diskIdx + 1}`;
-                                                                                    return `<span class="vm-config-detail-compact"><i class="fas fa-hdd"></i> ${diskName}: ${diskSize}/${diskMax} GB</span>`;
-                                                                                }).join('')}
+                                                const diskSize = typeof disk.currentSize === 'number' ? disk.currentSize.toFixed(1) :
+                                                    (typeof disk.currentSize === 'string' ? disk.currentSize.replace(' GB', '') : 'N/A');
+                                                const diskMax = typeof disk.maxSize === 'number' ? disk.maxSize.toFixed(1) :
+                                                    (typeof disk.maxSize === 'string' ? disk.maxSize.replace(' GB', '') : 'N/A');
+                                                const diskName = disk.name || disk.path || `Disk ${diskIdx + 1}`;
+                                                return `<span class="vm-config-detail-compact"><i class="fas fa-hdd"></i> ${diskName}: ${diskSize}/${diskMax} GB</span>`;
+                                            }).join('')}
                                                                             </div>
                                                                             ` : ''}
                                                                         </div>
                                                                         `;
-                                                                    }).join('') : ''}
+                                        }).join('') : ''}
                                                                 </div>
                                                             </div>
                                                             ` : ''}
@@ -3590,7 +3780,7 @@ export class HyperVAuditorPage {
                                             </tr>
                                             ` : ''}
                                         `;
-                                        }).join('')}
+                        }).join('')}
                                     </tbody>
                                 </table>
                             </div>
@@ -3618,16 +3808,16 @@ export class HyperVAuditorPage {
                 </div>
                 <div class="host-disks-grid-compact">
                     ${host.disks.map(disk => {
-                        const totalSizeGB = typeof disk.size === 'number' ? disk.size : 
-                            (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
-                        const allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : 
-                            (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
-                        
-                        const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
-                        const unallocatedPercent = totalSizeGB > 0 ? (unallocatedGB / totalSizeGB) * 100 : 0;
-                        const allocatedPercent = totalSizeGB > 0 ? (allocatedGB / totalSizeGB) * 100 : 0;
-                        
-                        return `
+            const totalSizeGB = typeof disk.size === 'number' ? disk.size :
+                (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
+            const allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize :
+                (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
+
+            const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
+            const unallocatedPercent = totalSizeGB > 0 ? (unallocatedGB / totalSizeGB) * 100 : 0;
+            const allocatedPercent = totalSizeGB > 0 ? (allocatedGB / totalSizeGB) * 100 : 0;
+
+            return `
                             <div class="disk-card-compact">
                                 <div class="disk-card-header">
                                     <div class="disk-name-group">
@@ -3661,7 +3851,7 @@ export class HyperVAuditorPage {
                                 </div>
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -3683,15 +3873,15 @@ export class HyperVAuditorPage {
                 </div>
                 <div class="host-volumes-grid-compact">
                     ${host.volumes.map(volume => {
-                        const totalSizeGB = typeof volume.size === 'number' ? volume.size : 
-                            (typeof volume.size === 'string' ? parseFloat(volume.size.replace(/[^\d.]/g, '')) : 0);
-                        const freeSizeGB = typeof volume.sizeRemaining === 'number' ? volume.sizeRemaining : 
-                            (typeof volume.sizeRemaining === 'string' ? parseFloat(volume.sizeRemaining.replace(/[^\d.]/g, '')) : 0);
-                        const usedSizeGB = totalSizeGB - freeSizeGB;
-                        const freePercent = totalSizeGB > 0 ? (freeSizeGB / totalSizeGB) * 100 : 0;
-                        const usedPercent = totalSizeGB > 0 ? (usedSizeGB / totalSizeGB) * 100 : 0;
-                        
-                        return `
+            const totalSizeGB = typeof volume.size === 'number' ? volume.size :
+                (typeof volume.size === 'string' ? parseFloat(volume.size.replace(/[^\d.]/g, '')) : 0);
+            const freeSizeGB = typeof volume.sizeRemaining === 'number' ? volume.sizeRemaining :
+                (typeof volume.sizeRemaining === 'string' ? parseFloat(volume.sizeRemaining.replace(/[^\d.]/g, '')) : 0);
+            const usedSizeGB = totalSizeGB - freeSizeGB;
+            const freePercent = totalSizeGB > 0 ? (freeSizeGB / totalSizeGB) * 100 : 0;
+            const usedPercent = totalSizeGB > 0 ? (usedSizeGB / totalSizeGB) * 100 : 0;
+
+            return `
                             <div class="volume-card-compact">
                                 <div class="volume-card-header">
                                     <div class="volume-name-group">
@@ -3728,7 +3918,7 @@ export class HyperVAuditorPage {
                                 </div>
                             </div>
                         `;
-                    }).join('')}
+        }).join('')}
                 </div>
             </div>
         `;
@@ -3803,10 +3993,10 @@ export class HyperVAuditorPage {
     filterServerVMs(hostIndex, searchTerm) {
         const table = document.getElementById(`vm-table-${hostIndex}`);
         if (!table) return;
-        
+
         const rows = table.getElementsByTagName('tr');
         const search = searchTerm.toLowerCase();
-        
+
         for (let row of rows) {
             const text = row.textContent.toLowerCase();
             row.style.display = text.includes(search) ? '' : 'none';
@@ -3849,7 +4039,7 @@ export class HyperVAuditorPage {
         const targetType = document.getElementById('target-type').value;
         const clusterGroup = document.getElementById('cluster-group');
         const hostGroup = document.getElementById('host-group');
-        
+
         if (targetType === 'cluster') {
             clusterGroup.style.display = 'block';
             hostGroup.style.display = 'none';
@@ -3889,7 +4079,7 @@ export class HyperVAuditorPage {
             }
 
             const data = await response.json();
-            
+
             // Create a blob and download
             const blob = new Blob([data.script], { type: 'text/plain' });
             const url = window.URL.createObjectURL(blob);
@@ -4028,7 +4218,7 @@ export class HyperVAuditorPage {
                     const isTeamed = adapter.isTeamed === true || adapter.isTeamed === 'true' || adapter.isTeamed === 1;
                     const isSET = adapter.isSET === true || adapter.isSET === 'true' || adapter.isSET === 1;
                     const isVirtual = adapter.isVirtual === true || adapter.isVirtual === 'true' || adapter.isVirtual === 1;
-                    
+
                     return {
                         name: adapter.name || '',
                         interfaceName: adapter.interfaceName || adapter.interfaceDescription || '',
@@ -4157,12 +4347,12 @@ export class HyperVAuditorPage {
         // Check status first, then fall back to state, also consider clusterNodeState for clustered nodes
         const upNodes = this.hosts.filter(h => {
             // Priority: error > status > clusterNodeState > state
-            
+
             // If there's an error, definitely offline
             if (h.error) {
                 return false;
             }
-            
+
             // Check status field first (from PowerShell script) - most reliable indicator
             if (h.status) {
                 const statusLower = (h.status || '').toString().toLowerCase().trim();
@@ -4173,7 +4363,7 @@ export class HyperVAuditorPage {
                 // Otherwise, if status exists and is not offline/down, it's up
                 return true;
             }
-            
+
             // For clustered nodes, check clusterNodeState
             if (h.isClustered && h.clusterNodeState) {
                 const clusterState = (h.clusterNodeState || '').toString().toLowerCase().trim();
@@ -4186,7 +4376,7 @@ export class HyperVAuditorPage {
                 }
                 // If cluster state is unknown, fall through to check state field
             }
-            
+
             // Fall back to state field
             const state = (h.state || '').toString().toLowerCase().trim();
             return state === 'up' || state === 'online';
@@ -4203,7 +4393,7 @@ export class HyperVAuditorPage {
             }
             return 0;
         };
-        
+
         let totalLP = 0;
         let totalMemory = 0;
         let usedMemory = 0;
@@ -4221,7 +4411,7 @@ export class HyperVAuditorPage {
 
         this.hosts.forEach(host => {
             totalLP += host.logicalProcessor || 0;
-            
+
             // Parse memory - handle both string and number formats
             if (typeof host.totalMemory === 'number') {
                 totalMemory += host.totalMemory;
@@ -4233,7 +4423,7 @@ export class HyperVAuditorPage {
                     totalMemory += parseFloat(memMatch[1]);
                 }
             }
-            
+
             if (typeof host.usedMemory === 'number') {
                 usedMemory += host.usedMemory;
             } else if (typeof host.memory?.used === 'number') {
@@ -4261,14 +4451,14 @@ export class HyperVAuditorPage {
                     }
                 });
             }
-            
+
             // Calculate used storage from volumes (also deduplicate)
             if (Array.isArray(host.volumes) && host.volumes.length > 0) {
                 host.volumes.forEach(vol => {
                     const size = parseGB(vol.size);
                     const free = parseGB(vol.sizeRemaining);
                     const volId = vol.uniqueId || vol.path || `${vol.fileSystemLabel}-${size}`;
-                    
+
                     if (!seenVolumes.has(volId)) {
                         seenVolumes.add(volId);
                         if (size > 0 && free >= 0) {
@@ -4290,7 +4480,7 @@ export class HyperVAuditorPage {
                     totalVmMemory += parseFloat(vmMemMatch[1]);
                 }
             }
-            
+
             if (typeof vm.memory?.assigned === 'number') {
                 usedVmMemory += vm.memory.assigned;
             } else if (typeof vm.memory?.startup === 'number') {
@@ -4301,9 +4491,9 @@ export class HyperVAuditorPage {
                     usedVmMemory += parseFloat(vmUsedMemMatch[1]);
                 }
             }
-            
+
             totalVProc += vm.vCPU || 0;
-            
+
             // Parse VM disk sizes
             if (vm.disks && Array.isArray(vm.disks)) {
                 vm.disks.forEach(disk => {
@@ -4732,18 +4922,24 @@ export class HyperVAuditorPage {
     async updateDisplay() {
         const content = document.getElementById('page-content');
         if (content) {
-            content.innerHTML = await this.render();
-            // Set instance but don't call mount() to avoid reloading reports
-            window.hyperVAuditorInstance = this;
-            // Update page navbar title after rendering
-            if (window.pageNavbarInstance) {
-                window.pageNavbarInstance.updateTitle();
+            try {
+                content.innerHTML = await this.render();
+                // Set instance but don't call mount() to avoid reloading reports
+                window.hyperVAuditorInstance = this;
+                // Update page navbar title after rendering
+                if (window.pageNavbarInstance) {
+                    window.pageNavbarInstance.updateTitle();
+                }
+            } catch (error) {
+                console.error('Error updating Hyper-V Auditor display:', error);
+                content.innerHTML = `<div class="error-message">Error rendering page: ${error.message}</div>`;
             }
         }
     }
 
     async mount() {
         window.hyperVAuditorInstance = this;
+        document.body.style.overflow = 'hidden';
         const reportId = this.getReportIdFromURL();
         if (reportId) {
             await this.loadReportById(reportId);
@@ -4756,6 +4952,10 @@ export class HyperVAuditorPage {
                 window.location.hash = 'hyperv-auditor-list';
             }
         }
+    }
+
+    async unmount() {
+        document.body.style.overflow = '';
     }
 
     async loadReportById(id) {
@@ -4779,7 +4979,7 @@ export class HyperVAuditorPage {
         if (this.loadingReports) {
             return;
         }
-        
+
         this.loadingReports = true;
         try {
             const response = await fetch('/api/hyperv-reports');
@@ -4788,7 +4988,7 @@ export class HyperVAuditorPage {
             }
             const reports = await response.json();
             this.reports = reports || [];
-            
+
             // Update display after loading reports
             // Use requestAnimationFrame to avoid updating during render
             requestAnimationFrame(() => {
@@ -4824,7 +5024,7 @@ export class HyperVAuditorPage {
     showFeatureModal(hostIndex, roleIndex) {
         const host = this.hosts[hostIndex];
         if (!host || !host.serverRoles || !host.serverRoles[roleIndex]) return;
-        
+
         this.selectedFeature = {
             host: host.name,
             role: host.serverRoles[roleIndex]
@@ -4865,7 +5065,7 @@ export class HyperVAuditorPage {
         if (!this.selectedErrorsModal) return;
         const { type, hostIndex } = this.selectedErrorsModal;
         let errors = [];
-        
+
         // Get the appropriate errors based on type
         if (type === 'cluster') {
             errors = this.clusterErrors || [];
@@ -4874,7 +5074,7 @@ export class HyperVAuditorPage {
         } else if (type === 'hyperv' && hostIndex !== null) {
             errors = this.hosts[hostIndex]?.hypervErrors || [];
         }
-        
+
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(errors.length / pageSize));
         let page = this.selectedErrorsModal.page || 0;
@@ -4888,7 +5088,7 @@ export class HyperVAuditorPage {
         const { type, hostIndex, page } = this.selectedErrorsModal;
         let errors = [];
         let errorClass = '';
-        
+
         // Get the appropriate errors based on type
         if (type === 'cluster') {
             errors = this.clusterErrors || [];
@@ -4900,24 +5100,24 @@ export class HyperVAuditorPage {
             errors = this.hosts[hostIndex]?.hypervErrors || [];
             errorClass = 'hyperv-error';
         }
-        
+
         const pageSize = 20;
         const totalPages = Math.max(1, Math.ceil(errors.length / pageSize));
         const currentPage = Math.min(Math.max(page || 0, 0), totalPages - 1);
         const start = currentPage * pageSize;
         const pageItems = errors.slice(start, start + pageSize);
-        
+
         const errorsList = document.getElementById('errors-modal-list');
         const pageSpan = document.getElementById('errors-modal-page');
         const prevBtn = document.getElementById('errors-prev-btn');
         const nextBtn = document.getElementById('errors-next-btn');
-        
+
         if (!errorsList || !pageSpan) {
             // Fallback: re-render if elements are missing
             this.updateDisplay();
             return;
         }
-        
+
         // Update errors list
         errorsList.innerHTML = pageItems.length > 0 ? pageItems.map(error => `
             <div class="error-item-modern ${errorClass}">
@@ -4928,17 +5128,16 @@ export class HyperVAuditorPage {
                         <span class="error-item-modern-time"><i class="fas fa-clock"></i> ${error.time}</span>
                         ${error.source ? `<span class="error-item-modern-source"><i class="fas fa-tag"></i> ${error.source}</span>` : ''}
                         ${error.level ? `<span class="error-item-modern-level"><i class="fas fa-info-circle"></i> ${error.level}</span>` : ''}
-                        ${error.logName ? `<span class="error-item-modern-log"><i class="fas fa-book"></i> ${
-                            type === 'cluster' ? error.logName.replace('Microsoft-Windows-FailoverClustering', 'Cluster') :
-                            type === 'hyperv' ? error.logName.replace('Microsoft-Windows-Hyper-V-', 'HV-') :
-                            error.logName
-                        }</span>` : ''}
+                        ${error.logName ? `<span class="error-item-modern-log"><i class="fas fa-book"></i> ${type === 'cluster' ? error.logName.replace('Microsoft-Windows-FailoverClustering', 'Cluster') :
+                type === 'hyperv' ? error.logName.replace('Microsoft-Windows-Hyper-V-', 'HV-') :
+                    error.logName
+                }</span>` : ''}
                         ${error.node ? `<span class="error-item-modern-node"><i class="fas fa-server"></i> ${error.node}</span>` : ''}
                     </div>
                 </div>
             </div>
         `).join('') : '<div class="empty-state">No errors found</div>';
-        
+
         // Update pagination
         if (pageSpan) {
             pageSpan.textContent = `Page ${currentPage + 1} of ${totalPages}`;
@@ -4949,7 +5148,7 @@ export class HyperVAuditorPage {
         if (nextBtn) {
             nextBtn.disabled = currentPage === totalPages - 1;
         }
-        
+
         // Scroll to top of errors list
         if (errorsList) {
             errorsList.scrollTop = 0;
@@ -5220,7 +5419,7 @@ export class HyperVAuditorPage {
         const targetType = document.getElementById('new-target-type').value;
         const clusterGroup = document.getElementById('new-cluster-group');
         const hostGroup = document.getElementById('new-host-group');
-        
+
         if (targetType === 'cluster') {
             clusterGroup.style.display = 'block';
             hostGroup.style.display = 'none';
@@ -5284,7 +5483,7 @@ export class HyperVAuditorPage {
                 throw new Error('Failed to load report');
             }
             this.selectedReport = await response.json();
-            
+
             // Load report data if available
             if (this.selectedReport.reportData) {
                 this.loadImportedData(this.selectedReport.reportData);
@@ -5295,7 +5494,7 @@ export class HyperVAuditorPage {
                 this.vms = [];
                 this.volumes = [];
             }
-            
+
             this.updateDisplay();
         } catch (error) {
             this.showMessage('Error loading report: ' + error.message, 'error');
@@ -5305,7 +5504,7 @@ export class HyperVAuditorPage {
     async deleteReport(reportId = null) {
         // If no reportId provided, try to get it from selectedReport or reportId
         const idToDelete = reportId || this.selectedReport?.id || this.reportId;
-        
+
         if (!idToDelete) {
             this.showMessage('No report ID available', 'error');
             return;
@@ -5333,18 +5532,22 @@ export class HyperVAuditorPage {
             }
 
             this.showMessage('Report deleted successfully!', 'success');
-            
+
             // Navigate back to list page
             setTimeout(() => {
-                if (window.appInstance) {
-                    window.appInstance.navigateTo('hyperv-auditor-list');
-                } else {
-                    window.location.hash = '#hyperv-auditor-list';
-                    window.location.reload();
-                }
+                this.goBack();
             }, 1000);
         } catch (error) {
             this.showMessage('Error deleting report: ' + error.message, 'error');
+        }
+    }
+
+    goBack() {
+        if (window.appInstance) {
+            window.appInstance.navigateTo('hyperv-auditor-list');
+        } else {
+            window.location.hash = '#hyperv-auditor-list';
+            window.location.reload();
         }
     }
 }

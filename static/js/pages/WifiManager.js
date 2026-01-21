@@ -8,8 +8,20 @@ export class WifiManagerPage {
 
     async render() {
         return `
-            <div class="page-container-full" style="padding: 0;">
-                <div class="content-padding" style="padding: 0 0.75rem;">
+            <div class="page-container-full" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+                <div class="content-padding" style="flex: 1; overflow-y: auto; padding: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-wifi" style="font-size: 1.5rem; color: #3b82f6;"></i>
+                            <h2 style="margin: 0; font-size: 1.5rem; color: #f8fafc;">WiFi Manager</h2>
+                        </div>
+                        <div style="display: flex; gap: 0.75rem;">
+                            <button class="page-action-btn" onclick="wifiManagerInstance.loadData()">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    </div>
                     <!-- Upstream Connection (Client Mode) -->
                     <div id="upstream-section" class="compact-summary-section" style="margin-bottom: 0.75rem; display: none;">
                         <div class="compact-summary-header" style="margin-bottom: 0.5rem; padding-bottom: 0.375rem;">

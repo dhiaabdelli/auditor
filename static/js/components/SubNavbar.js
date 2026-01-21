@@ -73,7 +73,6 @@ export class SubNavbar {
                 networkInterfaces: 'Interfaces Réseau'
             }
         };
-        this.handleResize = this.checkOverflow.bind(this);
     }
 
     t(key) {
@@ -563,10 +562,6 @@ export class SubNavbar {
         return `
             <div class="sub-navbar" data-group="${config.group}">
                 <div class="sub-navbar-container">
-                    <button class="sub-navbar-scroll-btn left-btn hidden" onclick="subNavbarInstance.scroll('left')">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    
                     <div class="sub-navbar-scroll-area" id="sub-navbar-scroll-area">
                         <div class="sub-navbar-items">
                             ${config.items.map(item => {
@@ -587,10 +582,6 @@ export class SubNavbar {
         }).join('')}
                         </div>
                     </div>
-
-                    <button class="sub-navbar-scroll-btn right-btn hidden" onclick="subNavbarInstance.scroll('right')">
-                        <i class="fas fa-chevron-right"></i>
-                    </button>
                 </div>
             </div>
         `;
@@ -646,55 +637,7 @@ export class SubNavbar {
             const newHTML = this.render(pageId);
             if (newHTML) {
                 subNavbar.outerHTML = newHTML;
-                // Re-attach event listeners
-                this.attachEventListeners();
             }
-        }
-    }
-
-    /**
-     * Attach event listeners to sub-navbar items
-     */
-    scroll(direction) {
-        const scrollArea = document.getElementById('sub-navbar-scroll-area');
-        if (scrollArea) {
-            const scrollAmount = 200;
-            if (direction === 'left') {
-                scrollArea.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-            } else {
-                scrollArea.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-            }
-        }
-    }
-
-    checkOverflow() {
-        const scrollArea = document.getElementById('sub-navbar-scroll-area');
-        const leftBtn = document.querySelector('.sub-navbar-scroll-btn.left-btn');
-        const rightBtn = document.querySelector('.sub-navbar-scroll-btn.right-btn');
-
-        if (!scrollArea || !leftBtn || !rightBtn) return;
-
-        // Check if content overflows - allows a small tolerance
-        const isOverflowing = scrollArea.scrollWidth > scrollArea.clientWidth + 1;
-
-        if (!isOverflowing) {
-            leftBtn.classList.add('hidden');
-            rightBtn.classList.add('hidden');
-            return;
-        }
-
-        // Check scroll position
-        if (scrollArea.scrollLeft > 0) {
-            leftBtn.classList.remove('hidden');
-        } else {
-            leftBtn.classList.add('hidden');
-        }
-
-        // Check if we are at the end (with small tolerance)
-        if (scrollArea.scrollLeft < scrollArea.scrollWidth - scrollArea.clientWidth - 1) {
-            rightBtn.classList.remove('hidden');
-        } else {
-            rightBtn.classList.add('hidden');
         }
     }
 
@@ -702,29 +645,7 @@ export class SubNavbar {
      * Attach event listeners to sub-navbar items
      */
     attachEventListeners() {
-        const items = document.querySelectorAll('.sub-navbar-item');
-        items.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const pageId = item.getAttribute('data-page');
-                const label = item.getAttribute('data-label');
-                this.handleDiagnosticsNavigation(e, pageId, label);
-            });
-        });
-
-        const scrollArea = document.getElementById('sub-navbar-scroll-area');
-        if (scrollArea) {
-            scrollArea.addEventListener('scroll', () => {
-                this.checkOverflow();
-            });
-
-            // Check overflow on load
-            this.checkOverflow();
-
-            // Re-check on window resize
-            window.removeEventListener('resize', this.handleResize);
-            window.addEventListener('resize', this.handleResize);
-        }
+        // No special listeners needed now that scrolling is removed
     }
 }
 

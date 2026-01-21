@@ -15,15 +15,24 @@ import (
 	_ "modernc.org/sqlite"
 
 	// Internal packages
+	"embed"
+	"io/fs"
 	"network-script-generator/internal/database"
 	"network-script-generator/internal/handlers"
 	"network-script-generator/internal/router"
 	"network-script-generator/internal/security"
 )
 
+//go:embed static
+var staticContent embed.FS
+
 // staticFileSystem returns an http.FileSystem for serving static files
 func staticFileSystem() http.FileSystem {
-	return http.Dir("static")
+	sub, err := fs.Sub(staticContent, "static")
+	if err != nil {
+		log.Fatal("Failed to create sub filesystem:", err)
+	}
+	return http.FS(sub)
 }
 
 func main() {

@@ -27,8 +27,8 @@
     flex-wrap: wrap;
     gap: 0.75rem;
     flex-shrink: 0;
-    border-bottom: 1px solid #334155;
-    background: #1e293b;
+    border-bottom: 1px solid var(--header-border);
+    background: var(--card-bg);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -46,7 +46,7 @@
 .speedtest-header h2 {
     margin: 0;
     font-size: 1rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -68,7 +68,7 @@
     gap: 1.5rem;
     margin-left: 1.5rem;
     padding-left: 1.5rem;
-    border-left: 1px solid #334155;
+    border-left: 1px solid var(--header-border);
 }
 
 .speedtest-header-stat {
@@ -647,7 +647,7 @@
     min-height: 200px;
     max-height: 200px;
     flex-shrink: 0;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     display: flex;
     align-items: center;
@@ -1595,7 +1595,7 @@
 
 /* Skeleton Loading Styles */
 .speedtest-skeleton {
-    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background: linear-gradient(90deg, var(--card-bg) 25%, var(--header-border) 50%, var(--card-bg) 75%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
     border-radius: 4px;
@@ -1612,8 +1612,8 @@
 }
 
 .speedtest-skeleton-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     padding: 0.45rem 0.5rem;
     display: flex;
@@ -1659,7 +1659,7 @@
     grid-template-columns: 1.5fr 1fr 1fr 0.8fr 0.8fr 1fr 1fr 1.2fr 0.5fr;
     gap: 0.5rem;
     padding: 0.6rem 0.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .speedtest-skeleton-table-cell {
@@ -1668,8 +1668,8 @@
 }
 
 .speedtest-skeleton-overall-stat {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     padding: 0.5rem 0.6rem;
 }

@@ -125,68 +125,6 @@ func SetupRoutes(staticFS http.FileSystem) {
 	// System Metrics WebSocket
 	http.Handle("/ws/system/metrics", http.HandlerFunc(handlers.HandleSystemMetricsWebSocket))
 
-	// Documentation API endpoints
-	http.Handle("/api/docs/categories", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetCategories(w, r)
-		case "POST":
-			handlers.HandleCreateCategory(w, r)
-		case "PUT":
-			handlers.HandleUpdateCategory(w, r)
-		case "DELETE":
-			handlers.HandleDeleteCategory(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
-	http.Handle("/api/docs/subcategories", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetSubcategories(w, r)
-		case "POST":
-			handlers.HandleCreateSubcategory(w, r)
-		case "PUT":
-			handlers.HandleUpdateSubcategory(w, r)
-		case "DELETE":
-			handlers.HandleDeleteSubcategory(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
-	http.Handle("/api/docs/documents", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetDocuments(w, r)
-		case "POST":
-			handlers.HandleCreateDocument(w, r)
-		case "PUT":
-			handlers.HandleUpdateDocument(w, r)
-		case "DELETE":
-			handlers.HandleDeleteDocument(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
-	http.Handle("/api/docs/attachments", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetAttachments(w, r)
-		case "POST":
-			handlers.HandleUploadAttachment(w, r)
-		case "DELETE":
-			handlers.HandleDeleteAttachment(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
-	http.Handle("/api/docs/attachments/download", secureAPIHandler(handlers.HandleDownloadAttachment))
-	http.Handle("/api/docs/attachments/view", secureAPIHandler(handlers.HandleViewAttachment))
-
 	// Security endpoints for API key management
 	// Get API key for first-time setup (one-time display)
 	http.Handle("/api/security/api-key/setup", security.ChainMiddleware(
@@ -302,54 +240,6 @@ func SetupRoutes(staticFS http.FileSystem) {
 		security.RequestLogging,
 		security.InputValidation,
 	))
-
-	// Todo API endpoints
-	http.Handle("/api/todos", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetTodos(w, r)
-		case "POST":
-			handlers.HandleCreateTodo(w, r)
-		case "PUT":
-			handlers.HandleUpdateTodo(w, r)
-		case "DELETE":
-			handlers.HandleDeleteTodo(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-	http.Handle("/api/todos/reorder", secureAPIHandler(handlers.HandleReorderTodos))
-
-	// Todo Subtasks API endpoints
-	http.Handle("/api/todos/subtasks", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetSubtasks(w, r)
-		case "POST":
-			handlers.HandleCreateSubtask(w, r)
-		case "PUT":
-			handlers.HandleUpdateSubtask(w, r)
-		case "DELETE":
-			handlers.HandleDeleteSubtask(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-	http.Handle("/api/todos/subtasks/toggle", secureAPIHandler(handlers.HandleToggleSubtask))
-
-	// Todo Tabs API endpoints
-	http.Handle("/api/todo-tabs", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			handlers.HandleGetTodoTabs(w, r)
-		case "POST":
-			handlers.HandleCreateTodoTab(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
-	http.Handle("/api/todo-tabs/delete", secureAPIHandler(handlers.HandleDeleteTodoTab))
 
 	// Hyper-V Report API endpoints
 	http.Handle("/api/hyperv-reports", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
@@ -711,6 +601,9 @@ func SetupRoutes(staticFS http.FileSystem) {
 		}
 	}))
 	http.Handle("/api/audit/stats", secureAPIHandler(handlers.GetAPIAuditLogStats))
+
+	// User management endpoints
+	http.Handle("/api/admin/users", secureAPIHandler(handlers.HandleGetUsers))
 
 	// Sessions endpoints
 	http.Handle("/api/sessions", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {

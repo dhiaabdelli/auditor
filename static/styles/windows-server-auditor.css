@@ -2,14 +2,14 @@
 
 .audit-content {
     padding: 1.5rem;
-    background: #0f172a;
+    background: var(--bg);
     min-height: calc(100vh - 200px);
 }
 
 /* Dashboard Header (Host Overview) */
 .audit-dashboard-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border: 1px solid var(--header-border);
     border-radius: 12px;
     padding: 1rem;
     margin-bottom: 1rem;
@@ -54,7 +54,7 @@
 .dashboard-hero-title {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #f8fafc;
+    color: var(--text-color);
     margin: 0 0 0.375rem 0;
     letter-spacing: -0.015em;
     display: flex;
@@ -76,9 +76,9 @@
     border-radius: 999px;
     font-size: 0.6875rem;
     font-weight: 600;
-    background: #1e293b;
-    border: 1px solid #334155;
-    color: #94a3b8;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
+    color: var(--text-muted);
 }
 
 .hero-badge i {
@@ -101,7 +101,7 @@
     display: flex;
     gap: 1.25rem;
     padding-left: 1.25rem;
-    border-left: 1px solid #334155;
+    border-left: 1px solid var(--header-border);
 }
 
 .hero-stat-item {
@@ -112,7 +112,7 @@
 
 .hero-stat-label {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -120,7 +120,7 @@
 
 .hero-stat-value {
     font-size: 0.9375rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -133,8 +133,8 @@
 }
 
 .dashboard-panel {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     display: flex;
@@ -144,8 +144,8 @@
 
 .dashboard-panel-header {
     padding: 0.625rem 1rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     display: flex;
     align-items: center;
     gap: 0.625rem;
@@ -154,7 +154,7 @@
 .dashboard-panel-title {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0;
 }
 
@@ -235,8 +235,8 @@
 }
 
 .windows-update-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
-    border: 1px solid #334155 !important;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%) !important;
+    border: 1px solid var(--header-border) !important;
     border-radius: 8px !important;
     padding: 0.875rem !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
@@ -246,7 +246,7 @@
 .windows-update-card:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2), 0 0 20px rgba(59, 130, 246, 0.1) !important;
-    border-color: #475569 !important;
+    border-color: var(--header-border) !important;
 }
 
 .windows-update-card .hardware-icon-modern {
@@ -336,8 +336,8 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #e2e8f0;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    color: var(--text-color);
     border: 1px solid #ef4444;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -394,8 +394,8 @@
     left: 50%;
     transform: translateX(-50%);
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    color: #e2e8f0;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    color: var(--text-color);
     border: 1px solid #f59e0b;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -461,7 +461,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     transition: background 0.2s ease;
 }
 
@@ -480,7 +480,7 @@
 }
 
 .data-icon {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.75rem;
     width: 1rem;
     text-align: center;
@@ -488,13 +488,13 @@
 
 .data-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .data-value {
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     text-align: right;
 }
@@ -507,7 +507,7 @@
 .section-subtitle-modern {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0 0 0.75rem 0;
     display: flex;
     align-items: center;
@@ -544,8 +544,8 @@
 }
 
 .role-item-modern {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     padding: 0.75rem;
     transition: all 0.2s ease;
@@ -555,7 +555,7 @@
 .role-item-modern:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    border-color: #94a3b8;
+    border-color: var(--text-muted);
 }
 
 .role-header-modern {
@@ -583,14 +583,14 @@
 .role-name-modern {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.3;
     flex: 1;
 }
 
 .role-description-modern {
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.4;
     margin-top: 0.375rem;
     display: -webkit-box;
@@ -626,8 +626,8 @@
 }
 
 .audit-section {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
@@ -636,7 +636,7 @@
 .audit-section-title {
     font-size: 1.25rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 1rem;
     display: flex;
     align-items: center;
@@ -661,13 +661,13 @@
 
 .audit-label {
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .audit-value {
     font-size: 0.9375rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 400;
 }
 
@@ -679,8 +679,8 @@
 }
 
 .audit-stat-card {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     padding: 1rem;
     min-width: 120px;
@@ -690,13 +690,13 @@
 .audit-stat-value {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.25rem;
 }
 
 .audit-stat-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
@@ -718,7 +718,7 @@
 
 .status-offline, .status-stopped, .status-disabled, .status-disconnected, .status-down {
     background: rgba(100, 116, 139, 0.2);
-    color: #94a3b8;
+    color: var(--text-muted);
     border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
@@ -740,10 +740,10 @@
 }
 
 .table-container-modern {
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     overflow: visible;
-    background: #1e293b;
+    background: var(--card-bg);
     margin: 0;
     padding: 0;
 }
@@ -756,12 +756,12 @@
 .table-compact {
     width: 100%;
     border-collapse: collapse;
-    background: #1e293b;
+    background: var(--card-bg);
     border: none;
 }
 
 .table-compact thead {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .table-compact th {
@@ -769,24 +769,24 @@
     text-align: left;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #e2e8f0;
-    border-bottom: 1px solid #334155;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .table-compact tbody tr {
-    background: #1e293b;
+    background: var(--card-bg);
     transition: background 0.2s ease;
 }
 
 .table-compact tbody tr:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .table-compact td {
     padding: 0.375rem 0.5rem;
     font-size: 0.75rem;
-    color: #e2e8f0;
-    border-bottom: 1px solid #334155;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--header-border);
     line-height: 1.4;
 }
 
@@ -851,7 +851,7 @@
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .host-disks-title-group i {
@@ -878,8 +878,8 @@
 }
 
 .disk-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -896,8 +896,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .disk-name-group {
@@ -920,13 +920,13 @@
 
 .disk-name {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
 .disk-id {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-family: 'Courier New', monospace;
 }
 
@@ -971,14 +971,14 @@
 
 .disk-size-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .disk-size-value {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .disk-usage-bar {
@@ -989,7 +989,7 @@
 
 .usage-bar-track {
     height: 6px;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -1007,11 +1007,11 @@
 }
 
 .usage-allocated {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .usage-unallocated {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Compact Host Volumes Styling */
@@ -1029,7 +1029,7 @@
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .host-volumes-title-group i {
@@ -1056,8 +1056,8 @@
 }
 
 .volume-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -1075,7 +1075,7 @@
     justify-content: space-between;
     padding: 0.75rem;
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .volume-name-group {
@@ -1098,7 +1098,7 @@
 
 .volume-name {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
@@ -1114,7 +1114,7 @@
 }
 
 .volume-fs {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .volume-status-badge {
@@ -1157,14 +1157,14 @@
 
 .volume-size-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .volume-size-value {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .volume-usage-bar {
@@ -1174,11 +1174,11 @@
 }
 
 .usage-used {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .usage-free {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Compact Network Adapter Styling */
@@ -1194,8 +1194,8 @@
 }
 
 .network-adapter-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -1215,7 +1215,7 @@
 }
 
 .network-adapter-card.virtual-adapter {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, #1e293b 100%);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, var(--card-bg) 100%);
 }
 
 .adapter-card-header {
@@ -1223,8 +1223,8 @@
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 0.75rem;
-    background: #0f172a;
-    border-bottom: 1px solid #334155;
+    background: var(--bg);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .adapter-icon {
@@ -1251,7 +1251,7 @@
 .adapter-name {
     font-size: 0.8125rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     gap: 0.3125rem;
@@ -1260,7 +1260,7 @@
 
 .adapter-interface {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1306,17 +1306,17 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.1875rem 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .info-pill i {
     font-size: 0.5625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .adapter-ip-config {
@@ -1324,9 +1324,9 @@
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
-    border-top: 1px dashed #334155;
+    border-top: 1px dashed var(--header-border);
     margin-top: 0.25rem;
 }
 
@@ -1341,18 +1341,18 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     min-width: 45px;
 }
 
 .adapter-ip-label i {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .adapter-ip-value {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     word-break: break-all;
 }
@@ -1375,7 +1375,7 @@
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .updates-title-group i {
@@ -1390,8 +1390,8 @@
 }
 
 .update-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -1407,8 +1407,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .update-kb-badge {
@@ -1431,7 +1431,7 @@
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 500;
 }
@@ -1446,7 +1446,7 @@
 
 .update-description {
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.4;
     margin-bottom: 0.5rem;
 }
@@ -1456,16 +1456,16 @@
     align-items: center;
     gap: 0.375rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 0.375rem 0.5rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
 }
 
 .update-installer i {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Modal Updates (Matching Hyper-V) */
@@ -1483,8 +1483,8 @@
 }
 
 .update-modal-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -1500,8 +1500,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 1rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .update-modal-body {
@@ -1510,7 +1510,7 @@
 
 .update-description-full {
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.5;
     margin-bottom: 0.75rem;
 }
@@ -1526,8 +1526,8 @@
     bottom: auto;
     left: auto;
     transform: translateY(calc(-100% - 8px));
-    background: #1e293b;
-    color: #e2e8f0;
+    background: var(--card-bg);
+    color: var(--text-color);
     padding: 0.5rem 0.75rem;
     border-radius: 6px;
     font-size: 0.75rem;
@@ -1536,7 +1536,7 @@
     pointer-events: none;
     transition: opacity 0.2s ease;
     z-index: 10000;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
     max-width: 300px;
     word-wrap: break-word;
@@ -1554,7 +1554,7 @@
     left: auto;
     transform: translateY(calc(-100% - 2px));
     border: 6px solid transparent;
-    border-top-color: #334155;
+    border-top-color: var(--header-border);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;

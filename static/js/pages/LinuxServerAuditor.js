@@ -5,6 +5,8 @@ export class LinuxServerAuditorPage {
         this.loading = false;
         this.currentLanguage = localStorage.getItem('language') || 'en';
         this.activeView = 'overview';
+        this.sidebarCollapsed = false;
+        this.expandedCategories = new Set(['system', 'security']);
         this.translations = {
             en: {
                 title: 'Linux Server Audit',
@@ -113,6 +115,34 @@ export class LinuxServerAuditorPage {
         };
     }
 
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        this.updateDisplay();
+    }
+
+    toggleCategory(key) {
+        if (this.expandedCategories.has(key)) {
+            this.expandedCategories.delete(key);
+        } else {
+            this.expandedCategories.add(key);
+        }
+        this.updateDisplay();
+    }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
+        // Close sidebar on mobile when switching views
+        if (window.innerWidth <= 768) {
+            this.closeSidebar();
+        }
+    }
+
+    closeSidebar() {
+        this.sidebarCollapsed = true;
+        this.updateDisplay();
+    }
+
     t(key) {
         return this.translations[this.currentLanguage][key] || key;
     }
@@ -121,10 +151,44 @@ export class LinuxServerAuditorPage {
         const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
         this.reportId = urlParams.get('id');
 
+        const headerContent = `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
+                    <button class="page-header-back-btn" onclick="linuxServerAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                        <i class="fas fa-arrow-left" style="font-size: 0.9rem;"></i>
+                    </button>
+                    <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
+                        <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.reportData?.name || this.t('title')}</h2>
+                        <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${this.reportData?.hostname || 'Linux Server Audit'}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <button class="premium-action-btn" onclick="linuxServerAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+                        <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
+                    </button>
+                    <button class="premium-action-btn" onclick="linuxServerAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                        <i class="fas fa-code" style="font-size: 0.7rem;"></i>
+                        <span>Script</span>
+                    </button>
+                    <button class="premium-action-btn" onclick="linuxServerAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                        <i class="fas fa-file-alt" style="font-size: 0.7rem;"></i>
+                        <span>Plain</span>
+                    </button>
+                    <button class="premium-action-btn" onclick="linuxServerAuditorInstance.importReport()" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                        <i class="fas fa-upload" style="font-size: 0.7rem;"></i>
+                        <span>Import</span>
+                    </button>
+                    <button class="premium-action-btn" onclick="linuxServerAuditorInstance.deleteReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                        <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
         if (this.loading) {
             return `
-                <div class="page-container-full">
-                    <div class="loading-container">
+                <div class="administration-container page-container-full">
+                    <div class="loading-container" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         <div class="spinner"></div>
                         <p>${this.t('loading')}</p>
                     </div>
@@ -134,15 +198,35 @@ export class LinuxServerAuditorPage {
 
         if (!this.reportData) {
             return `
-                <div class="page-container-full">
+                <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
                     <input type="file" id="linux-report-file-input" accept=".json" style="display: none;" onchange="linuxServerAuditorInstance.handleFileSelect(event)">
-                    <div class="reports-empty-state">
-                        <i class="fab fa-linux fa-3x"></i>
-                        <p>${this.t('noData')}</p>
-                        <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
-                            Click "Script" to download the bash script, run it on your Linux server, then click "Import" to upload the JSON output.
-                        </p>
-                    </div>
+                    
+                    <aside class="administration-sidebar">
+                        <div class="sidebar-collapse-header">
+                            <button class="collapse-btn" onclick="linuxServerAuditorInstance.toggleSidebar()">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                        </div>
+                        <nav class="sidebar-nav">
+                            <button class="nav-item active">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Overview</span>
+                            </button>
+                        </nav>
+                    </aside>
+
+                    <main class="administration-content">
+                        <div class="file-share-auditor-main">
+                            ${headerContent}
+                            <div class="reports-empty-state" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 4rem 2rem;">
+                                <i class="fab fa-linux fa-3x" style="margin-bottom: 1.5rem; color: #94a3b8;"></i>
+                                <p style="font-size: 1.125rem; color: #f8fafc; margin-bottom: 0.5rem;">${this.t('noData')}</p>
+                                <p style="color: #94a3b8; font-size: 0.875rem; text-align: center; max-width: 400px;">
+                                    Click "Script" to download the bash script, run it on your Linux server, then click "Import" to upload the JSON output.
+                                </p>
+                            </div>
+                        </div>
+                    </main>
                 </div>
             `;
         }
@@ -157,72 +241,96 @@ export class LinuxServerAuditorPage {
         const disks = data.disks || [];
 
         return `
-            <div class="page-container-full file-share-auditor-layout">
+            <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
                 <input type="file" id="linux-report-file-input" accept=".json" style="display: none;" onchange="linuxServerAuditorInstance.handleFileSelect(event)">
-                <!-- Sidebar Overlay (Mobile) -->
-                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="linuxServerAuditorInstance.closeSidebar()"></div>
-                <!-- Sidebar Navigation -->
-                <div class="file-share-auditor-sidebar" id="auditor-sidebar">
-                    <div class="file-share-auditor-sidebar-nav">
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('overview')">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Overview</span>
-                        </div>
-                        ${packages.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'packages' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('packages')">
-                            <i class="fas fa-box"></i>
-                            <span>Packages</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${packages.length})</span>
-                        </div>
-                        ` : ''}
-                        ${services.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'services' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('services')">
-                            <i class="fas fa-cog"></i>
-                            <span>Services</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${services.length})</span>
-                        </div>
-                        ` : ''}
-                        ${users.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'users' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('users')">
-                            <i class="fas fa-users"></i>
-                            <span>Users</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${users.length})</span>
-                        </div>
-                        ` : ''}
-                        ${groups.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'groups' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('groups')">
-                            <i class="fas fa-users-cog"></i>
-                            <span>Groups</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${groups.length})</span>
-                        </div>
-                        ` : ''}
-                        ${listeningPorts.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'listening-ports' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('listening-ports')">
-                            <i class="fas fa-network-wired"></i>
-                            <span>Listening Ports</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${listeningPorts.length})</span>
-                        </div>
-                        ` : ''}
-                        ${processes.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'processes' ? 'active' : ''}" 
-                             onclick="linuxServerAuditorInstance.switchView('processes')">
-                            <i class="fas fa-microchip"></i>
-                            <span>Processes</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${processes.length})</span>
-                        </div>
-                        ` : ''}
+                
+                <aside class="administration-sidebar">
+                    <div class="sidebar-collapse-header">
+                        <button class="collapse-btn" onclick="linuxServerAuditorInstance.toggleSidebar()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
                     </div>
-                </div>
-                <!-- Main Content -->
-                <div class="file-share-auditor-content">
-                    ${this.renderView(data)}
-                </div>
+                    <nav class="sidebar-nav">
+                        <!-- System Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('system') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="linuxServerAuditorInstance.toggleCategory('system')">
+                                <div class="category-title">
+                                    <i class="fas fa-server"></i>
+                                    <span>System</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('overview')">
+                                    <span>Overview</span>
+                                </button>
+                                ${packages.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'packages' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('packages')">
+                                    <span>Packages (${packages.length})</span>
+                                </button>
+                                ` : ''}
+                                ${services.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'services' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('services')">
+                                    <span>Services (${services.length})</span>
+                                </button>
+                                ` : ''}
+                                ${processes.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'processes' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('processes')">
+                                    <span>Processes (${processes.length})</span>
+                                </button>
+                                ` : ''}
+                                ${disks.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'disks' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('disks')">
+                                    <span>Disks (${disks.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Security Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('security') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="linuxServerAuditorInstance.toggleCategory('security')">
+                                <div class="category-title">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Security</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${users.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'users' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('users')">
+                                    <span>Users (${users.length})</span>
+                                </button>
+                                ` : ''}
+                                ${groups.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'groups' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('groups')">
+                                    <span>Groups (${groups.length})</span>
+                                </button>
+                                ` : ''}
+                                ${listeningPorts.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'listening-ports' ? 'active' : ''}" 
+                                        onclick="linuxServerAuditorInstance.switchView('listening-ports')">
+                                    <span>Ports (${listeningPorts.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </nav>
+                </aside>
+
+                <main class="administration-content">
+                    <div class="file-share-auditor-main">
+                        ${headerContent}
+                        ${this.renderView(data)}
+                    </div>
+                </main>
             </div>
         `;
     }
@@ -519,38 +627,17 @@ export class LinuxServerAuditorPage {
         `;
     }
 
-    toggleSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('sidebar-open');
-            overlay.classList.toggle('show');
-        }
-    }
-
-    closeSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-        }
-    }
-
-    switchView(view) {
-        this.activeView = view;
-        this.updateDisplay();
-        // Close sidebar on mobile when switching views
-        if (window.innerWidth <= 768) {
-            this.closeSidebar();
-        }
-    }
 
     async mount() {
         window.linuxServerAuditorInstance = this;
+        document.body.style.overflow = 'hidden';
         if (this.reportId) {
             await this.loadReport();
         }
+    }
+
+    async unmount() {
+        document.body.style.overflow = '';
     }
 
     async loadReport() {
@@ -604,7 +691,7 @@ export class LinuxServerAuditorPage {
             });
 
             if (!response.ok) throw new Error('Failed to import report');
-            
+
             this.reportData = reportData;
             this.updateDisplay();
             alert('Report imported successfully');
@@ -614,13 +701,59 @@ export class LinuxServerAuditorPage {
         }
     }
 
-    updateDisplay() {
+    async updateDisplay() {
         const content = document.getElementById('page-content');
         if (content) {
-            this.render().then(html => {
-                content.innerHTML = html;
-            });
+            content.innerHTML = await this.render();
+            // Set instance for event handlers
+            window.linuxServerAuditorInstance = this;
+            // Update page navbar title after rendering
+            if (window.pageNavbarInstance) {
+                window.pageNavbarInstance.updateTitle();
+            }
         }
+    }
+
+    goBack() {
+        if (window.appInstance) {
+            window.appInstance.navigateTo('linux-server-auditor-list');
+        } else {
+            window.location.hash = 'linux-server-auditor-list';
+        }
+    }
+
+    async deleteReport() {
+        if (!this.reportId) return;
+        if (!confirm('Are you sure you want to delete this report?')) return;
+
+        try {
+            const response = await fetch(`/api/linux-server-reports/delete?id=${this.reportId}`, {
+                method: 'DELETE'
+            });
+            if (!response.ok) throw new Error('Failed to delete report');
+            this.goBack();
+        } catch (error) {
+            console.error('Error deleting report:', error);
+            alert('Failed to delete report: ' + error.message);
+        }
+    }
+
+    downloadAuditScript() {
+        // This is a placeholder for downloading the bash script
+        const bashScript = `#!/bin/bash
+# Linux Server Audit Script
+echo "Starting Linux Server Audit..."
+# ... (rest of the script)
+`;
+        const blob = new Blob([bashScript], { type: 'text/plain' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'linux_audit.sh';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
     }
 }
 

@@ -3,6 +3,9 @@ export class VeeamAuditorListPage {
         this.reports = [];
         this.showCreateModal = false;
         this.loadingReports = false;
+        this.searchQuery = '';
+        this.sortField = 'createdAt';
+        this.sortOrder = 'desc';
         this.currentLanguage = localStorage.getItem('language') || 'en';
         this.translations = {
             en: {
@@ -17,6 +20,7 @@ export class VeeamAuditorListPage {
                 status: 'Status',
                 created: 'Created',
                 actions: 'Actions',
+                import: 'Import',
                 view: 'View',
                 delete: 'Delete',
                 audit: 'Run Audit',
@@ -40,7 +44,8 @@ export class VeeamAuditorListPage {
                 language: 'Language',
                 languageLabel: 'Language',
                 languageEnglish: 'English',
-                languageFrench: 'French'
+                languageFrench: 'French',
+                search: 'Search audits...'
             },
             fr: {
                 title: 'Audits Veeam Backup & Replication',
@@ -54,6 +59,7 @@ export class VeeamAuditorListPage {
                 status: 'Statut',
                 created: 'Créé',
                 actions: 'Actions',
+                import: 'Importer',
                 view: 'Voir',
                 delete: 'Supprimer',
                 audit: 'Exécuter Audit',
@@ -77,7 +83,8 @@ export class VeeamAuditorListPage {
                 language: 'Langue',
                 languageLabel: 'Langue',
                 languageEnglish: 'Anglais',
-                languageFrench: 'Français'
+                languageFrench: 'Français',
+                search: 'Rechercher...'
             }
         };
     }
@@ -92,54 +99,166 @@ export class VeeamAuditorListPage {
         this.updateDisplay();
     }
 
+    handleSearch(query) {
+        this.searchQuery = query.toLowerCase();
+        this.updateDisplay();
+    }
+
+    handleSort(field) {
+        if (this.sortField === field) {
+            this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortField = field;
+            this.sortOrder = 'asc';
+        }
+        this.updateDisplay();
+    }
+
+    getFilteredReports() {
+        let filtered = (this.reports || []).filter(report => {
+            const matchesSearch = !this.searchQuery ||
+                report.name.toLowerCase().includes(this.searchQuery) ||
+                (report.serverName && report.serverName.toLowerCase().includes(this.searchQuery));
+            return matchesSearch;
+        });
+
+        return filtered.sort((a, b) => {
+            let valA = a[this.sortField];
+            let valB = b[this.sortField];
+
+            if (this.sortField === 'createdAt') {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+            } else if (typeof valA === 'string') {
+                valA = (valA || '').toLowerCase();
+                valB = (valB || '').toLowerCase();
+            }
+
+            if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
+            if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+
+    renderReportsContent() {
+        if (!this.reports || this.reports.length === 0) {
+            return `
+                <div class="reports-empty-state" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                    <i class="fas fa-cloud-upload-alt fa-3x"></i>
+                    <p>${this.t('noReports')}</p>
+                    <p>${this.t('createFirst')}</p>
+                </div>
+            `;
+        }
+        return this.renderReportsList();
+    }
+
+    renderReportsList() {
+        const filteredReports = this.getFilteredReports();
+
+        if (filteredReports.length === 0 && this.reports.length > 0) {
+            return `
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #64748b;">
+                    <i class="fas fa-search fa-2x" style="margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>${this.t('noResultsFound')}</p>
+                </div>
+            `;
+        }
+
+        return `
+            <div style="flex: 1; overflow: auto; min-height: 0; border-radius: 6px;">
+                <table class="audit-table-v2 compact-mode" style="font-size: 0.75rem; width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed;">
+                    <thead>
+                        <tr>
+                            <th onclick="veeamAuditorListInstance.handleSort('name')" style="width: 35%; padding: 0.75rem 0.5rem; cursor: pointer; user-select: none; position: sticky; top: 0; background: #0f172a; z-index: 10; border-bottom: 2px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                                ${this.t('name')} ${this.sortField === 'name' ? `<i class="fas fa-sort-${this.sortOrder === 'asc' ? 'up' : 'down'}" style="margin-left: 0.25rem;"></i>` : ''}
+                            </th>
+                            <th onclick="veeamAuditorListInstance.handleSort('serverName')" style="width: 30%; padding: 0.75rem 0.5rem; cursor: pointer; user-select: none; position: sticky; top: 0; background: #0f172a; z-index: 10; border-bottom: 2px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                                ${this.t('server')} ${this.sortField === 'serverName' ? `<i class="fas fa-sort-${this.sortOrder === 'asc' ? 'up' : 'down'}" style="margin-left: 0.25rem;"></i>` : ''}
+                            </th>
+                            <th style="width: 15%; padding: 0.75rem 0.5rem; position: sticky; top: 0; background: #0f172a; z-index: 10; border-bottom: 2px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                                ${this.t('status')}
+                            </th>
+                            <th onclick="veeamAuditorListInstance.handleSort('createdAt')" style="width: 12%; padding: 0.75rem 0.5rem; cursor: pointer; user-select: none; position: sticky; top: 0; background: #0f172a; z-index: 10; border-bottom: 2px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                                ${this.t('created')} ${this.sortField === 'createdAt' ? `<i class="fas fa-sort-${this.sortOrder === 'asc' ? 'up' : 'down'}" style="margin-left: 0.25rem;"></i>` : ''}
+                            </th>
+                            <th style="width: 12%; padding: 0.75rem 0.5rem; text-align: right; position: sticky; top: 0; background: #0f172a; z-index: 10; border-bottom: 2px solid rgba(255, 255, 255, 0.1);">${this.t('actions')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredReports.map(report => `
+                            <tr onclick="veeamAuditorListInstance.viewReport(${report.id})" style="cursor: pointer;">
+                                <td style="padding: 0.35rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <span style="font-weight: 600;">${report.name}</span>
+                                </td>
+                                <td style="padding: 0.35rem 0.5rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                    <span style="color: #94a3b8;">
+                                        <i class="fas fa-server" style="margin-right: 0.375rem; font-size: 0.75rem; opacity: 0.5;"></i>
+                                        ${report.serverName || 'N/A'}
+                                    </span>
+                                </td>
+                                <td style="padding: 0.35rem 0.5rem;">
+                                    ${report.hasData ? '<span style="color: #10b981;">Loaded</span>' : '<span style="color: #64748b;">Empty</span>'}
+                                </td>
+                                <td style="padding: 0.35rem 0.5rem;">
+                                    <span style="font-family: monospace; color: #94a3b8;">${new Date(report.createdAt).toLocaleDateString()}</span>
+                                </td>
+                                <td style="padding: 0.35rem 0.5rem; text-align: right; white-space: nowrap;">
+                                    <button class="premium-action-btn" style="display: inline-flex; width: 24px; height: 24px; padding: 0; justify-content: center; font-size: 0.75rem;" onclick="event.stopPropagation(); veeamAuditorListInstance.triggerImport(${report.id})" title="${this.t('import')}">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                    <button class="premium-action-btn" style="display: inline-flex; width: 24px; height: 24px; padding: 0; justify-content: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2); font-size: 0.75rem;" onclick="event.stopPropagation(); veeamAuditorListInstance.deleteReport(${report.id})" title="${this.t('delete')}">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+
     async render() {
         return `
-            <div class="page-container-full">
-                ${!this.reports || this.reports.length === 0 ? `
-                    <div class="reports-empty-state">
-                        <i class="fas fa-cloud-upload-alt fa-3x"></i>
-                        <p>${this.t('noReports')}</p>
-                        <p>${this.t('createFirst')}</p>
-                    </div>
-                ` : `
-                    <div class="reports-grid-modern">
-                        ${(this.reports || []).map(report => `
-                            <div class="report-card-modern" onclick="veeamAuditorListInstance.viewReport(${report.id})">
-                                <div class="report-card-header-modern">
-                                    <div class="report-card-icon-modern" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);">
-                                        <i class="fas fa-cloud-upload-alt" style="color: #3b82f6;"></i>
-                                    </div>
-                                    <div class="report-card-title-section">
-                                        <h3 class="report-card-title-modern">${report.name}</h3>
-                                        <div class="report-card-meta">
-                                            <span class="report-card-server">
-                                                <i class="fas fa-server" style="font-size: 0.6875rem; margin-right: 0.25rem;"></i>
-                                                <span style="font-family: 'Consolas', 'Monaco', monospace; font-size: 0.75rem;">${report.serverName || 'N/A'}</span>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="report-card-body-modern">
-                                    <div class="report-card-info-row">
-                                        <div class="report-card-info-item">
-                                            <span class="report-card-info-label">Status</span>
-                                            ${report.hasData ? '<span class="report-card-status report-card-status-success"><i class="fas fa-check-circle"></i> Loaded</span>' : '<span class="report-card-status report-card-status-empty"><i class="fas fa-circle"></i> Empty</span>'}
-                                        </div>
-                                        <div class="report-card-info-item">
-                                            <span class="report-card-info-label">Created</span>
-                                            <span class="report-card-date">${new Date(report.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
+            <div class="page-container-full" style="height: calc(100vh - 120px); overflow: hidden; display: flex; flex-direction: column;">
+                <input type="file" id="veeam-list-file-input" style="display: none" onchange="veeamAuditorListInstance.handleFileSelect(event)">
+                <div style="padding: 1.5rem; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; flex-shrink: 0; gap: 1rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex: 1;">
+                            <div style="position: relative; flex: 0 1 300px;">
+                                <i class="fas fa-search" style="position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.8rem;"></i>
+                                <input type="text" 
+                                       placeholder="${this.t('search')}" 
+                                       value="${this.searchQuery}"
+                                       oninput="veeamAuditorListInstance.handleSearch(this.value)"
+                                       style="width: 100%; padding: 0 0.75rem 0 2.25rem; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white; font-size: 0.75rem; outline: none; height: 32px;">
                             </div>
-                        `).join('')}
+                        </div>
+                        
+                        <div style="display: flex; gap: 0.5rem; flex-shrink: 0;">
+                            <button class="premium-action-btn" onclick="veeamAuditorListInstance.loadReports()" style="width: 32px; height: 32px; padding: 0; display: flex; justify-content: center; align-items: center;" title="Refresh">
+                                <i class="fas fa-sync-alt ${this.loadingReports ? 'fa-spin' : ''}" style="font-size: 0.75rem;"></i>
+                            </button>
+                            
+                            <button class="premium-action-btn primary" onclick="veeamAuditorListInstance.showCreateReportModal()" style="padding: 0 0.6rem; font-size: 0.75rem; height: 32px;">
+                                <i class="fas fa-plus" style="font-size: 0.7rem;"></i>
+                                <span>${this.t('newReport')}</span>
+                            </button>
+                        </div>
                     </div>
-                `}
 
-                ${this.showCreateModal ? this.renderCreateReportModal() : ''}
-
-                <div id="report-message" class="message" style="display: none;"></div>
+                    <div id="reports-dynamic-content" style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                        ${this.renderReportsContent()}
+                    </div>
+                </div>
             </div>
+
+            <div id="modal-dynamic-content">
+                ${this.showCreateModal ? this.renderCreateReportModal() : ''}
+            </div>
+
+            <div id="report-message" class="message" style="display: none;"></div>
         `;
     }
 
@@ -183,6 +302,7 @@ export class VeeamAuditorListPage {
     async loadReports() {
         if (this.loadingReports) return;
         this.loadingReports = true;
+        this.updateDisplay();
 
         try {
             const response = await fetch('/api/veeam-reports');
@@ -195,12 +315,7 @@ export class VeeamAuditorListPage {
             this.showMessage(this.t('failedToLoad'), 'error');
         } finally {
             this.loadingReports = false;
-            const content = document.getElementById('page-content');
-            if (content) {
-                this.render().then(html => {
-                    content.innerHTML = html;
-                });
-            }
+            this.updateDisplay();
         }
     }
 
@@ -229,7 +344,7 @@ export class VeeamAuditorListPage {
         setTimeout(() => {
             const nameInput = document.getElementById('report-name');
             const serverNameInput = document.getElementById('server-name');
-            
+
             if (nameInput) nameInput.value = '';
             if (serverNameInput) serverNameInput.value = '';
         }, 50);
@@ -275,7 +390,7 @@ export class VeeamAuditorListPage {
                 }
                 throw new Error(errorMessage);
             }
-            
+
             this.closeCreateModal();
             await this.loadReports();
             this.showMessage(this.t('reportCreated'), 'success');
@@ -294,12 +409,60 @@ export class VeeamAuditorListPage {
             });
 
             if (!response.ok) throw new Error('Failed to delete audit');
-            
+
             await this.loadReports();
             this.showMessage(this.t('reportDeleted'), 'success');
         } catch (error) {
             console.error('Error deleting audit:', error);
             this.showMessage(this.t('failedToDelete'), 'error');
+        }
+    }
+
+    triggerImport(reportId) {
+        this.importingReportId = reportId;
+        const fileInput = document.getElementById('veeam-list-file-input');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    async handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file || !this.importingReportId) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const jsonData = JSON.parse(e.target.result);
+                await this.importReportData(this.importingReportId, jsonData);
+            } catch (error) {
+                this.showMessage('Invalid JSON file: ' + error.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    async importReportData(reportId, reportData) {
+        try {
+            const response = await fetch('/api/veeam-reports/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reportId: parseInt(reportId),
+                    reportData: JSON.stringify(reportData)
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to import report');
+
+            await this.loadReports();
+            this.showMessage('Report imported successfully', 'success');
+        } catch (error) {
+            console.error('Error importing report:', error);
+            this.showMessage('Failed to import report', 'error');
+        } finally {
+            this.importingReportId = null;
         }
     }
 
@@ -316,11 +479,23 @@ export class VeeamAuditorListPage {
     }
 
     updateDisplay() {
-        const content = document.getElementById('page-content');
-        if (content) {
-            this.render().then(html => {
-                content.innerHTML = html;
-            });
+        const dynamicContent = document.getElementById('reports-dynamic-content');
+        if (dynamicContent) {
+            dynamicContent.innerHTML = this.renderReportsContent();
+        }
+
+        const modalContent = document.getElementById('modal-dynamic-content');
+        if (modalContent) {
+            modalContent.innerHTML = this.showCreateModal ? this.renderCreateReportModal() : '';
+        }
+
+        if (!dynamicContent && !modalContent) {
+            const content = document.getElementById('page-content');
+            if (content) {
+                this.render().then(html => {
+                    content.innerHTML = html;
+                });
+            }
         }
     }
 }

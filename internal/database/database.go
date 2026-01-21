@@ -351,6 +351,11 @@ func createTables() error {
 		username TEXT NOT NULL UNIQUE,
 		password_hash TEXT NOT NULL,
 		salt TEXT NOT NULL,
+		role TEXT DEFAULT 'Admin',
+		status TEXT DEFAULT 'Enabled',
+		quota TEXT DEFAULT 'Unlimited',
+		usage TEXT DEFAULT '0 B',
+		is_locked INTEGER DEFAULT 0,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -622,7 +627,24 @@ func migrateTables() error {
 	if err != nil && !strings.Contains(err.Error(), "duplicate column") {
 		// Ignore if column already exists
 	}
+	// Add management columns to users table if they don't exist
+	userColumns := []struct {
+		name string
+		def  string
+	}{
+		{"role", "TEXT DEFAULT 'Admin'"},
+		{"status", "TEXT DEFAULT 'Enabled'"},
+		{"quota", "TEXT DEFAULT 'Unlimited'"},
+		{"usage", "TEXT DEFAULT '0 B'"},
+		{"is_locked", "INTEGER DEFAULT 0"},
+	}
 
+	for _, col := range userColumns {
+		_, err = DB.Exec(fmt.Sprintf("ALTER TABLE users ADD COLUMN %s %s", col.name, col.def))
+		if err != nil && !strings.Contains(err.Error(), "duplicate column") {
+			// Ignore if column already exists
+		}
+	}
 	// Add icon and updated_at columns to todo_tabs if they don't exist
 	_, err = DB.Exec(`ALTER TABLE todo_tabs ADD COLUMN icon TEXT`)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column") {

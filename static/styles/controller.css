@@ -13,7 +13,7 @@
 .controller-title h1 {
     font-size: 2.5rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--bg);
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -65,7 +65,7 @@
     transform: translateY(-8px);
     border-color: rgba(59, 130, 246, 0.3);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4),
-                0 0 0 1px rgba(59, 130, 246, 0.2);
+        0 0 0 1px rgba(59, 130, 246, 0.2);
 }
 
 .controller-app-card:hover::before {
@@ -90,7 +90,7 @@
 .controller-app-content h2 {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--bg);
     margin-bottom: 0.75rem;
 }
 
@@ -184,7 +184,7 @@
 .controller-subview-title {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #f1f5f9;
+    color: var(--bg);
     margin: 0;
 }
 
@@ -230,4 +230,3 @@
         gap: 1rem;
     }
 }
-

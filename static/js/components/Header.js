@@ -1,12 +1,10 @@
 import { SubNavbar } from './SubNavbar.js';
-import { PageNavbar } from './PageNavbar.js';
 
 export class Header {
     constructor(currentPage = 'controller') {
         this.currentPage = currentPage;
         this.subNavbar = new SubNavbar();
-        this.pageNavbar = new PageNavbar();
-        this.isDarkMode = localStorage.getItem('theme') !== 'light';
+        this.isDarkMode = true; // strictly dark
     }
 
     getPageName(pageId) {
@@ -22,48 +20,48 @@ export class Header {
             'proxmox': 'Manager',
             'xen': 'Manager',
             'virtualbox': 'Manager',
-            'hyperv-auditor': 'Auditor',
-            'hyperv-auditor-list': 'Auditor',
-            'hyperv-auditor-details': 'Auditor',
-            'esxi-auditor': 'Auditor',
-            'vsphere-auditor': 'Auditor',
-            'windows-auditor': 'Auditor',
-            'windows-server-auditor-list': 'Auditor',
-            'windows-server-auditor-details': 'Auditor',
-            'linux-auditor': 'Auditor',
-            'linux-server-auditor-list': 'Auditor',
-            'linux-server-auditor-details': 'Auditor',
-            'file-share-auditor': 'Auditor',
-            'file-share-auditor-list': 'Auditor',
-            'file-share-auditor-details': 'Auditor',
-            'active-directory-auditor': 'Auditor',
+            'hyperv-auditor': 'DeepView Insight',
+            'hyperv-auditor-list': 'DeepView Insight',
+            'hyperv-auditor-details': 'DeepView Insight',
+            'esxi-auditor': 'DeepView Insight',
+            'vsphere-auditor': 'DeepView Insight',
+            'windows-auditor': 'DeepView Insight',
+            'windows-server-auditor-list': 'DeepView Insight',
+            'windows-server-auditor-details': 'DeepView Insight',
+            'linux-auditor': 'DeepView Insight',
+            'linux-server-auditor-list': 'DeepView Insight',
+            'linux-server-auditor-details': 'DeepView Insight',
+            'file-share-auditor': 'DeepView Insight',
+            'file-share-auditor-list': 'DeepView Insight',
+            'file-share-auditor-details': 'DeepView Insight',
+            'active-directory-auditor': 'DeepView Insight',
+            'veeam-auditor-list': 'DeepView Insight',
+            'veeam-auditor-details': 'DeepView Insight',
             // Productivity
-            'documentation': 'Productivity',
-            'todo': 'To-Do Manager',
             'infrastructure-diagram': 'Productivity',
             // Automation
-            'automation': 'Automation',
-            'automation/workflows': 'Workflows',
-            'automation/webhooks': 'Webhooks',
-            'automation/schedulers': 'Schedulers',
-            'automation/executions': 'Executions',
+            'automation': 'DeepView Automation',
+            'automation/workflows': 'DeepView Automation',
+            'automation/webhooks': 'DeepView Automation',
+            'automation/schedulers': 'DeepView Automation',
+            'automation/executions': 'DeepView Automation',
             // Remote
-            'remote': 'Remote',
-            'ssh-client': 'Remote',
-            'sftp-client': 'Remote',
-            'ftp-client': 'Remote',
-            'powershell-remote': 'Remote',
-            'rdp-client': 'Remote',
-            'telnet-client': 'Remote',
-            'winrm-client': 'Remote',
-            'database': 'Remote',
-            'ip-scanner': 'IP Scanner',
-            'ping-tracer': 'Ping Tracer',
-            'domain-lookup': 'Domain Lookup',
-            'packet-analyzer': 'Packet Analyzer',
-            'speedtest': 'Speedtest',
+            'remote': 'DeepView Remote',
+            'ssh-client': 'DeepView Remote',
+            'sftp-client': 'DeepView Remote',
+            'ftp-client': 'DeepView Remote',
+            'powershell-remote': 'DeepView Remote',
+            'rdp-client': 'DeepView Remote',
+            'telnet-client': 'DeepView Remote',
+            'winrm-client': 'DeepView Remote',
+            'database': 'DeepView Remote',
+            'ip-scanner': 'DeepView Scout',
+            'ping-tracer': 'DeepView Trace',
+            'domain-lookup': 'DeepView Domain Lookup',
+            'packet-analyzer': 'DeepView Packet',
+            'speedtest': 'DeepView Pulse',
             // Reports
-            'reports': 'Reports',
+            'reports': 'DeepView Reports',
             // Infrastructure Inventory
             'infrastructure-inventory': 'Infrastructure Inventory',
             // Tools
@@ -81,7 +79,8 @@ export class Header {
             'activity-log-sessions': 'Activity Log',
             // Settings
             'settings': 'Settings',
-            // WiFi Manager
+            // Administration
+            'administration': 'Administration',
             'wifi-manager': 'WiFi Manager'
         };
         return pageNames[pageId] || 'Applications';
@@ -101,8 +100,7 @@ export class Header {
 
     async openAdministration() {
         if (window.appInstance) {
-            // Default administration page is WiFi Manager
-            await window.appInstance.navigateTo('wifi-manager');
+            await window.appInstance.navigateTo('administration');
         }
     }
 
@@ -138,25 +136,8 @@ export class Header {
         }
     }
 
-    toggleTheme() {
-        this.isDarkMode = !this.isDarkMode;
-        const theme = this.isDarkMode ? 'dark' : 'light';
-        localStorage.setItem('theme', theme);
-        this.applyTheme();
-
-        // Update toggle icon
-        const icon = document.querySelector('#theme-toggle i');
-        if (icon) {
-            icon.className = this.isDarkMode ? 'fas fa-moon' : 'fas fa-sun';
-        }
-    }
-
     applyTheme() {
-        if (!this.isDarkMode) {
-            document.body.classList.add('light-mode');
-        } else {
-            document.body.classList.remove('light-mode');
-        }
+        document.body.classList.remove('light-mode');
     }
 
 
@@ -178,17 +159,8 @@ export class Header {
         return `
             <div class="modern-header">
                 <div class="header-left">
-                    ${needsConfigToggle ? `
-                        <button class="header-config-toggle" id="header-config-toggle" onclick="headerInstance.toggleConfigSidebar()" title="Configuration">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    ` : `
-                        <button class="apps-toggle-btn" onclick="headerInstance.openApps()" title="Applications">
-                            <i class="fas fa-bars"></i>
-                        </button>
-                    `}
                     <div class="header-brand-logo" onclick="headerInstance.openOverview()">
-                        DCT
+                        DeepView Console
                     </div>
                     <div class="header-nav">
                         <button class="nav-item ${['controller', 'network-overview'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openOverview()">
@@ -197,7 +169,7 @@ export class Header {
                         <button class="nav-item ${this.currentPage === 'apps' ? 'active' : ''}" onclick="headerInstance.openApps()">
                             Applications
                         </button>
-                        <button class="nav-item ${['wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openAdministration()">
+                        <button class="nav-item ${['administration', 'wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openAdministration()">
                             Administration
                         </button>
                         <button class="nav-item ${this.currentPage === 'health-monitor' ? 'active' : ''}" onclick="headerInstance.openMonitor()">
@@ -208,9 +180,7 @@ export class Header {
                 
                 <div class="header-right">
                     <div class="header-actions">
-                        <button class="theme-toggle" id="theme-toggle" onclick="headerInstance.toggleTheme()" title="Toggle Theme">
-                            <i class="fas ${this.isDarkMode ? 'fa-moon' : 'fa-sun'}"></i>
-                        </button>
+
                         <div class="user-menu-container">
                             <div class="user-profile" onclick="headerInstance.toggleUserMenu()">
                                 <div class="user-avatar">
@@ -286,7 +256,7 @@ export class Header {
             const headerNav = headerLeft.querySelector('.header-nav');
             if (headerNav) {
                 const isOverview = ['controller', 'network-overview'].includes(pageId);
-                const isAdministration = ['wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(pageId);
+                const isAdministration = ['administration', 'wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(pageId);
                 const isMonitor = pageId === 'health-monitor';
                 const isApplications = !isOverview && !isAdministration && !isMonitor && pageId !== 'login';
 
@@ -353,14 +323,8 @@ export class Header {
             existingSubNavbar.remove();
         }
 
-        // Remove existing page navbar
-        const existingPageNavbar = document.querySelector('.page-navbar');
-        if (existingPageNavbar) {
-            existingPageNavbar.remove();
-        }
-
         // Update body classes - remove all navbar classes first
-        document.body.classList.remove('has-sub-navbar', 'has-page-navbar');
+        document.body.classList.remove('has-sub-navbar');
 
         // Render new sub-navbar if needed
         const subNavbarHTML = this.subNavbar.render(pageId);
@@ -371,67 +335,6 @@ export class Header {
                 this.subNavbar.attachEventListeners();
                 // Add class to body to adjust padding
                 document.body.classList.add('has-sub-navbar');
-
-                // Render page navbar after sub-navbar (skip for ping-tracer and ip-scanner)
-                if (pageId !== 'ping-tracer' && pageId !== 'ip-scanner') {
-                    const pageNavbarHTML = this.pageNavbar.render(pageId);
-                    if (pageNavbarHTML) {
-                        // Find the sub-navbar we just inserted
-                        const subNavbar = header.nextElementSibling;
-                        if (subNavbar && subNavbar.classList.contains('sub-navbar')) {
-                            subNavbar.insertAdjacentHTML('afterend', pageNavbarHTML);
-                            window.pageNavbarInstance = this.pageNavbar;
-                            // Add class to body to adjust padding
-                            document.body.classList.add('has-page-navbar');
-                            // Attach event listeners after rendering
-                            setTimeout(() => {
-                                this.pageNavbar.attachEventListeners();
-                            }, 0);
-                        } else {
-                            // Fallback: search for sub-navbar
-                            setTimeout(() => {
-                                const subNavbarFallback = document.querySelector('.sub-navbar');
-                                if (subNavbarFallback) {
-                                    subNavbarFallback.insertAdjacentHTML('afterend', pageNavbarHTML);
-                                    window.pageNavbarInstance = this.pageNavbar;
-                                    document.body.classList.add('has-page-navbar');
-                                    // Attach event listeners after rendering
-                                    this.pageNavbar.attachEventListeners();
-                                }
-                            }, 50);
-                        }
-                    } else {
-                        // No page navbar for this page, ensure class is removed
-                        document.body.classList.remove('has-page-navbar');
-                    }
-                } else {
-                    // No page navbar for ping-tracer and ip-scanner
-                    document.body.classList.remove('has-page-navbar');
-                }
-            }
-        } else {
-            // If no sub-navbar, render page navbar after header (skip for ping-tracer and ip-scanner)
-            if (pageId !== 'ping-tracer' && pageId !== 'ip-scanner') {
-                const pageNavbarHTML = this.pageNavbar.render(pageId);
-                if (pageNavbarHTML) {
-                    const header = document.querySelector('.modern-header');
-                    if (header && header.parentNode) {
-                        header.insertAdjacentHTML('afterend', pageNavbarHTML);
-                        window.pageNavbarInstance = this.pageNavbar;
-                        // Add class to body to adjust padding
-                        document.body.classList.add('has-page-navbar');
-                        // Attach event listeners after rendering
-                        setTimeout(() => {
-                            this.pageNavbar.attachEventListeners();
-                        }, 0);
-                    }
-                } else {
-                    // No page navbar for this page, ensure class is removed
-                    document.body.classList.remove('has-page-navbar');
-                }
-            } else {
-                // No page navbar for ping-tracer and ip-scanner
-                document.body.classList.remove('has-page-navbar');
             }
         }
     }
@@ -455,8 +358,14 @@ export class Header {
         }
 
         // Handle auditor pages
-        if (window.pageNavbarInstance && typeof window.pageNavbarInstance.toggleAuditorSidebar === 'function') {
-            window.pageNavbarInstance.toggleAuditorSidebar();
+        if (window.windowsServerAuditorInstance && typeof window.windowsServerAuditorInstance.toggleSidebar === 'function') {
+            window.windowsServerAuditorInstance.toggleSidebar();
+        } else if (window.veeamAuditorInstance && typeof window.veeamAuditorInstance.toggleSidebar === 'function') {
+            window.veeamAuditorInstance.toggleSidebar();
+        } else if (window.fileShareAuditorInstance && typeof window.fileShareAuditorInstance.toggleSidebar === 'function') {
+            window.fileShareAuditorInstance.toggleSidebar();
+        } else if (window.linuxServerAuditorInstance && typeof window.linuxServerAuditorInstance.toggleSidebar === 'function') {
+            window.linuxServerAuditorInstance.toggleSidebar();
         }
     }
 

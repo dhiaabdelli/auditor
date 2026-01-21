@@ -19,6 +19,8 @@ export class FileShareAuditorPage {
         this.isShareDetailsModalOpen = false;
         this.selectedShareDetails = null;
         this.activeView = 'overview'; // 'overview' or 'folder-tree'
+        this.sidebarCollapsed = false;
+        this.expandedCategories = new Set(['navigation']);
         this.translations = {
             en: {
                 title: 'File Share Audit',
@@ -81,6 +83,26 @@ export class FileShareAuditorPage {
                 isInherited: 'Hérité'
             }
         };
+        this.sidebarCollapsed = false;
+    }
+
+    toggleSidebar() {
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        this.updateDisplay();
+    }
+
+    toggleCategory(key) {
+        if (this.expandedCategories.has(key)) {
+            this.expandedCategories.delete(key);
+        } else {
+            this.expandedCategories.add(key);
+        }
+        this.updateDisplay();
+    }
+
+    switchView(view) {
+        this.activeView = view;
+        this.updateDisplay();
     }
 
     t(key) {
@@ -90,8 +112,8 @@ export class FileShareAuditorPage {
     async render() {
         if (this.loading) {
             return `
-                <div class="page-container-full">
-                    <div class="loading-container">
+                <div class="administration-container page-container-full">
+                    <div class="loading-container" style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;">
                         <div class="loading-spinner"></div>
                         <p>${this.t('loading')}</p>
                     </div>
@@ -101,32 +123,60 @@ export class FileShareAuditorPage {
 
         if (!this.reportData) {
             return `
-                <div class="page-container-full file-share-auditor-layout">
-                    <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
-                    <!-- Sidebar Overlay (Mobile) -->
-                    <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="fileShareAuditorInstance.closeSidebar()"></div>
-                    <!-- Sidebar Navigation -->
-                    <div class="file-share-auditor-sidebar" id="auditor-sidebar">
-                        <div class="file-share-auditor-sidebar-nav">
-                            <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
-                                 onclick="fileShareAuditorInstance.switchView('overview')">
+                <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
+                    <input type="file" id="file-share-report-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                    
+                    <aside class="administration-sidebar">
+                        <div class="sidebar-collapse-header">
+                            <button class="collapse-btn" onclick="fileShareAuditorInstance.toggleSidebar()">
+                                <i class="fas fa-angle-double-left"></i>
+                            </button>
+                        </div>
+                        <nav class="sidebar-nav">
+                            <button class="nav-item active">
                                 <i class="fas fa-chart-line"></i>
                                 <span>Overview</span>
+                            </button>
+                        </nav>
+                    </aside>
+
+                    <main class="administration-content" style="padding: 0;">
+                        <div class="file-share-auditor-main premium-auditor-container" style="height: 100%; display: flex; flex-direction: column; gap: 0; padding: 0;">
+                            <div class="premium-header-modern" style="padding: 1rem 1.5rem; margin: 1.5rem 1.5rem 0 1.5rem;">
+                                <div class="premium-title-group">
+                                    <button class="page-header-back-btn" onclick="fileShareAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 8px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                                        <i class="fas fa-arrow-left" style="font-size: 1rem;"></i>
+                                    </button>
+                                    <div class="premium-title-text">
+                                        <h2 style="font-size: 1.5rem;">${this.t('title')}</h2>
+                                        <p style="font-size: 0.75rem;">${this.reportData?.serverName || this.t('noData') || 'File Share Audit'}</p>
+                                    </div>
+                                </div>
+                                <div class="premium-btn-group">
+                                    <button class="premium-action-btn" onclick="fileShareAuditorInstance.loadReport()" style="height: 36px;">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                    <button class="premium-action-btn" onclick="fileShareAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 36px;">
+                                        <i class="fas fa-code"></i>
+                                        <span>Script</span>
+                                    </button>
+                                    <button class="premium-action-btn" onclick="fileShareAuditorInstance.showImportDialog()" style="height: 36px;">
+                                        <i class="fas fa-upload"></i>
+                                        <span>Import</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="audit-content">
+                                <div class="reports-empty-state">
+                                    <i class="fas fa-folder-open fa-3x"></i>
+                                    <p>${this.t('noData')}</p>
+                                    <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
+                                        Click "Script" to download the PowerShell script, run it on your server, then click "Import" to upload the JSON output.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <!-- Main Content -->
-                    <div class="file-share-auditor-main">
-                        <div class="audit-content">
-                            <div class="reports-empty-state">
-                                <i class="fas fa-folder-open fa-3x"></i>
-                                <p>${this.t('noData')}</p>
-                                <p style="margin-top: 1rem; color: #94a3b8; font-size: 0.875rem;">
-                                    Click "Script" to download the PowerShell script, run it on your server, then click "Import" to upload the JSON output.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                    </main>
                 </div>
             `;
         }
@@ -234,32 +284,79 @@ export class FileShareAuditorPage {
             .sort((a, b) => b.totalFolders - a.totalFolders);
 
         return `
-            <div class="page-container-full file-share-auditor-layout">
-                <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
-                <!-- Sidebar Overlay (Mobile) -->
-                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="fileShareAuditorInstance.closeSidebar()"></div>
-                    <!-- Sidebar Navigation -->
-                    <div class="file-share-auditor-sidebar" id="auditor-sidebar">
-                        <div class="file-share-auditor-sidebar-nav">
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
-                             onclick="fileShareAuditorInstance.switchView('overview')">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Overview</span>
+            <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
+                <input type="file" id="file-share-report-file-input" accept=".json" style="display: none;" onchange="fileShareAuditorInstance.handleFileSelect(event)">
+                
+                <aside class="administration-sidebar">
+                    <div class="sidebar-collapse-header">
+                        <button class="collapse-btn" onclick="fileShareAuditorInstance.toggleSidebar()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
+                    </div>
+                    <nav class="sidebar-nav">
+                        <!-- Navigation Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('navigation') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="fileShareAuditorInstance.toggleCategory('navigation')">
+                                <div class="category-title">
+                                    <i class="fas fa-compass"></i>
+                                    <span>Navigation</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                                        onclick="fileShareAuditorInstance.switchView('overview')">
+                                    <span>Overview</span>
+                                </button>
+                                ${folderTree.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'folder-tree' ? 'active' : ''}" 
+                                        onclick="fileShareAuditorInstance.switchView('folder-tree')">
+                                    <span>Folder Tree (${folderTree.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
-                        ${folderTree.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'folder-tree' ? 'active' : ''}" 
-                             onclick="fileShareAuditorInstance.switchView('folder-tree')">
-                            <i class="fas fa-sitemap"></i>
-                            <span>Folder Tree</span>
+                    </nav>
+                </aside>
+
+                <main class="administration-content">
+                    <div class="file-share-auditor-main">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
+                                <button class="page-header-back-btn" onclick="fileShareAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                                    <i class="fas fa-arrow-left" style="font-size: 0.95rem;"></i>
+                                </button>
+                                <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
+                                    <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.reportData?.name || this.t('title')}</h2>
+                                    <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${this.reportData?.serverName || 'File Share Audit'}</span>
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button class="premium-action-btn" onclick="fileShareAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+                                    <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <button class="premium-action-btn" onclick="fileShareAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-code" style="font-size: 0.7rem;"></i>
+                                    <span>Script</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="fileShareAuditorInstance.generateScript({ encrypt: false, obfuscate: false })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-file-alt" style="font-size: 0.7rem;"></i>
+                                    <span>Plain</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="fileShareAuditorInstance.showImportDialog()" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-upload" style="font-size: 0.7rem;"></i>
+                                    <span>Import</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="fileShareAuditorInstance.deleteReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
                         </div>
-                        ` : ''}
+                        ${this.activeView === 'folder-tree' ? this.renderFolderTreeView(folderTree, folderAnalysis) : this.renderOverviewView(folderAnalysis, summary, criticalIssues, warningIssues, totalPermissions, totalExplicit, totalInherited, totalDenyAces, totalAllow)}
                     </div>
                 </div>
-                <!-- Main Content -->
-                <div class="file-share-auditor-main">
-                    ${this.activeView === 'folder-tree' ? this.renderFolderTreeView(folderTree, folderAnalysis) : this.renderOverviewView(folderAnalysis, summary, criticalIssues, warningIssues, totalPermissions, totalExplicit, totalInherited, totalDenyAces, totalAllow)}
-                </div>
             </div>
+            <div id="report-message" class="message" style="display: none;"></div>
         `;
     }
 
@@ -1725,35 +1822,10 @@ export class FileShareAuditorPage {
         `;
     }
 
-    toggleSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('sidebar-open');
-            overlay.classList.toggle('show');
-        }
-    }
-
-    closeSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-        }
-    }
-
-    switchView(view) {
-        this.activeView = view;
-        this.updateDisplay();
-        // Close sidebar on mobile when switching views
-        if (window.innerWidth <= 768) {
-            this.closeSidebar();
-        }
-    }
 
     async mount() {
         window.fileShareAuditorInstance = this;
+        document.body.style.overflow = 'hidden';
         const urlParams = new URLSearchParams(window.location.search);
         const id = urlParams.get('id');
         if (id) {
@@ -1775,6 +1847,10 @@ export class FileShareAuditorPage {
                 }
             }
         }
+    }
+
+    async unmount() {
+        document.body.style.overflow = '';
     }
 
     async loadReport() {
@@ -2514,42 +2590,41 @@ export class FileShareAuditorPage {
         `;
     }
 
-    updateDisplay() {
+    async updateDisplay() {
         const content = document.getElementById('page-content');
         if (content) {
-            this.render().then(html => {
-                content.innerHTML = html;
-                // Append modals after render
-                if (this.showCriticalIssuesModal) {
-                    content.insertAdjacentHTML('beforeend', this.renderIssuesModal('critical'));
-                }
-                if (this.showWarningIssuesModal) {
-                    content.insertAdjacentHTML('beforeend', this.renderIssuesModal('warning'));
-                }
-                if (this.selectedGroupModal !== null) {
-                    content.insertAdjacentHTML('beforeend', this.renderGroupModal());
-                }
-                // Update page navbar title after rendering
-                if (window.pageNavbarInstance) {
-                    window.pageNavbarInstance.updateTitle();
-                }
-                if (this.selectedUserModal !== null) {
-                    content.insertAdjacentHTML('beforeend', this.renderUserModal());
-                }
-                if (this.isRedFlagsModalOpen) {
-                    content.insertAdjacentHTML('beforeend', this.renderRedFlagsModal());
-                }
-                if (this.isShareDetailsModalOpen) {
-                    content.insertAdjacentHTML('beforeend', this.renderShareDetailsModal());
-                }
-                if (this.selectedFolderForModal) {
-                    content.insertAdjacentHTML('beforeend', this.renderFolderPermissionsModal());
-                }
-                // Update page navbar title after rendering
-                if (window.pageNavbarInstance) {
-                    window.pageNavbarInstance.updateTitle();
-                }
-            });
+            content.innerHTML = await this.render();
+
+            // Set instance for event handlers
+            window.fileShareAuditorInstance = this;
+
+            // Append modals after render
+            if (this.showCriticalIssuesModal) {
+                content.insertAdjacentHTML('beforeend', this.renderIssuesModal('critical'));
+            }
+            if (this.showWarningIssuesModal) {
+                content.insertAdjacentHTML('beforeend', this.renderIssuesModal('warning'));
+            }
+            if (this.selectedGroupModal !== null) {
+                content.insertAdjacentHTML('beforeend', this.renderGroupModal());
+            }
+            if (this.selectedUserModal !== null) {
+                content.insertAdjacentHTML('beforeend', this.renderUserModal());
+            }
+            if (this.isRedFlagsModalOpen) {
+                content.insertAdjacentHTML('beforeend', this.renderRedFlagsModal());
+            }
+            if (this.isShareDetailsModalOpen) {
+                content.insertAdjacentHTML('beforeend', this.renderShareDetailsModal());
+            }
+            if (this.selectedFolderForModal) {
+                content.insertAdjacentHTML('beforeend', this.renderFolderPermissionsModal());
+            }
+
+            // Update page navbar title after rendering
+            if (window.pageNavbarInstance) {
+                window.pageNavbarInstance.updateTitle();
+            }
         }
     }
 

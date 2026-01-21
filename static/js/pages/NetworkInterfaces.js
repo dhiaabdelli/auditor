@@ -5,8 +5,20 @@ export class NetworkInterfacesPage {
 
     render() {
         return `
-            <div class="page-container-full network-interfaces-layout">
-                <div class="network-interfaces-main">
+            <div class="page-container-full network-interfaces-layout" style="display: flex; flex-direction: column; height: 100%; overflow: hidden;">
+                <div class="network-interfaces-main" style="flex: 1; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid rgba(148, 163, 184, 0.1); background: var(--card-bg);">
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <i class="fas fa-network-wired" style="font-size: 1.25rem; color: #3b82f6;"></i>
+                            <h2 style="margin: 0; font-size: 1.25rem; color: #f8fafc;">Network Interfaces</h2>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button class="page-action-btn" onclick="networkInterfacesInstance.loadData()">
+                                <i class="fas fa-sync-alt"></i>
+                                <span>Refresh</span>
+                            </button>
+                        </div>
+                    </div>
                     <div class="network-interfaces-content">
                         <table id="interface-table" style="width: 100%; border-collapse: collapse; table-layout: fixed;">
                             <thead>
@@ -317,7 +329,6 @@ export class NetworkInterfacesPage {
         if (navbar) {
             navbar.style.display = 'none';
             navbar.innerHTML = '';
-            document.body.classList.remove('has-page-navbar');
         }
     }
 }

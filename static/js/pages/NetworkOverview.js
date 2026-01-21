@@ -11,7 +11,7 @@ export class NetworkOverviewPage {
         return `
             <div class="page-container-full" style="padding: 0; display: flex; height: calc(100vh - 110px); overflow: hidden;">
                 <!-- LEFT SIDEBAR -->
-                <div style="width: 260px; min-width: 260px; background: #0f172a; border-right: 1px solid rgba(148, 163, 184, 0.1); display: flex; flex-direction: column; overflow-y: auto; z-index: 20; box-shadow: 4px 0 24px rgba(0,0,0,0.2);">
+                <div style="width: 260px; min-width: 260px; background: var(--bg); border-right: 1px solid rgba(148, 163, 184, 0.1); display: flex; flex-direction: column; overflow-y: auto; z-index: 20; box-shadow: 4px 0 24px rgba(0,0,0,0.2);">
                     <div style="padding: 1.75rem 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: center;">
                         <div style="margin-bottom: 0.75rem; position: relative; display: inline-block;">
                            <img src="/images/gateway-server.png" style="width: 100px; height: auto; display: block; filter: drop-shadow(0 0 15px rgba(96, 165, 250, 0.3));">
@@ -135,7 +135,7 @@ export class NetworkOverviewPage {
                 </div>
 
                 <!-- MAIN CONTENT -->
-                <div style="flex: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; background: #0f172a;">
+                <div style="flex: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; background: var(--bg);">
                     <!-- Top Row: Visualization & Status -->
                     <div style="display: flex; gap: 0.1rem; align-items: stretch; min-height: 300px;">
                         
@@ -145,7 +145,7 @@ export class NetworkOverviewPage {
                                 <i class="fas fa-project-diagram" style="color: #60a5fa;"></i>
                                 Network Topology & Flow
                             </div>
-                            <div class="network-flow-wrapper" style="flex: 1; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(148, 163, 184, 0.1); border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+                            <div class="network-flow-wrapper" style="flex: 1; background: linear-gradient(180deg, var(--card-bg) 0%, var(--bg) 100%); border: 1px solid rgba(148, 163, 184, 0.1); border-radius: 12px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
                                 <svg id="network-flow-svg" class="network-flow-svg" viewBox="0 0 1800 500" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 300px;">
                                     <defs>
                                         <linearGradient id="connectionGradient" x1="0%" y1="0%" x2="100%" y2="0%">
@@ -213,8 +213,8 @@ export class NetworkOverviewPage {
                                     <!-- Node 1: Gateway -->
                                     <g id="gateway-node" class="network-node" transform="translate(120, 250)" onclick="window.appInstance?.navigateTo('network-interfaces')">
                                         <title>Management Gateway - Click for Interfaces</title>
-                                        <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="#1e293b" stroke="#60a5fa" stroke-width="4" filter="url(#techGlow)"/>
-                                        <path d="M0 -50 L42 -25 L42 25 L0 50 L-42 25 L-42 -25 Z" fill="#1e3a8a" opacity="0.3"/>
+                                        <path d="M0 -70 L60 -35 L60 35 L0 70 L-60 35 L-60 -35 Z" fill="var(--card-bg)" stroke="#60a5fa" stroke-width="4" filter="url(#techGlow)"/>
+                                        <path d="M0 -50 L42 -25 L42 25 L0 50 L-42 25 L-42 -25 Z" fill="var(--primary-dark)" opacity="0.3"/>
                                         <use href="#icon-gateway" x="-30" y="-30" width="60" height="60" fill="#dbeafe"/>
                                         <text x="0" y="105" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="900" letter-spacing="1.5px">GATEWAY</text>
                                         <text x="0" y="130" text-anchor="middle" fill="#60a5fa" font-size="14" font-weight="700" id="gateway-status">ACTIVE</text>
@@ -225,7 +225,7 @@ export class NetworkOverviewPage {
                                         <title>WiFi Connection - Click to Activate</title>
                                         <text x="0" y="-85" text-anchor="middle" fill="#10b981" font-size="16" font-weight="700" id="wifi-node-status">CONNECTED</text>
                                         
-                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="#1e293b" stroke="#818cf8" stroke-width="3" filter="url(#techGlow)"/>
+                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="var(--card-bg)" stroke="#818cf8" stroke-width="3" filter="url(#techGlow)"/>
                                         <path d="M0 -44 L38 -22 L38 22 L0 44 L-38 22 L-38 -22 Z" fill="#312e81" opacity="0.3"/>
                                         <use href="#icon-wifi" x="-25" y="-25" width="50" height="50" fill="#c7d2fe"/>
                                         <text x="0" y="95" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="800" letter-spacing="1px">WIFI</text>
@@ -234,7 +234,7 @@ export class NetworkOverviewPage {
                                     <!-- Node 3: Ethernet -->
                                     <g id="ethernet-node" class="network-node" transform="translate(900, 400)" onclick="window.networkOverviewInstance.toggleConnection('ethernet')">
                                         <title>Ethernet Connection - Click to Activate</title>
-                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="#1e293b" stroke="#34d399" stroke-width="3" filter="url(#techGlow)"/>
+                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="var(--card-bg)" stroke="#34d399" stroke-width="3" filter="url(#techGlow)"/>
                                         <path d="M0 -44 L38 -22 L38 22 L0 44 L-38 22 L-38 -22 Z" fill="#064e3b" opacity="0.3"/>
                                         <use href="#icon-ethernet" x="-25" y="-25" width="50" height="50" fill="#d1fae5"/>
                                         <text x="0" y="-85" text-anchor="middle" fill="#f8fafc" font-size="18" font-weight="800" letter-spacing="1px">ETH</text>
@@ -244,7 +244,7 @@ export class NetworkOverviewPage {
                                     <!-- Node 4: Internet -->
                                     <g id="internet-node" class="network-node" transform="translate(1680, 250)" onclick="window.networkOverviewInstance.runSpeedTest()">
                                         <title>Cloud Internet - Click to Test Speed</title>
-                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="#1e293b" stroke="#38bdf8" stroke-width="3" filter="url(#techGlow)"/>
+                                        <path d="M0 -60 L52 -30 L52 30 L0 60 L-52 30 L-52 -30 Z" fill="var(--card-bg)" stroke="#38bdf8" stroke-width="3" filter="url(#techGlow)"/>
                                         <path d="M0 -44 L38 -22 L38 22 L0 44 L-38 22 L-38 -22 Z" fill="#0c4a6e" opacity="0.3"/>
                                         <use href="#icon-internet" x="-25" y="-25" width="50" height="50" fill="#e0f2fe"/>
                                         <text x="0" y="105" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="800" letter-spacing="1.5px">INTERNET</text>

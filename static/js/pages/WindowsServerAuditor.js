@@ -46,6 +46,8 @@ export class WindowsServerAuditorPage {
         this.selectedFirewallRuleDetails = null; // { rule }
         this.showListeningPortDetailsModalFlag = false;
         this.selectedListeningPortDetails = null; // { listener }
+        this.sidebarCollapsed = false;
+        this.expandedCategories = new Set(['system', 'security', 'network', 'maintenance']);
         this.translations = {
             en: {
                 title: 'Windows Server Audit',
@@ -239,21 +241,22 @@ export class WindowsServerAuditorPage {
     }
 
     toggleSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.toggle('sidebar-open');
-            overlay.classList.toggle('show');
+        this.sidebarCollapsed = !this.sidebarCollapsed;
+        this.updateDisplay();
+    }
+
+    toggleCategory(key) {
+        if (this.expandedCategories.has(key)) {
+            this.expandedCategories.delete(key);
+        } else {
+            this.expandedCategories.add(key);
         }
+        this.updateDisplay();
     }
 
     closeSidebar() {
-        const sidebar = document.getElementById('auditor-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        if (sidebar && overlay) {
-            sidebar.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-        }
+        this.sidebarCollapsed = true;
+        this.updateDisplay();
     }
 
     async render() {
@@ -320,188 +323,230 @@ export class WindowsServerAuditorPage {
         const raidControllers = data.raidControllers || [];
 
         return `
-            <div class="page-container-full file-share-auditor-layout">
+            <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
                 <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="windowsServerAuditorInstance.handleFileSelect(event)">
-                <!-- Sidebar Overlay (Mobile) -->
-                <div class="file-share-auditor-sidebar-overlay" id="sidebar-overlay" onclick="windowsServerAuditorInstance.closeSidebar()"></div>
-                <!-- Sidebar Navigation -->
-                <div class="file-share-auditor-sidebar" id="auditor-sidebar">
-                    <div class="file-share-auditor-sidebar-nav">
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('overview')">
-                            <i class="fas fa-chart-line"></i>
-                            <span>Overview</span>
-                        </div>
-                        <!-- Security & Access -->
-                        ${localUsersSummary.localUsersCount !== undefined ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'users' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('users')">
-                            <i class="fas fa-users"></i>
-                            <span>Users</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${localUsersSummary.localUsersCount || 0})</span>
-                        </div>
-                        ` : ''}
-                        ${localGroups && localGroups.length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'groups' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('groups')">
-                            <i class="fas fa-users-cog"></i>
-                            <span>Groups</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(localGroups || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(data?.certificates?.allCertificates || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'certificates' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('certificates')">
-                            <i class="fas fa-certificate"></i>
-                            <span>Certificates</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.certificates.allCertificates || []).length})</span>
-                        </div>
-                        ` : ''}
-                        <!-- System Configuration -->
-                        ${(rolesAndFeatures.installedRoles || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'roles' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('roles')">
-                            <i class="fas fa-server"></i>
-                            <span>Roles</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(rolesAndFeatures.installedRoles || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(rolesAndFeatures.installedFeatures || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'features' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('features')">
-                            <i class="fas fa-puzzle-piece"></i>
-                            <span>Features</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(rolesAndFeatures.installedFeatures || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(services.services || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'services' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('services')">
-                            <i class="fas fa-cogs"></i>
-                            <span>Services</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(services.services || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${scheduledTasks.totalTasks !== undefined ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'scheduled-tasks' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('scheduled-tasks')">
-                            <i class="fas fa-clock"></i>
-                            <span>Scheduled Tasks</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${scheduledTasks.totalTasks || 0})</span>
-                        </div>
-                        ` : ''}
-                        <!-- Software & Hardware -->
-                        ${(software.applications || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'applications' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('applications')">
-                            <i class="fas fa-box"></i>
-                            <span>Applications</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(software.applications || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(drivers || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'drivers' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('drivers')">
-                            <i class="fas fa-microchip"></i>
-                            <span>Drivers</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(drivers || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${data.devices && data.devices.totalDevices > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'devices' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('devices')">
-                            <i class="fas fa-usb"></i>
-                            <span>Devices</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${data.devices.totalDevices || 0})</span>
-                        </div>
-                        ` : ''}
-                        ${(data.minifilters || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'minifilters' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('minifilters')">
-                            <i class="fas fa-filter"></i>
-                            <span>Minifilter Drivers</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.minifilters || []).length})</span>
-                        </div>
-                        ` : ''}
-                        <!-- Updates & Maintenance -->
-                        ${windowsUpdatesSummary.installedKBCount !== undefined ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'installed-updates' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('installed-updates')">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Installed Updates</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${windowsUpdatesSummary.installedKBCount || 0})</span>
-                        </div>
-                        ` : ''}
-                        ${windowsUpdatesSummary.missingCumulativeCount !== undefined ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'missing-updates' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('missing-updates')">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Missing Updates</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${windowsUpdatesSummary.missingCumulativeCount || 0})</span>
-                        </div>
-                        ` : ''}
-                        <!-- Network -->
-                        ${(network?.adapters || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'network-adapters' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('network-adapters')">
-                            <i class="fas fa-network-wired"></i>
-                            <span>Network Adapters</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.adapters || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(network?.persistentRoutes || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'persistent-routes' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('persistent-routes')">
-                            <i class="fas fa-route"></i>
-                            <span>Persistent Routes</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.persistentRoutes || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(network?.arpTable || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'arp-table' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('arp-table')">
-                            <i class="fas fa-network-wired"></i>
-                            <span>ARP Table</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(network.arpTable || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(data.firewallRules || []).length > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'firewall-rules' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('firewall-rules')">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Firewall Rules</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(data.firewallRules || []).length})</span>
-                        </div>
-                        ` : ''}
-                        ${(data.listeningPorts?.total || 0) > 0 ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'listening-ports' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('listening-ports')">
-                            <i class="fas fa-network-wired"></i>
-                            <span>Listening Ports</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${data.listeningPorts?.total || 0})</span>
-                        </div>
-                        ` : ''}
-                        <!-- Monitoring & Diagnostics -->
-                        ${eventLogOverview.systemErrors24h !== undefined || eventLogOverview.appErrors24h !== undefined ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'event-log' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('event-log')">
-                            <i class="fas fa-clipboard-list"></i>
-                            <span>Event Log</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${((eventLogOverview.systemErrors || []).length || 0) + ((eventLogOverview.appErrors || []).length || 0) + ((eventLogOverview.criticalEvents || []).length || 0)})</span>
-                        </div>
-                        ` : ''}
-                        ${processTree.summary ? `
-                        <div class="file-share-auditor-nav-item ${this.activeView === 'process' ? 'active' : ''}" 
-                             onclick="windowsServerAuditorInstance.switchView('process')">
-                            <i class="fas fa-microchip"></i>
-                            <span>Process</span>
-                            <span style="margin-left: auto; color: #64748b; font-size: 0.75rem;">(${(processTree.processes || []).length || 0})</span>
-                        </div>
-                        ` : ''}
+                
+                <aside class="administration-sidebar">
+                    <div class="sidebar-collapse-header">
+                        <button class="collapse-btn" onclick="windowsServerAuditorInstance.toggleSidebar()">
+                            <i class="fas fa-angle-double-left"></i>
+                        </button>
                     </div>
-                </div>
-                <!-- Main Content -->
-                <div class="file-share-auditor-main">
+                    <nav class="sidebar-nav">
+                        <!-- System Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('system') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="windowsServerAuditorInstance.toggleCategory('system')">
+                                <div class="category-title">
+                                    <i class="fas fa-server"></i>
+                                    <span>System</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                <button class="nav-item ${this.activeView === 'overview' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('overview')">
+                                    <span>Overview</span>
+                                </button>
+                                ${(rolesAndFeatures.installedRoles || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'roles' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('roles')">
+                                    <span>Roles (${(rolesAndFeatures.installedRoles || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(rolesAndFeatures.installedFeatures || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'features' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('features')">
+                                    <span>Features (${(rolesAndFeatures.installedFeatures || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(services.services || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'services' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('services')">
+                                    <span>Services (${(services.services || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${scheduledTasks.totalTasks !== undefined ? `
+                                <button class="nav-item ${this.activeView === 'scheduled-tasks' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('scheduled-tasks')">
+                                    <span>Tasks (${scheduledTasks.totalTasks || 0})</span>
+                                </button>
+                                ` : ''}
+                                ${processTree.processes ? `
+                                <button class="nav-item ${this.activeView === 'process' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('process')">
+                                    <span>Processes (${(processTree.processes || []).length || 0})</span>
+                                </button>
+                                ` : ''}
+                                ${(software.applications || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'applications' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('applications')">
+                                    <span>Applications (${(software.applications || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(drivers || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'drivers' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('drivers')">
+                                    <span>Drivers (${(drivers || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${data.devices && data.devices.totalDevices > 0 ? `
+                                <button class="nav-item ${this.activeView === 'devices' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('devices')">
+                                    <span>Devices (${data.devices.totalDevices || 0})</span>
+                                </button>
+                                ` : ''}
+                                ${(data.minifilters || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'minifilters' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('minifilters')">
+                                    <span>Minifilters (${(data.minifilters || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${raidControllers.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'raid-controllers' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('raid-controllers')">
+                                    <span>RAID (${raidControllers.length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Security Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('security') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="windowsServerAuditorInstance.toggleCategory('security')">
+                                <div class="category-title">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Security</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${localUsersSummary.localUsersCount !== undefined ? `
+                                <button class="nav-item ${this.activeView === 'users' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('users')">
+                                    <span>Users (${localUsersSummary.localUsersCount || 0})</span>
+                                </button>
+                                ` : ''}
+                                ${localGroups && localGroups.length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'groups' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('groups')">
+                                    <span>Groups (${(localGroups || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(data?.certificates?.allCertificates || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'certificates' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('certificates')">
+                                    <span>Certificates (${(data.certificates.allCertificates || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(data.firewallRules || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'firewall-rules' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('firewall-rules')">
+                                    <span>Firewall (${(data.firewallRules || []).length})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Network Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('network') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="windowsServerAuditorInstance.toggleCategory('network')">
+                                <div class="category-title">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>Network</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${(network?.adapters || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'network-adapters' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('network-adapters')">
+                                    <span>Adapters (${(network.adapters || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(network?.persistentRoutes || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'persistent-routes' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('persistent-routes')">
+                                    <span>Routes (${(network.persistentRoutes || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(network?.arpTable || []).length > 0 ? `
+                                <button class="nav-item ${this.activeView === 'arp-table' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('arp-table')">
+                                    <span>ARP (${(network.arpTable || []).length})</span>
+                                </button>
+                                ` : ''}
+                                ${(data.listeningPorts?.total || 0) > 0 ? `
+                                <button class="nav-item ${this.activeView === 'listening-ports' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('listening-ports')">
+                                    <span>Ports (${data.listeningPorts?.total || 0})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Maintenance Category -->
+                        <div class="sidebar-category ${this.expandedCategories.has('maintenance') ? 'expanded' : ''}">
+                            <div class="category-header" onclick="windowsServerAuditorInstance.toggleCategory('maintenance')">
+                                <div class="category-title">
+                                    <i class="fas fa-tools"></i>
+                                    <span>Maintenance</span>
+                                </div>
+                                <i class="fas fa-chevron-down arrow"></i>
+                            </div>
+                            <div class="category-items">
+                                ${eventLogOverview.systemErrors24h !== undefined || eventLogOverview.appErrors24h !== undefined ? `
+                                <button class="nav-item ${this.activeView === 'event-log' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('event-log')">
+                                    <span>Events (${((eventLogOverview.systemErrors || []).length || 0) + ((eventLogOverview.appErrors || []).length || 0) + ((eventLogOverview.criticalEvents || []).length || 0)})</span>
+                                </button>
+                                ` : ''}
+                                ${windowsUpdatesSummary.installedKBCount !== undefined ? `
+                                <button class="nav-item ${this.activeView === 'installed-updates' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('installed-updates')">
+                                    <span>Updates (${windowsUpdatesSummary.installedKBCount || 0})</span>
+                                </button>
+                                ` : ''}
+                                ${windowsUpdatesSummary.missingCumulativeCount !== undefined ? `
+                                <button class="nav-item ${this.activeView === 'missing-updates' ? 'active' : ''}" 
+                                        onclick="windowsServerAuditorInstance.switchView('missing-updates')">
+                                    <span>Missing (${windowsUpdatesSummary.missingCumulativeCount || 0})</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </nav>
+                </aside>
+
+                <main class="administration-content" style="padding: 0;">
+                    <div class="premium-auditor-container" style="height: 100%; display: flex; flex-direction: column; gap: 0; padding: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                            <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
+                                <button class="page-header-back-btn" onclick="windowsServerAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
+                                    <i class="fas fa-arrow-left" style="font-size: 0.9rem;"></i>
+                                </button>
+                                <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
+                                    <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.reportData?.name || this.t('title')}</h2>
+                                    <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${this.reportData?.systemInfo?.csName || 'Windows Server Audit'}</span>
+                                </div>
+                            </div>
+                            
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <button class="premium-action-btn" onclick="windowsServerAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+                                    <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
+                                </button>
+                                <button class="premium-action-btn" onclick="windowsServerAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-code" style="font-size: 0.7rem;"></i>
+                                    <span>Script</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="windowsServerAuditorInstance.importReport()" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
+                                    <i class="fas fa-upload" style="font-size: 0.7rem;"></i>
+                                    <span>Import</span>
+                                </button>
+                                <button class="premium-action-btn" onclick="windowsServerAuditorInstance.deleteReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center; color: #ef4444; border-color: rgba(239, 68, 68, 0.2);">
+                                    <i class="fas fa-trash" style="font-size: 0.75rem;"></i>
+                                </button>
+                            </div>
+                        </div>
                     ${this.activeView === 'drivers' ? this.renderDriversView(drivers) :
                 this.activeView === 'devices' ? this.renderDevicesView(data.devices) :
                     this.activeView === 'minifilters' ? this.renderMinifiltersView(data.minifilters || []) :
@@ -517,33 +562,34 @@ export class WindowsServerAuditorPage {
                                                             this.activeView === 'event-log' ? this.renderEventLogView(eventLogOverview) :
                                                                 this.activeView === 'process' ? this.renderProcessView(processTree) :
                                                                     this.activeView === 'network-adapters' ? this.renderNetworkAdaptersView(network?.adapters || []) :
-                                                                            this.activeView === 'persistent-routes' ? this.renderPersistentRoutesView(network?.persistentRoutes || []) :
-                                                                                this.activeView === 'arp-table' ? this.renderARPTableView(network?.arpTable || []) :
-                                                                                    this.activeView === 'firewall-rules' ? this.renderFirewallRulesView(data.firewallRules || []) :
-                                                                                        this.activeView === 'listening-ports' ? this.renderListeningPortsView(data.listeningPorts || {}) :
-                                                                                            this.activeView === 'certificates' ? this.renderCertificatesView(data?.certificates) :
-                                                                                                this.renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers)}
+                                                                        this.activeView === 'persistent-routes' ? this.renderPersistentRoutesView(network?.persistentRoutes || []) :
+                                                                            this.activeView === 'arp-table' ? this.renderARPTableView(network?.arpTable || []) :
+                                                                                this.activeView === 'firewall-rules' ? this.renderFirewallRulesView(data.firewallRules || []) :
+                                                                                    this.activeView === 'listening-ports' ? this.renderListeningPortsView(data.listeningPorts || {}) :
+                                                                                        this.activeView === 'certificates' ? this.renderCertificatesView(data?.certificates) :
+                                                                                            this.renderOverviewView(data, systemInfo, rolesAndFeatures, services, network, disks, memory, software, security, eventLogs, iis, sqlServer, activeDirectory, drivers, windowsUpdates, missingUpdates, windowsUpdatesSummary, localUsersSummary, eventLogOverview, crashAnalysis, processTree, environmentPaths, scheduledTasks, physicalDisks, volumes, iscsi, iscsiSessions, iscsiConnections, iscsiDisks, shutdowns, localGroups, raidControllers)}
                 </div>
-            </div>
-            ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
-            ${this.showWindowsUpdatesModalFlag ? this.renderWindowsUpdatesModal() : ''}
-            ${this.showMissingUpdatesModalFlag ? this.renderMissingUpdatesModal() : ''}
-            ${this.showRolesModalFlag ? this.renderRolesModal() : ''}
-            ${this.showFeaturesModalFlag ? this.renderFeaturesModal() : ''}
-            ${this.showAllTasksModalFlag ? this.renderAllTasksModal() : ''}
-            ${this.showFailedTasksModalFlag ? this.renderFailedTasksModal() : ''}
-            ${this.showTempEnvironmentModalFlag ? this.renderTempEnvironmentModal() : ''}
-            ${this.showDirectoryHealthModalFlag ? this.renderDirectoryHealthModal() : ''}
-            ${this.showPathOrderAnalysisModalFlag ? this.renderPathOrderAnalysisModal() : ''}
-            ${this.showPathHygieneChecksModalFlag ? this.renderPathHygieneChecksModal() : ''}
-            ${this.showGroupMembersModalFlag ? this.renderGroupMembersModal() : ''}
-            ${this.showEventLogModalFlag ? this.renderEventLogModal() : ''}
-            ${this.showEventDetailsModalFlag ? this.renderEventDetailsModal() : ''}
-            ${this.showProcessTreeModalFlag ? this.renderProcessTreeModal() : ''}
-            ${this.showProcessDetailsModalFlag ? this.renderProcessDetailsModal() : ''}
-            ${this.showMinifilterDetailsModalFlag ? this.renderMinifilterDetailsModal() : ''}
-            ${this.showFirewallRuleDetailsModalFlag ? this.renderFirewallRuleDetailsModal() : ''}
-            ${this.showListeningPortDetailsModalFlag ? this.renderListeningPortDetailsModal() : ''}
+            </main>
+        </div>
+        ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
+        ${this.showWindowsUpdatesModalFlag ? this.renderWindowsUpdatesModal() : ''}
+        ${this.showMissingUpdatesModalFlag ? this.renderMissingUpdatesModal() : ''}
+        ${this.showRolesModalFlag ? this.renderRolesModal() : ''}
+        ${this.showFeaturesModalFlag ? this.renderFeaturesModal() : ''}
+        ${this.showAllTasksModalFlag ? this.renderAllTasksModal() : ''}
+        ${this.showFailedTasksModalFlag ? this.renderFailedTasksModal() : ''}
+        ${this.showTempEnvironmentModalFlag ? this.renderTempEnvironmentModal() : ''}
+        ${this.showDirectoryHealthModalFlag ? this.renderDirectoryHealthModal() : ''}
+        ${this.showPathOrderAnalysisModalFlag ? this.renderPathOrderAnalysisModal() : ''}
+        ${this.showPathHygieneChecksModalFlag ? this.renderPathHygieneChecksModal() : ''}
+        ${this.showGroupMembersModalFlag ? this.renderGroupMembersModal() : ''}
+        ${this.showEventLogModalFlag ? this.renderEventLogModal() : ''}
+        ${this.showEventDetailsModalFlag ? this.renderEventDetailsModal() : ''}
+        ${this.showProcessTreeModalFlag ? this.renderProcessTreeModal() : ''}
+        ${this.showProcessDetailsModalFlag ? this.renderProcessDetailsModal() : ''}
+        ${this.showMinifilterDetailsModalFlag ? this.renderMinifilterDetailsModal() : ''}
+        ${this.showFirewallRuleDetailsModalFlag ? this.renderFirewallRuleDetailsModal() : ''}
+        ${this.showListeningPortDetailsModalFlag ? this.renderListeningPortDetailsModal() : ''}
         `;
     }
 
@@ -5468,12 +5514,17 @@ export class WindowsServerAuditorPage {
 
     async mount() {
         window.windowsServerAuditorInstance = this;
+        document.body.style.overflow = 'hidden';
         const urlParams = new URLSearchParams(window.location.hash.split('?')[1] || '');
         this.reportId = urlParams.get('id');
 
         if (this.reportId) {
             await this.loadReport();
         }
+    }
+
+    async unmount() {
+        document.body.style.overflow = '';
     }
 
     async loadReport() {
@@ -6514,16 +6565,16 @@ export class WindowsServerAuditorPage {
         ).join(' ');
     }
 
-    updateDisplay() {
+    async updateDisplay() {
         const content = document.getElementById('page-content');
         if (content) {
-            this.render().then(html => {
-                content.innerHTML = html;
-                // Update page navbar title after rendering
-                if (window.pageNavbarInstance) {
-                    window.pageNavbarInstance.updateTitle();
-                }
-            });
+            content.innerHTML = await this.render();
+            // Set instance for event handlers
+            window.windowsServerAuditorInstance = this;
+            // Update page navbar title after rendering
+            if (window.pageNavbarInstance) {
+                window.pageNavbarInstance.updateTitle();
+            }
         }
     }
 

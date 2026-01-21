@@ -8,8 +8,8 @@
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     padding: 0.75rem 1rem;
     display: flex;
@@ -22,7 +22,7 @@
 .stat-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    border-color: #475569;
+    border-color: var(--header-border);
 }
 
 .stat-icon {
@@ -43,13 +43,13 @@
 .stat-value {
     font-size: 1.375rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.2;
 }
 
 .stat-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-top: 0.25rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -57,8 +57,8 @@
 }
 
 .api-audit-filters {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
@@ -85,12 +85,12 @@
 .filter-group label {
     font-size: 0.875rem;
     font-weight: 500;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .api-audit-logs-container {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -102,8 +102,8 @@
 }
 
 .api-audit-table thead {
-    background: #0f172a;
-    border-bottom: 2px solid #334155;
+    background: var(--bg);
+    border-bottom: 2px solid var(--header-border);
 }
 
 .api-audit-table th {
@@ -111,24 +111,24 @@
     text-align: left;
     font-weight: 600;
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
 
 .api-audit-table tbody tr {
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     transition: background-color 0.15s;
 }
 
 .api-audit-table tbody tr:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .api-audit-table td {
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .method-badge {
@@ -201,7 +201,7 @@
 .log-details-section {
     margin-bottom: 2rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .log-details-section:last-child {
@@ -212,7 +212,7 @@
 .log-details-section h3 {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 1rem;
 }
 
@@ -229,19 +229,19 @@
 .details-table td:first-child {
     width: 150px;
     font-weight: 500;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .code-block {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     padding: 1rem;
     overflow-x: auto;
     font-family: 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.5;
-    color: #e2e8f0;
+    color: var(--text-color);
     max-height: 400px;
     overflow-y: auto;
 }
@@ -252,16 +252,16 @@
 }
 
 .code-block::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 4px;
 }
 
 .code-block::-webkit-scrollbar-thumb {
-    background: #475569;
+    background: var(--header-border);
     border-radius: 4px;
 }
 
 .code-block::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+    background: var(--text-muted);
 }
 

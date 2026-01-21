@@ -21,8 +21,8 @@
     padding: 0;
     overflow-x: auto;
     box-sizing: border-box;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
 }
 
@@ -31,12 +31,12 @@
     min-width: 100%;
     table-layout: auto;
     border-collapse: collapse;
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 .audit-table thead {
-    background: #0f172a;
-    border-bottom: 2px solid #334155;
+    background: var(--bg);
+    border-bottom: 2px solid var(--header-border);
 }
 
 .audit-table th {
@@ -44,15 +44,15 @@
     text-align: left;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     white-space: nowrap;
 }
 
 .audit-table td {
     padding: 0.75rem 1rem;
     font-size: 0.875rem;
-    color: #e2e8f0;
-    border-bottom: 1px solid #334155;
+    color: var(--text-color);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .audit-table tbody tr {

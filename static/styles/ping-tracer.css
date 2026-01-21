@@ -6,7 +6,7 @@
     width: 100vw !important;
     max-width: 100% !important;
     position: fixed;
-    background: #0f172a;
+    background: var(--bg);
     top: 55px;
     /* Just header on desktop */
     left: 0;
@@ -65,7 +65,7 @@ body:has(.ping-tracer-full-container) {
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: #0f172a;
+    background: var(--bg);
     overflow: hidden;
 }
 
@@ -74,7 +74,7 @@ body:has(.ping-tracer-full-container) {
     flex-direction: row;
     gap: 0;
     padding: 0;
-    background: #0f172a;
+    background: var(--bg);
     height: 100%;
     width: 100%;
     overflow: hidden;
@@ -82,8 +82,8 @@ body:has(.ping-tracer-full-container) {
 }
 
 .ping-tracer-form {
-    background: #0f172a;
-    border-right: 1px solid #334155;
+    background: var(--bg);
+    border-right: 1px solid var(--header-border);
     padding: 0;
     width: 320px;
     flex-shrink: 0;
@@ -102,8 +102,8 @@ body:has(.ping-tracer-full-container) {
 
 .ping-tracer-form-header {
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #334155;
-    background: #1e293b;
+    border-bottom: 1px solid var(--header-border);
+    background: var(--card-bg);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -112,7 +112,7 @@ body:has(.ping-tracer-full-container) {
 
 .ping-tracer-form-header h3 {
     margin: 0;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.75rem;
     font-weight: 600;
     display: flex;
@@ -141,7 +141,7 @@ body:has(.ping-tracer-full-container) {
 
 .ping-tracer-form .form-group h4 {
     margin: 0 0 0.375rem 0;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.7rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -151,7 +151,7 @@ body:has(.ping-tracer-full-container) {
 .ping-tracer-form label {
     display: block;
     margin-bottom: 0.25rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     font-size: 0.75rem;
 }
@@ -163,10 +163,10 @@ body:has(.ping-tracer-full-container) {
 .ping-tracer-form .form-input {
     width: 100%;
     padding: 0.4rem 0.6rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 5px;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.75rem;
     transition: all 0.2s ease;
     box-sizing: border-box;
@@ -176,7 +176,7 @@ body:has(.ping-tracer-full-container) {
     outline: none;
     border-color: #3b82f6;
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 .form-spacer {
@@ -216,16 +216,16 @@ body:has(.ping-tracer-full-container) {
 }
 
 .ping-tracer-form .btn-secondary {
-    background: #475569;
-    color: #e2e8f0;
+    background: var(--header-border);
+    color: var(--text-color);
 }
 
 .ping-tracer-form .btn-secondary:hover {
-    background: #64748b;
+    background: var(--text-muted);
 }
 
 .ping-tracer-results {
-    background: #0f172a;
+    background: var(--bg);
     padding: 1rem;
     flex: 1;
     flex-grow: 1;
@@ -242,7 +242,7 @@ body:has(.ping-tracer-full-container) {
     flex-direction: column;
     margin-bottom: 0.75rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     flex-shrink: 0;
     gap: 0.75rem;
 }
@@ -255,7 +255,7 @@ body:has(.ping-tracer-full-container) {
 
 .results-header h3 {
     margin: 0;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 1rem;
     font-weight: 600;
     display: flex;
@@ -276,9 +276,9 @@ body:has(.ping-tracer-full-container) {
     width: 28px;
     height: 28px;
     background: transparent;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 4px;
-    color: #94a3b8;
+    color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s ease;
     flex-shrink: 0;
@@ -287,8 +287,8 @@ body:has(.ping-tracer-full-container) {
 }
 
 .mobile-config-toggle:hover {
-    background: #1e293b;
-    border-color: #475569;
+    background: var(--card-bg);
+    border-color: var(--header-border);
     color: #3b82f6;
 }
 
@@ -328,7 +328,7 @@ body:has(.ping-tracer-full-container) {
     width: 100%;
     /* Use full width */
     height: 6px;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 3px;
     overflow: hidden;
     position: relative;
@@ -370,11 +370,11 @@ body:has(.ping-tracer-full-container) {
     display: flex;
     gap: 1.5rem;
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .results-stats strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -382,7 +382,7 @@ body:has(.ping-tracer-full-container) {
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .graphs-empty {
@@ -393,7 +393,7 @@ body:has(.ping-tracer-full-container) {
     justify-content: center;
     min-height: 400px;
     padding: 2rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .empty-icon-wrapper {
@@ -417,27 +417,27 @@ body:has(.ping-tracer-full-container) {
     margin: 0 0 0.75rem 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .graphs-empty p {
     margin: 0;
     font-size: 1rem;
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-muted);
     max-width: 400px;
 }
 
 .hop-graph {
     margin-bottom: 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     padding: 0.5rem;
 }
 
 .hop-label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     margin-bottom: 0.25rem;
     font-family: 'Courier New', monospace;
@@ -500,7 +500,7 @@ body:has(.ping-tracer-full-container) {
         /* Full height minus header and footer */
         z-index: 999;
         transform: translateX(0);
-        border-right: 1px solid #334155;
+        border-right: 1px solid var(--header-border);
         box-shadow: 2px 0 16px rgba(0, 0, 0, 0.4);
         transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         overflow-y: auto;
@@ -546,9 +546,9 @@ body:has(.ping-tracer-full-container) {
         width: 28px;
         height: 28px;
         background: transparent;
-        border: 1px solid #334155;
+        border: 1px solid var(--header-border);
         border-radius: 4px;
-        color: #94a3b8;
+        color: var(--text-muted);
         cursor: pointer;
         transition: all 0.2s ease;
         flex-shrink: 0;
@@ -556,8 +556,8 @@ body:has(.ping-tracer-full-container) {
     }
 
     .ping-tracer-form-close:hover {
-        background: #1e293b;
-        border-color: #475569;
+        background: var(--card-bg);
+        border-color: var(--header-border);
         color: #ef4444;
     }
 
@@ -623,7 +623,7 @@ body:has(.ping-tracer-full-container) {
         flex-direction: column;
         margin-bottom: 0.75rem;
         padding-bottom: 0.75rem;
-        border-bottom: 1px solid #334155;
+        border-bottom: 1px solid var(--header-border);
         flex-shrink: 0;
         gap: 0.75rem;
     }
@@ -636,7 +636,7 @@ body:has(.ping-tracer-full-container) {
 
     .results-header h3 {
         margin: 0;
-        color: #e2e8f0;
+        color: var(--text-color);
         font-size: 0.875rem;
         font-weight: 600;
     }
@@ -650,7 +650,7 @@ body:has(.ping-tracer-full-container) {
         display: flex;
         gap: 1.5rem;
         font-size: 0.875rem;
-        color: #94a3b8;
+        color: var(--text-muted);
     }
 
     .discovery-status {

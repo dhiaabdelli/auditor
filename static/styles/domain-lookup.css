@@ -5,7 +5,7 @@
     width: 100vw !important;
     max-width: 100% !important;
     position: fixed;
-    background: #0f172a;
+    background: var(--bg);
     top: 90px; /* Header + sub-navbar height */
     left: 0;
     right: 0;
@@ -53,13 +53,13 @@ body:has(.domain-lookup-container) {
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #0f172a;
+    background: var(--bg);
 }
 
 /* Search Section - Compact */
 .domain-lookup-search {
-    background: #1e293b;
-    border-bottom: 1px solid #334155;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--header-border);
     padding: 0.5rem 1rem;
     margin-bottom: 0;
     width: 100%;
@@ -88,9 +88,9 @@ body:has(.domain-lookup-container) {
     flex: 1;
     padding: 0.5rem 0.75rem;
     background: rgba(15, 23, 42, 0.5);
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 6px;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
     transition: all 0.2s ease;
     min-width: 0;
@@ -104,7 +104,7 @@ body:has(.domain-lookup-container) {
 }
 
 .domain-input::placeholder {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 /* Buttons */
@@ -133,7 +133,7 @@ body:has(.domain-lookup-container) {
 }
 
 .domain-lookup-search .btn-primary:disabled {
-    background: #475569;
+    background: var(--header-border);
     cursor: not-allowed;
     opacity: 0.6;
 }
@@ -147,7 +147,7 @@ body:has(.domain-lookup-container) {
     justify-content: center;
     min-height: 400px;
     padding: 2rem;
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .empty-icon-wrapper {
@@ -171,14 +171,14 @@ body:has(.domain-lookup-container) {
     margin: 0 0 0.75rem 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .domain-lookup-empty > p {
     margin: 0 0 2rem 0;
     font-size: 1rem;
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-muted);
     max-width: 400px;
 }
 
@@ -199,7 +199,7 @@ body:has(.domain-lookup-container) {
 
 /* Results Section */
 .domain-lookup-results {
-    background: #0f172a;
+    background: var(--bg);
     padding: 1rem;
     width: 100%;
     box-sizing: border-box;
@@ -219,7 +219,7 @@ body:has(.domain-lookup-container) {
     gap: 0.5rem;
     margin-bottom: 0.75rem;
     padding-bottom: 0.75rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .domain-header-top {
@@ -237,7 +237,7 @@ body:has(.domain-lookup-container) {
 
 .domain-title h1 {
     margin: 0;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 1rem;
     font-weight: 600;
 }
@@ -245,10 +245,10 @@ body:has(.domain-lookup-container) {
 .domain-handle {
     display: inline-block;
     padding: 0.125rem 0.5rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8125rem;
     font-family: monospace;
     margin: 0;
@@ -302,7 +302,7 @@ body:has(.domain-lookup-container) {
 
 .domain-section h3 {
     margin: 0 0 0.5rem 0;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.8125rem;
     font-weight: 600;
     display: flex;
@@ -339,10 +339,10 @@ body:has(.domain-lookup-container) {
     align-items: center;
     gap: 0.375rem;
     padding: 0.375rem 0.625rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -350,7 +350,7 @@ body:has(.domain-lookup-container) {
 }
 
 .lock-item-horizontal i {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.75rem;
 }
 
@@ -365,9 +365,9 @@ body:has(.domain-lookup-container) {
 }
 
 .lock-item-horizontal:not(.active) {
-    background: #1e293b;
-    border-color: #334155;
-    color: #64748b;
+    background: var(--card-bg);
+    border-color: var(--header-border);
+    color: var(--text-muted);
 }
 
 /* EPP Status Codes */
@@ -462,7 +462,7 @@ body:has(.domain-lookup-container) {
 }
 
 .lifecycle-label {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.6875rem;
     font-weight: 500;
     text-align: left;
@@ -472,12 +472,12 @@ body:has(.domain-lookup-container) {
 }
 
 .lifecycle-stage.active .lifecycle-label {
-    color: #f1f5f9;
+    color: var(--text-color);
     font-weight: 600;
 }
 
 .lifecycle-stage:not(.active) .lifecycle-label {
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .lifecycle-connector {
@@ -505,7 +505,7 @@ body:has(.domain-lookup-container) {
     position: relative;
     width: 100%;
     min-height: 150px;
-    background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, rgba(30, 41, 59, 0.3) 100%);
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.5) 0%, var(--card-bg) 100%);
     border-radius: 8px;
     padding: 1rem;
     backdrop-filter: blur(10px);
@@ -526,7 +526,7 @@ body:has(.domain-lookup-container) {
     align-items: center;
     gap: 0.75rem;
     padding: 0.5rem 0;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.8125rem;
     line-height: 1.4;
     position: relative;
@@ -642,7 +642,7 @@ body:has(.domain-lookup-container) {
 }
 
 .timeline-label {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.8125rem;
     font-weight: 500;
     white-space: nowrap;
@@ -651,7 +651,7 @@ body:has(.domain-lookup-container) {
 }
 
 .timeline-item:hover .timeline-label {
-    color: #f1f5f9;
+    color: var(--text-color);
 }
 
 .timeline-value {
@@ -721,7 +721,7 @@ body:has(.domain-lookup-container) {
 
 .entity-icon-default {
     background: rgba(100, 116, 139, 0.2);
-    color: #64748b;
+    color: var(--text-muted);
 }
 
 .entity-content {
@@ -749,12 +749,12 @@ body:has(.domain-lookup-container) {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.6875rem;
 }
 
 .entity-person-icon {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 0.6875rem;
     width: 14px;
     text-align: center;
@@ -814,7 +814,7 @@ body:has(.domain-lookup-container) {
     gap: 0.75rem;
     margin-bottom: 0.5rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .entity-stat {
@@ -836,7 +836,7 @@ body:has(.domain-lookup-container) {
 }
 
 .entity-stat-value {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.9375rem;
     font-weight: 600;
 }
@@ -854,12 +854,12 @@ body:has(.domain-lookup-container) {
 }
 
 .entity-person-icon {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
 }
 
 .entity-name {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.9375rem;
     font-weight: 600;
 }
@@ -902,7 +902,7 @@ body:has(.domain-lookup-container) {
 }
 
 .entity-handle {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8125rem;
     font-family: monospace;
     margin-top: 0.25rem;
@@ -916,23 +916,23 @@ body:has(.domain-lookup-container) {
 }
 
 .entity-id {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-family: monospace;
     padding: 0.125rem 0.5rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
 }
 
 .entity-nested {
     margin-top: 0.5rem;
     padding-top: 0.5rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .entity-nested-title {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
@@ -940,14 +940,14 @@ body:has(.domain-lookup-container) {
 
 .entity-nested-item {
     padding: 0.5rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     margin-bottom: 0.5rem;
 }
 
 .entity-nested-name {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
     font-weight: 500;
     display: block;
@@ -961,16 +961,16 @@ body:has(.domain-lookup-container) {
 }
 
 .entity-nested-role {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     padding: 0.125rem 0.375rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 3px;
 }
 
 .no-entities {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.9375rem;
     text-align: center;
     padding: 2rem;
@@ -987,14 +987,14 @@ body:has(.domain-lookup-container) {
 
 .nameserver-item {
     padding: 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     flex-shrink: 0;
 }
 
 .nameserver-name {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.9375rem;
     font-weight: 600;
     margin-bottom: 0.375rem;
@@ -1033,18 +1033,18 @@ body:has(.domain-lookup-container) {
 }
 
 .nameserver-ip-label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     font-weight: 600;
 }
 
 .nameserver-ip {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
     font-family: monospace;
     padding: 0.25rem 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
 }
 
@@ -1057,13 +1057,13 @@ body:has(.domain-lookup-container) {
 
 .info-item {
     padding: 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
 }
 
 .info-label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8125rem;
     font-weight: 600;
     display: block;
@@ -1071,7 +1071,7 @@ body:has(.domain-lookup-container) {
 }
 
 .info-value {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
     font-family: monospace;
 }
@@ -1214,7 +1214,7 @@ body:has(.domain-lookup-container) {
     border: 1px solid rgba(51, 65, 85, 0.4);
     border-radius: 6px;
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     transition: all 0.2s ease;
     white-space: nowrap;
     position: relative;
@@ -1265,7 +1265,7 @@ body:has(.domain-lookup-container) {
 }
 
 .graph-item-nameserver {
-    color: #94a3b8;
+    color: var(--text-muted);
     border-color: rgba(100, 116, 139, 0.4);
 }
 
@@ -1421,7 +1421,7 @@ body:has(.domain-lookup-container) {
 .graph-node-icon-nameserver {
     background: linear-gradient(135deg, rgba(100, 116, 139, 0.2) 0%, rgba(100, 116, 139, 0.1) 100%);
     border-color: rgba(100, 116, 139, 0.4);
-    color: #94a3b8;
+    color: var(--text-muted);
     box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
 }
 
@@ -1452,7 +1452,7 @@ body:has(.domain-lookup-container) {
 
 .graph-node-label {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     font-weight: 600;
@@ -1461,7 +1461,7 @@ body:has(.domain-lookup-container) {
 
 .graph-node-name {
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     word-break: break-word;
     line-height: 1.2;
@@ -1470,7 +1470,7 @@ body:has(.domain-lookup-container) {
 .graph-node-name-domain {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #f1f5f9;
+    color: var(--text-color);
 }
 
 .graph-connections {

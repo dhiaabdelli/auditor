@@ -3,7 +3,7 @@
 /* Compact VM Configuration */
 .expanded-content-compact {
     padding: 0.75rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 8px;
 }
 
@@ -14,9 +14,9 @@
 }
 
 .vm-config-section-compact {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 6px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     overflow: hidden;
 }
 
@@ -25,11 +25,11 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .vm-config-header-compact i {
@@ -46,15 +46,15 @@
 
 .vm-config-item-compact {
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     transition: all 0.2s ease;
 }
 
 .vm-config-item-compact:hover {
-    background: #1e293b;
-    border-color: #94a3b8;
+    background: var(--card-bg);
+    border-color: var(--text-muted);
 }
 
 .vm-config-item-compact.disk-missing {
@@ -73,7 +73,7 @@
 .vm-config-item-name-compact {
     font-weight: 600;
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     flex: 1;
     display: flex;
     align-items: center;
@@ -90,9 +90,9 @@
     padding: 0.125rem 0.375rem;
     border-radius: 3px;
     font-weight: 500;
-    background: #0f172a;
-    color: #94a3b8;
-    border: 1px solid #334155;
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--header-border);
 }
 
 .vm-config-item-status-compact.status-connected {
@@ -120,9 +120,9 @@
     border-radius: 3px;
     font-weight: 500;
     white-space: nowrap;
-    background: #0f172a;
-    color: #94a3b8;
-    border: 1px solid #334155;
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--header-border);
 }
 
 .vm-config-badge-compact.badge-diff {
@@ -144,9 +144,9 @@
 }
 
 .vm-config-badge-compact.badge-time {
-    background: #0f172a;
-    color: #94a3b8;
-    border: 1px solid #334155;
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--header-border);
 }
 
 .vm-config-badge-compact.badge-size {
@@ -160,7 +160,7 @@
     flex-wrap: wrap;
     gap: 0.5rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .vm-config-detail-compact {
@@ -168,24 +168,24 @@
     align-items: center;
     gap: 0.25rem;
     padding: 0.125rem 0.375rem;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 3px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .vm-config-detail-compact i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.6875rem;
 }
 
 .vm-config-path-compact {
     margin-top: 0.375rem;
     padding: 0.25rem 0.5rem;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 3px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     gap: 0.375rem;
@@ -193,7 +193,7 @@
 }
 
 .vm-config-path-compact i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.625rem;
     flex-shrink: 0;
 }
@@ -208,13 +208,13 @@
 .compact-summary-header {
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 2px solid #334155;
+    border-bottom: 2px solid var(--header-border);
 }
 
 .compact-section-title {
     font-size: 1rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0;
     display: flex;
     align-items: center;
@@ -252,8 +252,8 @@
     position: relative;
     overflow: visible;
     border-radius: 6px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border: 1px solid var(--header-border);
 }
 
 .compact-stat-card::before {
@@ -269,7 +269,7 @@
 .compact-stat-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    border-color: #94a3b8;
+    border-color: var(--text-muted);
 }
 
 .stat-icon {
@@ -350,21 +350,21 @@
 .stat-value {
     font-size: 1.25rem;
     font-weight: 800;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1;
     letter-spacing: -0.02em;
 }
 
 .stat-unit {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     margin-left: 0.125rem;
 }
 
 .stat-label {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -373,7 +373,7 @@
 
 .stat-detail {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     margin-top: 0.125rem;
 }
@@ -408,7 +408,7 @@
 
 .stat-progress-text {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
     min-width: 35px;
     text-align: right;
@@ -437,10 +437,10 @@
 .compact-group-title {
     font-size: 0.8125rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0 0 0.5rem 0;
     padding-bottom: 0.375rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .compact-resource-grid {
@@ -465,10 +465,10 @@
 }
 
 .cluster-header-card {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 0.625rem 0.875rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     margin-bottom: 0.75rem;
     display: flex;
@@ -523,7 +523,7 @@
 .cluster-name-modern {
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0;
     line-height: 1.2;
     white-space: nowrap;
@@ -537,7 +537,7 @@
     flex-wrap: wrap;
     align-items: center;
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .cluster-meta-compact span {
@@ -613,25 +613,25 @@
     font-size: 0.5625rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .stat-card-value {
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .stat-card-hint {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .cluster-metric-card {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 8px;
     padding: 0.625rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
     display: flex;
     flex-direction: column;
@@ -639,34 +639,34 @@
 }
 
 .cluster-metric-card.soft {
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--header-border);
 }
 
 .metric-header {
     display: flex;
     justify-content: space-between;
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
 .metric-header strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.75rem;
 }
 
 .cluster-metric-card.soft .metric-header span,
 .cluster-metric-card.soft .metric-header strong,
 .cluster-metric-card.soft .metric-footer span {
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .metric-progress {
     width: 100%;
     height: 6px;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 999px;
     overflow: hidden;
     position: relative;
@@ -694,7 +694,7 @@
     display: flex;
     justify-content: space-between;
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .metric-tags {
@@ -702,7 +702,7 @@
     flex-direction: column;
     gap: 0.1875rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .metric-tags span i {
@@ -718,9 +718,9 @@
 }
 
 .cluster-system-card {
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 6px;
-    background: #1e293b;
+    background: var(--card-bg);
     padding: 0.5rem;
     box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
 }
@@ -731,7 +731,7 @@
     gap: 0.3125rem;
     font-weight: 600;
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.4375rem;
 }
 
@@ -747,11 +747,11 @@
 }
 
 .system-pill {
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     padding: 0.375rem 0.3125rem;
     text-align: center;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     transition: all 0.15s ease;
 }
 
@@ -764,13 +764,13 @@
     display: block;
     font-size: 0.875rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.2;
 }
 
 .system-pill span {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     margin-top: 0.0625rem;
     display: block;
@@ -787,14 +787,14 @@
     flex-direction: column;
     gap: 0.0625rem;
     padding: 0.3125rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .system-card-meta span {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.025em;
     font-weight: 600;
@@ -802,7 +802,7 @@
 
 .system-card-meta strong {
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     line-height: 1.2;
 }
@@ -813,7 +813,7 @@
 
 .resource-label {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -823,14 +823,14 @@
 .resource-value {
     font-size: 1rem;
     font-weight: 800;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1;
     margin-bottom: 0.125rem;
 }
 
 .resource-detail {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -841,9 +841,9 @@
 
 .compact-table-wrapper {
     margin-top: 0.5rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 8px;
-    background: #1e293b;
+    background: var(--card-bg);
     overflow: hidden;
 }
 
@@ -859,7 +859,7 @@
 .divider-line {
     flex: 1;
     height: 2px;
-    background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+    background: linear-gradient(90deg, transparent 0%, var(--text-color) 50%, transparent 100%);
 }
 
 .divider-content {
@@ -867,8 +867,8 @@
     align-items: center;
     gap: 0.75rem;
     padding: 0.75rem 1.5rem;
-    background: #1e293b;
-    border: 2px solid #334155;
+    background: var(--card-bg);
+    border: 2px solid var(--header-border);
     border-radius: 50px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
@@ -882,7 +882,7 @@
     margin: 0;
     font-size: 1.125rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .host-count-badge {
@@ -912,9 +912,9 @@
 
 .server-card-wrapper {
     margin-bottom: 2.5rem;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 12px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     overflow: hidden;
     transition: all 0.3s ease;
@@ -933,15 +933,15 @@
     justify-content: space-between;
     align-items: center;
     padding: 1.25rem 1.5rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 2px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 2px solid var(--header-border);
     gap: 1.5rem;
     flex-wrap: wrap;
 }
 
 .server-section-modern {
     padding: 1.5rem;
-    background: #1e293b;
+    background: var(--card-bg);
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -982,7 +982,7 @@
     width: 24px;
     height: 24px;
     background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-    border: 2px solid #1e293b;
+    border: 2px solid var(--card-bg);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1001,7 +1001,7 @@
 .server-title-modern {
     font-size: 1.25rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0 0 0.375rem 0;
     letter-spacing: -0.01em;
 }
@@ -1017,12 +1017,12 @@
     align-items: center;
     gap: 0.375rem;
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .server-meta-item i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
 }
 
@@ -1037,8 +1037,8 @@
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 1rem;
-    background: #1e293b;
-    border: 2px solid #334155;
+    background: var(--card-bg);
+    border: 2px solid var(--header-border);
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
@@ -1104,7 +1104,7 @@
 }
 
 .server-stat-badge.vm-badge .badge-label {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .server-search-modern {
@@ -1117,19 +1117,19 @@
 .server-search-modern i {
     position: absolute;
     left: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     z-index: 1;
 }
 
 .server-search-modern input {
     padding: 0.5rem 0.75rem 0.5rem 2.25rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     font-size: 0.8125rem;
     width: 220px;
     transition: all 0.2s ease;
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 .server-search-modern input:focus {
@@ -1169,7 +1169,7 @@ table {
 .compact-table-wrapper,
 [class*="table-wrapper"],
 [class*="table-container"] {
-    border: 1px solid #334155 !important;
+    border: 1px solid var(--header-border) !important;
 }
 
 /* Ensure tables in vm-section-modern and hardware-section-modern have dark backgrounds */
@@ -1177,7 +1177,7 @@ table {
 .vm-section-modern .table-compact,
 .hardware-section-modern table,
 .hardware-section-modern .table-compact {
-    background: #1e293b;
+    background: var(--card-bg);
     border: none;
 }
 
@@ -1185,43 +1185,43 @@ table {
 .vm-section-modern .table-compact thead,
 .hardware-section-modern table thead,
 .hardware-section-modern .table-compact thead {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .vm-section-modern table tbody tr,
 .vm-section-modern .table-compact tbody tr,
 .hardware-section-modern table tbody tr,
 .hardware-section-modern .table-compact tbody tr {
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 .vm-section-modern table tbody tr:hover,
 .vm-section-modern .table-compact tbody tr:hover,
 .hardware-section-modern table tbody tr:hover,
 .hardware-section-modern .table-compact tbody tr:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .vm-section-modern table td,
 .vm-section-modern .table-compact td,
 .hardware-section-modern table td,
 .hardware-section-modern .table-compact td {
-    color: #e2e8f0;
-    border-color: #334155;
+    color: var(--text-color);
+    border-color: var(--header-border);
 }
 
 .vm-section-modern table th,
 .vm-section-modern .table-compact th,
 .hardware-section-modern table th,
 .hardware-section-modern .table-compact th {
-    color: #94a3b8;
-    border-color: #334155;
+    color: var(--text-muted);
+    border-color: var(--header-border);
 }
 
 .section-subtitle-modern {
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0 0 1rem 0;
     display: flex;
     align-items: center;
@@ -1243,7 +1243,7 @@ table {
 .multipath-section-compact,
 .updates-section-modern {
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     width: 100%;
 }
 
@@ -1404,7 +1404,7 @@ table {
     gap: 0.75rem;
     align-items: center;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
     border: none;
     border-radius: 0;
     transition: all 0.2s ease;
@@ -1456,7 +1456,7 @@ table {
 
 .hardware-label-modern {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1464,7 +1464,7 @@ table {
 
 .hardware-value-modern {
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     word-wrap: break-word;
     overflow-wrap: break-word;
@@ -1517,17 +1517,17 @@ table {
 }
 
 .errors-list-modern::-webkit-scrollbar-track {
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
 }
 
 .errors-list-modern::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--header-border);
     border-radius: 4px;
 }
 
 .errors-list-modern::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: var(--header-border);
 }
 
 .error-item-modern {
@@ -1597,7 +1597,7 @@ table {
 
 .error-item-modern-message {
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     margin-bottom: 0.375rem;
     line-height: 1.5;
@@ -1608,7 +1608,7 @@ table {
     gap: 1rem;
     flex-wrap: wrap;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .error-item-modern-time,
@@ -1620,7 +1620,7 @@ table {
 
 .error-item-modern-time i,
 .error-item-modern-source i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.6875rem;
 }
 
@@ -1629,7 +1629,7 @@ table {
     margin-top: 1rem;
     text-align: center;
     padding-top: 0.75rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .view-all-errors-btn .btn {
@@ -1708,8 +1708,8 @@ table {
 }
 
 .user-card-modern {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -1725,7 +1725,7 @@ table {
 }
 
 .user-card-modern.user-inactive {
-    border-top: 2px solid #94a3b8;
+    border-top: 2px solid var(--text-muted);
     opacity: 0.85;
 }
 
@@ -1734,7 +1734,7 @@ table {
     flex-direction: column;
     align-items: center;
     padding: 1rem 0.75rem 0.75rem 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
     text-align: center;
 }
 
@@ -1757,7 +1757,7 @@ table {
 }
 
 .user-avatar-modern.avatar-inactive {
-    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    background: linear-gradient(135deg, var(--text-color) 0%, var(--text-muted) 100%);
     color: white;
 }
 
@@ -1768,7 +1768,7 @@ table {
     width: 12px;
     height: 12px;
     border-radius: 50%;
-    border: 2px solid #1e293b;
+    border: 2px solid var(--card-bg);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
@@ -1777,7 +1777,7 @@ table {
 }
 
 .user-status-dot.dot-inactive {
-    background: #94a3b8;
+    background: var(--text-muted);
 }
 
 .user-header-info {
@@ -1787,7 +1787,7 @@ table {
 .user-name-modern {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1796,7 +1796,7 @@ table {
 
 .user-fullname-modern {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1804,7 +1804,7 @@ table {
 
 .user-card-body {
     padding: 0.625rem 0.75rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .user-description-modern {
@@ -1812,12 +1812,12 @@ table {
     align-items: flex-start;
     gap: 0.375rem;
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.4;
 }
 
 .user-description-modern i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     margin-top: 0.0625rem;
     flex-shrink: 0;
@@ -1837,8 +1837,8 @@ table {
 }
 
 .group-card-modern {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -1859,8 +1859,8 @@ table {
     align-items: center;
     gap: 0.75rem;
     padding: 0.875rem 1rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     flex: 1;
 }
 
@@ -1887,7 +1887,7 @@ table {
     height: 20px;
     padding: 0 0.25rem;
     background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
-    border: 2px solid #1e293b;
+    border: 2px solid var(--card-bg);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -1906,7 +1906,7 @@ table {
 .group-name-modern {
     font-size: 0.875rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1915,7 +1915,7 @@ table {
 
 .group-description-modern {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1923,8 +1923,8 @@ table {
 
 .group-card-footer {
     padding: 0.75rem 1rem;
-    background: #0f172a;
-    border-top: 1px solid #334155;
+    background: var(--bg);
+    border-top: 1px solid var(--header-border);
 }
 
 .group-footer-content {
@@ -1939,7 +1939,7 @@ table {
     gap: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .members-count-label i {
@@ -1964,14 +1964,14 @@ table {
     display: flex;
     align-items: center;
     gap: 0.375rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.6875rem;
     font-style: italic;
 }
 
 .group-no-members-compact i {
     font-size: 0.875rem;
-    color: #cbd5e1;
+    color: var(--text-color);
 }
 
 /* Group Members Modal */
@@ -2004,11 +2004,11 @@ table {
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 0.875rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     transition: all 0.15s ease;
 }
 
@@ -2028,15 +2028,15 @@ table {
     align-items: center;
     gap: 1rem;
     padding: 2rem;
-    background: #0f172a;
-    border: 1px dashed #334155;
+    background: var(--bg);
+    border: 1px dashed var(--header-border);
     border-radius: 8px;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .group-modal-no-members i {
     font-size: 2.5rem;
-    color: #cbd5e1;
+    color: var(--text-color);
     flex-shrink: 0;
 }
 
@@ -2050,8 +2050,8 @@ table {
     align-items: flex-start;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     gap: 1rem;
 }
 
@@ -2106,14 +2106,14 @@ table {
     margin: 0;
     font-size: 1rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.3;
 }
 
 .modal-description {
     margin: 0.375rem 0 0 0;
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.4;
 }
 
@@ -2142,7 +2142,7 @@ table {
 }
 
 .feature-type-pill.feature-type-role-service {
-    background: #fffbeb;
+    background: var(--card-bg)beb;
     color: #92400e;
 }
 
@@ -2151,8 +2151,8 @@ table {
     align-items: center;
     gap: 0.25rem;
     padding: 0.1875rem 0.5rem;
-    background: #1e293b;
-    color: #94a3b8;
+    background: var(--card-bg);
+    color: var(--text-muted);
     border-radius: 4px;
     font-size: 0.6875rem;
     font-weight: 500;
@@ -2167,8 +2167,8 @@ table {
     height: 32px;
     border-radius: 6px;
     border: none;
-    background: #1e293b;
-    color: #94a3b8;
+    background: var(--card-bg);
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2178,8 +2178,8 @@ table {
 }
 
 .modal-close-compact:hover {
-    background: #e2e8f0;
-    color: #e2e8f0;
+    background: var(--text-color);
+    color: var(--text-color);
 }
 
 .modal-body-compact {
@@ -2227,11 +2227,11 @@ table {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.625rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     transition: all 0.15s ease;
 }
 
@@ -2252,17 +2252,17 @@ table {
     justify-content: center;
     gap: 0.625rem;
     padding: 1.5rem;
-    background: #0f172a;
-    border: 1px dashed #334155;
+    background: var(--bg);
+    border: 1px dashed var(--header-border);
     border-radius: 6px;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     font-style: italic;
 }
 
 .modal-empty-state i {
     font-size: 1.5rem;
-    color: #cbd5e1;
+    color: var(--text-color);
 }
 
 /* Feature Modal Compact Styles */
@@ -2278,7 +2278,7 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.625rem 0.75rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 6px;
     gap: 1rem;
 }
@@ -2289,32 +2289,32 @@ table {
     gap: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
     flex-shrink: 0;
 }
 
 .feature-info-label i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.6875rem;
 }
 
 .feature-info-value {
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     text-align: right;
 }
 
 .feature-path-compact {
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     word-break: break-all;
 }
 
 .feature-description-compact {
     padding: 0.875rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
 }
 
@@ -2324,24 +2324,24 @@ table {
     gap: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
 .feature-description-header i {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .feature-description-text {
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.5;
 }
 
 /* Compact System Errors */
 .errors-section-compact {
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .errors-header-compact {
@@ -2358,7 +2358,7 @@ table {
     gap: 0.5rem;
     font-size: 0.9375rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .errors-title-group i {
@@ -2387,10 +2387,10 @@ table {
     align-items: center;
     gap: 0.375rem;
     padding: 0.375rem 0.75rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
@@ -2409,8 +2409,8 @@ table {
 
 .errors-table-wrapper {
     overflow-x: auto;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -2456,11 +2456,11 @@ table {
 
 .errors-table-compact tbody tr {
     transition: all 0.15s ease;
-    background: #1e293b;
+    background: var(--card-bg);
 }
 
 .errors-table-compact tbody tr:hover {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, #1e293b 100%);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, var(--card-bg) 100%);
 }
 
 .error-row-compact td {
@@ -2624,7 +2624,7 @@ table {
 .section-title-compact {
     font-size: 1.125rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -2639,8 +2639,8 @@ table {
 .table-wrapper-compact,
 .table-container-modern {
     overflow-x: auto;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     margin: 0;
@@ -2657,19 +2657,19 @@ table {
 }
 
 .table-compact thead {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .table-compact thead th {
     padding: 0.375rem 0.5rem;
     text-align: left;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
-    border-bottom: 2px solid #334155;
+    border-bottom: 2px solid var(--header-border);
     position: sticky;
     top: 0;
-    background: #0f172a;
+    background: var(--bg);
     z-index: 10;
     white-space: nowrap;
 }
@@ -2685,7 +2685,7 @@ table {
 .table-compact thead th i {
     margin-right: 0.375rem;
     font-size: 0.6875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .table-compact tbody tr {
@@ -2693,13 +2693,13 @@ table {
 }
 
 .table-compact tbody tr:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .table-compact tbody td {
     padding: 0.375rem 0.5rem;
-    border-bottom: 1px solid #334155;
-    color: #e2e8f0;
+    border-bottom: 1px solid var(--header-border);
+    color: var(--text-color);
     font-size: 0.75rem;
     vertical-align: middle;
     line-height: 1.4;
@@ -2744,7 +2744,7 @@ table {
 .table-compact .status-badge.status-down,
 .table-compact .status-badge.status-3 {
     background: rgba(100, 116, 139, 0.2);
-    color: #94a3b8;
+    color: var(--text-muted);
     border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
@@ -2776,10 +2776,10 @@ table {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    background: #1e293b;
+    background: var(--card-bg);
     padding: 0.375rem 0.625rem;
     border-radius: 6px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -2795,7 +2795,7 @@ table {
     gap: 0.25rem;
     font-size: 0.75rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
     white-space: nowrap;
 }
 
@@ -2809,10 +2809,10 @@ table {
     min-width: 90px;
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 4px;
-    background: #0f172a;
-    color: #e2e8f0;
+    background: var(--bg);
+    color: var(--text-color);
     font-weight: 500;
     cursor: pointer;
     transition: all 0.15s ease;
@@ -2833,10 +2833,10 @@ table {
     padding: 0.375rem 0.5rem;
     font-size: 0.75rem;
     font-weight: 600;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     border-radius: 6px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    color: #e2e8f0;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    color: var(--text-color);
     cursor: pointer;
     transition: all 0.2s ease;
     min-width: 70px;
@@ -2870,19 +2870,19 @@ table {
     gap: 0.5rem;
     margin-top: 0.75rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
     flex-shrink: 0;
 }
 
 .pagination-info {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .modal-page-indicator {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .btn-xs {
@@ -2899,8 +2899,8 @@ table {
 }
 
 .network-adapter-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -2920,7 +2920,7 @@ table {
 }
 
 .network-adapter-card.virtual-adapter {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, #1e293b 100%);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, var(--card-bg) 100%);
 }
 
 .adapter-card-header {
@@ -2928,8 +2928,8 @@ table {
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 0.75rem;
-    background: #0f172a;
-    border-bottom: 1px solid #334155;
+    background: var(--bg);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .adapter-icon {
@@ -2961,7 +2961,7 @@ table {
 .adapter-name {
     font-size: 0.8125rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--text-color);
     display: flex;
     align-items: center;
     gap: 0.3125rem;
@@ -2970,7 +2970,7 @@ table {
 
 .adapter-interface {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -3062,17 +3062,17 @@ table {
     align-items: center;
     gap: 0.25rem;
     padding: 0.1875rem 0.5rem;
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .info-pill i {
     font-size: 0.5625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .adapter-vswitch {
@@ -3102,7 +3102,7 @@ table {
     flex-wrap: wrap;
     gap: 0.3125rem;
     padding-top: 0.3125rem;
-    border-top: 1px dashed #334155;
+    border-top: 1px dashed var(--header-border);
 }
 
 .advanced-pill {
@@ -3133,16 +3133,16 @@ table {
     align-items: center;
     gap: 0.3125rem;
     padding: 0.3125rem 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     position: relative;
     cursor: help;
 }
 
 .adapter-bindings-compact i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.6875rem;
 }
 
@@ -3158,7 +3158,7 @@ table {
     right: 0;
     margin-bottom: 0.375rem;
     padding: 0.375rem 0.5rem;
-    background: #1e293b;
+    background: var(--card-bg);
     color: white;
     border-radius: 4px;
     font-size: 0.625rem;
@@ -3175,9 +3175,9 @@ table {
     flex-direction: column;
     gap: 0.25rem;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
-    border-top: 1px dashed #334155;
+    border-top: 1px dashed var(--header-border);
     margin-top: 0.25rem;
 }
 
@@ -3192,18 +3192,18 @@ table {
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     min-width: 60px;
 }
 
 .adapter-ip-label i {
     font-size: 0.625rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .adapter-ip-value {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     word-break: break-all;
 }
@@ -3213,14 +3213,14 @@ table {
 }
 
 .adapter-ip-value.dhcp-disabled {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .adapter-teaming-info {
     margin-top: 0.25rem;
     border-radius: 3px;
     overflow: hidden;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .adapter-teaming-info.set-info {
@@ -3235,8 +3235,8 @@ table {
 
 .teaming-header {
     padding: 0.1875rem 0.375rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -3253,9 +3253,9 @@ table {
     font-weight: 700;
     letter-spacing: 0.025em;
     text-transform: uppercase;
-    background: #0f172a;
-    color: #94a3b8;
-    border: 1px solid #334155;
+    background: var(--bg);
+    color: var(--text-muted);
+    border: 1px solid var(--header-border);
 }
 
 .adapter-team-badge.set-badge {
@@ -3291,7 +3291,7 @@ table {
     transition: all 0.15s ease;
     flex: 0 1 auto;
     font-size: 0.625rem;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .teaming-detail-item:hover {
@@ -3323,7 +3323,7 @@ table {
 }
 
 .teaming-detail-item i {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.5625rem;
     margin-top: 0.0625rem;
     flex-shrink: 0;
@@ -3353,7 +3353,7 @@ table {
 
 .detail-label {
     font-size: 0.5rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -3363,7 +3363,7 @@ table {
 
 .detail-value {
     font-size: 0.625rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     word-break: break-word;
     line-height: 1.2;
@@ -3428,12 +3428,12 @@ table {
 .member-badge-more {
     display: inline-block;
     padding: 0.25rem 0.5rem;
-    background: #1e293b;
-    color: #94a3b8;
+    background: var(--card-bg);
+    color: var(--text-muted);
     border-radius: 4px;
     font-size: 0.75rem;
     font-weight: 500;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     font-style: italic;
 }
 
@@ -3446,8 +3446,8 @@ table {
 }
 
 .role-item-modern {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     padding: 0.75rem;
     transition: all 0.2s ease;
@@ -3457,7 +3457,7 @@ table {
 .role-item-modern:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-    border-color: #94a3b8;
+    border-color: var(--text-muted);
 }
 
 .role-header-modern {
@@ -3485,14 +3485,14 @@ table {
 .role-name-modern {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.3;
     flex: 1;
 }
 
 .role-description-modern {
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     line-height: 1.4;
     margin-top: 0.375rem;
     display: -webkit-box;
@@ -3532,10 +3532,10 @@ table {
     padding: 0.5rem;
     text-align: center;
     font-size: 0.8125rem;
-    color: #94a3b8;
-    background: #0f172a;
+    color: var(--text-muted);
+    background: var(--bg);
     border-radius: 6px;
-    border: 1px dashed #334155;
+    border: 1px dashed var(--header-border);
 }
 
 .role-count-badge-modern {
@@ -3705,12 +3705,12 @@ table {
 
 /* Quorum Disk Styles */
 .quorum-disk-row {
-    background: #1e293b;
+    background: var(--card-bg);
     border-left: 3px solid #3b82f6;
 }
 
 .quorum-disk-row:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .quorum-badge {
@@ -3743,7 +3743,7 @@ table {
 .network-advanced-section {
     margin-top: 0.75rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .advanced-header {
@@ -3751,7 +3751,7 @@ table {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
@@ -3770,25 +3770,25 @@ table {
     justify-content: space-between;
     align-items: center;
     padding: 0.375rem 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     font-size: 0.8125rem;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .advanced-setting-item span {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .advanced-setting-item strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
 .network-bindings-section {
     margin-top: 0.75rem;
     padding-top: 0.75rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .bindings-header {
@@ -3796,7 +3796,7 @@ table {
     align-items: center;
     gap: 0.375rem;
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
@@ -3865,7 +3865,7 @@ table {
     gap: 0.5rem;
     font-size: 0.875rem;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.025em;
 }
@@ -3877,11 +3877,11 @@ table {
 
 .feature-detail-value {
     font-size: 1rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     padding: 0.75rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 6px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .feature-description {
@@ -3956,8 +3956,8 @@ table {
 }
 
 .multipath-config-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
 }
@@ -3971,10 +3971,10 @@ table {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem 1rem;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
@@ -3991,7 +3991,7 @@ table {
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem 0;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .multipath-config-item:last-child {
@@ -3999,12 +3999,12 @@ table {
 }
 
 .multipath-config-item span {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
 }
 
 .multipath-config-item strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -4013,7 +4013,7 @@ table {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
@@ -4039,17 +4039,17 @@ table {
 }
 
 .vswitch-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     margin-bottom: 1rem;
     overflow: hidden;
 }
 
 .vswitch-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
     padding: 1rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .vswitch-title {
@@ -4092,7 +4092,7 @@ table {
 
 .vswitch-notes {
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-style: italic;
     margin-top: 0.5rem;
 }
@@ -4113,8 +4113,8 @@ table {
 }
 
 .vswitch-config-section {
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     padding: 0.75rem;
 }
@@ -4129,10 +4129,10 @@ table {
     gap: 0.5rem;
     font-weight: 600;
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.75rem;
     padding-bottom: 0.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .vswitch-section-title i {
@@ -4159,11 +4159,11 @@ table {
 }
 
 .vswitch-config-item span {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .vswitch-config-item strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -4172,13 +4172,13 @@ table {
 }
 
 .text-muted {
-    color: #94a3b8 !important;
+    color: var(--text-muted) !important;
 }
 
 .vswitch-extensions {
     margin-top: 1rem;
     padding-top: 1rem;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
 }
 
 .vswitch-extensions-list {
@@ -4193,8 +4193,8 @@ table {
     align-items: flex-start;
     gap: 0.75rem;
     padding: 0.75rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
 }
 
@@ -4203,7 +4203,7 @@ table {
 }
 
 .vswitch-extension-item.extension-disabled {
-    border-left: 3px solid #94a3b8;
+    border-left: 3px solid var(--text-muted);
     opacity: 0.7;
 }
 
@@ -4217,7 +4217,7 @@ table {
 }
 
 .extension-disabled .extension-status-icon {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .extension-info {
@@ -4227,7 +4227,7 @@ table {
 .extension-name {
     font-weight: 600;
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.25rem;
 }
 
@@ -4235,7 +4235,7 @@ table {
     display: flex;
     gap: 0.75rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     flex-wrap: wrap;
 }
 
@@ -4248,7 +4248,7 @@ table {
 }
 
 .extension-disabled .extension-status {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Live Migration Section */
@@ -4264,20 +4264,20 @@ table {
 }
 
 .livemigration-config-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
 }
 
 .livemigration-config-header {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
     padding: 0.75rem 1rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
@@ -4297,17 +4297,17 @@ table {
     justify-content: space-between;
     align-items: center;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     font-size: 0.875rem;
 }
 
 .livemigration-config-item span {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .livemigration-config-item strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -4316,7 +4316,7 @@ table {
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 4px;
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
@@ -4329,7 +4329,7 @@ table {
 .network-priority {
     margin-left: auto;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -4363,15 +4363,15 @@ table {
 .multipath-device-more {
     text-align: center;
     padding: 0.5rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     font-style: italic;
 }
 
 .multipath-path-item {
     padding: 0.75rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     margin-bottom: 0.75rem;
 }
@@ -4389,7 +4389,7 @@ table {
 
 .multipath-path-vendor {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
@@ -4422,7 +4422,7 @@ table {
     align-items: center;
     gap: 0.25rem;
     margin-right: 1rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.8125rem;
 }
 
@@ -4436,7 +4436,7 @@ table {
     align-items: center;
     gap: 0.75rem;
     padding: 1rem;
-    background: #fffbeb;
+    background: var(--card-bg)beb;
     border: 1px solid #fbbf24;
     border-radius: 6px;
     color: #92400e;
@@ -4483,7 +4483,7 @@ table {
 
 .mpio-status-badge i {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .mpio-status-enabled i {
@@ -4503,8 +4503,8 @@ table {
 }
 
 .mpio-compact-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -4516,14 +4516,14 @@ table {
 }
 
 .mpio-compact-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     display: flex;
     align-items: center;
     gap: 0.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.8rem;
 }
 
@@ -4544,12 +4544,12 @@ table {
     justify-content: space-between;
     align-items: center;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 0.125rem 0;
 }
 
 .mpio-compact-item strong {
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     margin-right: 0.5rem;
 }
@@ -4559,7 +4559,7 @@ table {
 }
 
 .mpio-policy-none em {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-style: italic;
 }
 
@@ -4568,7 +4568,7 @@ table {
     align-items: center;
     gap: 0.375rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 0.125rem 0;
 }
 
@@ -4603,14 +4603,14 @@ table {
 
 .mpio-disk-compact-item {
     padding: 0.375rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     transition: all 0.2s ease;
 }
 
 .mpio-disk-compact-item:hover {
-    background: #1e293b;
+    background: var(--card-bg);
     border-color: #3b82f6;
 }
 
@@ -4629,7 +4629,7 @@ table {
 
 .mpio-disk-compact-name {
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     flex-shrink: 0;
 }
@@ -4637,7 +4637,7 @@ table {
 .mpio-disk-compact-details {
     flex: 1;
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-left: 0.5rem;
 }
 
@@ -4704,15 +4704,15 @@ table {
 .system-product-key {
     font-family: 'Courier New', monospace;
     font-size: 0.8rem;
-    background: #1e293b;
+    background: var(--card-bg);
     padding: 0.25rem 0.5rem;
     border-radius: 4px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .mpio-summary-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     margin-top: 1rem;
     overflow: hidden;
@@ -4743,8 +4743,8 @@ table {
 }
 
 .mpio-overview-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     padding: 0.75rem;
     display: flex;
@@ -4781,7 +4781,7 @@ table {
 
 .mpio-overview-title {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
     margin-bottom: 0.25rem;
 }
@@ -4800,7 +4800,7 @@ table {
 
 .mpio-overview-details span {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .mpio-overview-details strong {
@@ -4816,8 +4816,8 @@ table {
 }
 
 .mpio-disk-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 6px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -4829,9 +4829,9 @@ table {
 }
 
 .mpio-disk-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
     padding: 0.75rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -4853,7 +4853,7 @@ table {
 
 .mpio-disk-vendor span {
     font-size: 0.8rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
@@ -4901,13 +4901,13 @@ table {
 
 .mpio-disk-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .mpio-disk-value {
     font-size: 0.8rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -4922,8 +4922,8 @@ table {
 
 /* MPIO Disks List - Ultra Compact */
 .mpio-disks-list {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
     margin-top: 0.75rem;
     overflow: hidden;
@@ -4950,7 +4950,7 @@ table {
 
 .mpio-disk-item {
     padding: 0.5rem;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
     transition: all 0.2s ease;
 }
 
@@ -4959,7 +4959,7 @@ table {
 }
 
 .mpio-disk-item:hover {
-    background: #0f172a;
+    background: var(--bg);
 }
 
 .mpio-disk-main {
@@ -4988,13 +4988,13 @@ table {
 .mpio-disk-name {
     flex: 1;
     font-size: 0.8rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
     line-height: 1.2;
 }
 
 .mpio-inline-details {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 400;
     font-size: 0.75rem;
 }
@@ -5050,7 +5050,7 @@ table {
     align-items: center;
     gap: 0.25rem;
     font-size: 0.7rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -5403,10 +5403,10 @@ table {
 }
 
 .report-card {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 0.75rem;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     transition: all 0.2s ease;
     cursor: pointer;
     overflow: hidden;
@@ -5455,7 +5455,7 @@ table {
 .report-card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin: 0 0 0.75rem 0;
     line-height: 1.4;
 }
@@ -5471,13 +5471,13 @@ table {
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .report-detail i {
     width: 1rem;
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .target-type-badge {
@@ -5509,8 +5509,8 @@ table {
 
 .report-card-footer {
     padding: 0.75rem 1rem;
-    background-color: #0f172a;
-    border-top: 1px solid #334155;
+    background-color: var(--bg);
+    border-top: 1px solid var(--header-border);
 }
 
 .report-card-view {
@@ -5532,10 +5532,10 @@ table {
 }
 
 .domain-header-card {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 0.75rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -5562,14 +5562,14 @@ table {
     margin: 0 0 0.5rem 0;
     font-size: 1.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .domain-meta-compact {
     display: flex;
     gap: 1rem;
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .domain-meta-compact span {
@@ -5579,7 +5579,7 @@ table {
 }
 
 .domain-meta-compact i {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .domain-metrics-grid {
@@ -5589,29 +5589,29 @@ table {
 }
 
 .domain-metric-card {
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
     padding: 1rem;
 }
 
 .domain-metric-card .stat-card-label {
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
 .domain-metric-card .stat-card-value {
     font-size: 1.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.25rem;
 }
 
 .domain-metric-card .stat-card-hint {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Windows Updates Compact Section */
@@ -5632,7 +5632,7 @@ table {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .updates-title-group i {
@@ -5652,9 +5652,9 @@ table {
 }
 
 .view-all-btn-compact {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border: 1px solid #334155;
-    color: #94a3b8;
+    background: linear-gradient(135deg, var(--card-bg) 0%, var(--bg) 100%);
+    border: 1px solid var(--header-border);
+    color: var(--text-muted);
     padding: 0.375rem 0.75rem;
     border-radius: 6px;
     font-size: 0.8125rem;
@@ -5667,9 +5667,9 @@ table {
 }
 
 .view-all-btn-compact:hover {
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-    border-color: #94a3b8;
-    color: #334155;
+    background: linear-gradient(135deg, var(--text-color) 0%, var(--text-color) 100%);
+    border-color: var(--text-muted);
+    color: var(--header-border);
 }
 
 .updates-grid-compact {
@@ -5679,8 +5679,8 @@ table {
 }
 
 .update-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -5696,8 +5696,8 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .update-kb-badge {
@@ -5720,7 +5720,7 @@ table {
     display: flex;
     align-items: center;
     gap: 0.25rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.75rem;
     font-weight: 500;
 }
@@ -5735,7 +5735,7 @@ table {
 
 .update-description {
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.4;
     margin-bottom: 0.5rem;
 }
@@ -5745,16 +5745,16 @@ table {
     align-items: center;
     gap: 0.375rem;
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 0.375rem 0.5rem;
-    background: #0f172a;
-    border: 1px solid #334155;
+    background: var(--bg);
+    border: 1px solid var(--header-border);
     border-radius: 4px;
 }
 
 .update-installer i {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Live Migration Compact Section */
@@ -5775,7 +5775,7 @@ table {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .livemigration-title-group i {
@@ -5808,7 +5808,7 @@ table {
 
 .livemigration-status-badge i {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .livemigration-enabled i {
@@ -5826,8 +5826,8 @@ table {
 }
 
 .livemigration-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -5843,11 +5843,11 @@ table {
     align-items: center;
     gap: 0.5rem;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .livemigration-card-header i {
@@ -5867,7 +5867,7 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.375rem 0;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .livemigration-item-compact:last-child {
@@ -5876,13 +5876,13 @@ table {
 
 .livemigration-label {
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .livemigration-value {
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -5899,7 +5899,7 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem;
-    background: #0f172a;
+    background: var(--bg);
     border-radius: 6px;
     margin-bottom: 0.375rem;
 }
@@ -5921,7 +5921,7 @@ table {
 
 .livemigration-network-subnet {
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 500;
 }
 
@@ -5952,7 +5952,7 @@ table {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .vswitches-title-group i {
@@ -5978,8 +5978,8 @@ table {
 }
 
 .vswitch-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -5992,8 +5992,8 @@ table {
 
 .vswitch-card-header {
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .vswitch-name-group {
@@ -6011,7 +6011,7 @@ table {
 .vswitch-name {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .vswitch-type-badge {
@@ -6045,7 +6045,7 @@ table {
 
 .vswitch-notes-compact {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
     gap: 0.25rem;
@@ -6069,7 +6069,7 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.25rem 0;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .vswitch-config-row:last-child {
@@ -6078,13 +6078,13 @@ table {
 
 .vswitch-config-label {
     font-size: 0.8125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .vswitch-config-value {
     font-size: 0.8125rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
 }
 
@@ -6107,7 +6107,7 @@ table {
 
 /* Network Adapter Section */
 .vswitch-adapter-compact {
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
     padding-top: 0.75rem;
     margin-top: 0.75rem;
 }
@@ -6118,7 +6118,7 @@ table {
     gap: 0.375rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
 }
 
@@ -6142,14 +6142,14 @@ table {
 
 .vswitch-adapter-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
     min-width: 80px;
 }
 
 .vswitch-adapter-value {
     font-size: 0.75rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-weight: 600;
     text-align: right;
     flex: 1;
@@ -6162,7 +6162,7 @@ table {
 }
 
 .vswitch-extensions-compact {
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--header-border);
     padding-top: 0.75rem;
 }
 
@@ -6172,7 +6172,7 @@ table {
     gap: 0.375rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
 }
 
@@ -6190,7 +6190,7 @@ table {
 .vswitch-extension-detailed {
     padding: 0.5rem;
     border-radius: 6px;
-    border: 1px solid #334155;
+    border: 1px solid var(--header-border);
 }
 
 .vswitch-extension-detailed.ext-enabled {
@@ -6232,7 +6232,7 @@ table {
 .ext-name {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     margin-bottom: 0.25rem;
     line-height: 1.3;
 }
@@ -6246,7 +6246,7 @@ table {
 
 .ext-vendor {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -6380,7 +6380,7 @@ table {
     font-weight: 700;
     font-size: 0.75rem;
     line-height: 1;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .system-error-btn .error-count {
@@ -6407,8 +6407,8 @@ table {
 }
 
 .update-modal-card {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     transition: all 0.2s ease;
@@ -6424,8 +6424,8 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 1rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .update-modal-body {
@@ -6434,7 +6434,7 @@ table {
 
 .update-description-full {
     font-size: 0.875rem;
-    color: #e2e8f0;
+    color: var(--text-color);
     line-height: 1.5;
     margin-bottom: 0.75rem;
 }
@@ -6465,7 +6465,7 @@ table {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .host-disks-title-group i {
@@ -6492,8 +6492,8 @@ table {
 }
 
 .disk-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -6510,8 +6510,8 @@ table {
     align-items: center;
     justify-content: space-between;
     padding: 0.75rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border-bottom: 1px solid #334155;
+    background: linear-gradient(135deg, var(--bg) 0%, var(--card-bg) 100%);
+    border-bottom: 1px solid var(--header-border);
 }
 
 .disk-name-group {
@@ -6534,13 +6534,13 @@ table {
 
 .disk-name {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
 .disk-id {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-family: 'Courier New', monospace;
 }
 
@@ -6585,14 +6585,14 @@ table {
 
 .disk-size-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .disk-size-value {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .disk-usage-bar {
@@ -6603,7 +6603,7 @@ table {
 
 .usage-bar-track {
     height: 6px;
-    background: #1e293b;
+    background: var(--card-bg);
     border-radius: 3px;
     overflow: hidden;
 }
@@ -6621,11 +6621,11 @@ table {
 }
 
 .usage-allocated {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .usage-unallocated {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Compact Host Volumes Styling */
@@ -6643,7 +6643,7 @@ table {
     gap: 0.5rem;
     font-size: 1rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .host-volumes-title-group i {
@@ -6670,8 +6670,8 @@ table {
 }
 
 .volume-card-compact {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--card-bg);
+    border: 1px solid var(--header-border);
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
@@ -6689,7 +6689,7 @@ table {
     justify-content: space-between;
     padding: 0.75rem;
     background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0.15) 100%);
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .volume-name-group {
@@ -6712,7 +6712,7 @@ table {
 
 .volume-name {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
     font-size: 0.875rem;
 }
 
@@ -6724,13 +6724,13 @@ table {
 }
 
 .volume-drive {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 600;
 }
 
 .volume-fs {
-    color: #94a3b8;
-    background: #1e293b;
+    color: var(--text-muted);
+    background: var(--card-bg);
     padding: 0.125rem 0.375rem;
     border-radius: 4px;
     font-size: 0.6875rem;
@@ -6778,14 +6778,14 @@ table {
 
 .volume-size-label {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .volume-size-value {
     font-size: 0.875rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text-color);
 }
 
 .volume-usage-bar {
@@ -6795,9 +6795,9 @@ table {
 }
 
 .usage-used {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 .usage-free {
-    color: #94a3b8;
+    color: var(--text-muted);
 }
