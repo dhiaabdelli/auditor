@@ -33,7 +33,6 @@ import { DomainLookupPage } from './pages/DomainLookup.js';
 import { PacketAnalyzerPage } from './pages/PacketAnalyzerPage.js';
 import { SpeedtestPage } from './pages/Speedtest.js';
 import { ReportTemplatesPage } from './pages/ReportTemplates.js';
-import { InfrastructureInventoryPage } from './pages/InfrastructureInventory.js';
 import { SubnetCalculatorPage } from './pages/SubnetCalculator.js';
 import { CryptoToolsPage } from './pages/CryptoTools.js';
 import { WebToolsPage } from './pages/WebTools.js';
@@ -42,7 +41,7 @@ import { AutomationPage } from './pages/AutomationPage.js';
 import { HealthMonitorPage } from './pages/HealthMonitor.js';
 import { ActivityLogPage } from './pages/ActivityLog.js';
 import { SettingsPage } from './pages/Settings.js';
-import { WifiManagerPage } from './pages/WifiManager.js';
+
 import { AdministrationPage } from './pages/Administration.js';
 import { OverviewPage } from './pages/Controller.js';
 
@@ -338,8 +337,6 @@ class App {
             'ip-scanner', 'ping-tracer', 'domain-lookup', 'packet-analyzer', 'speedtest',
             // Reports
             'reports',
-            // Infrastructure Inventory
-            'infrastructure-inventory',
             // Tools
             'subnet-calculator',
             // Crypto
@@ -1047,11 +1044,6 @@ class App {
                 // Set instance immediately so onclick handlers work
                 window.reportTemplatesInstance = page;
                 break;
-            case 'infrastructure-inventory':
-                page = new InfrastructureInventoryPage();
-                // Set instance immediately so onclick handlers work
-                window.infrastructureInventoryInstance = page;
-                break;
             case 'subnet-calculator':
                 page = new SubnetCalculatorPage();
                 // Set instance immediately so onclick handlers work
@@ -1085,8 +1077,10 @@ class App {
                 window.overviewInstance = page;
                 break;
             case 'administration':
-            case 'wifi-manager':
                 page = new AdministrationPage();
+                break;
+            case 'wifi-manager':
+                page = new AdministrationPage('wifi');
                 break;
             case 'activity-log':
             case 'activity-log-sessions':

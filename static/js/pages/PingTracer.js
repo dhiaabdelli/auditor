@@ -8,183 +8,119 @@ export class PingTracerPage {
             rate: 1,
             traceRoute: true,
             reverseDNS: true,
+            enrichment: true,
+            mtuDiscovery: false,
+            probingMode: 'icmp',
             logFailures: false,
             logSuccesses: false,
             preferIPv4: true,
-            serverNames: false,
+            serverNames: true,
             packetLoss: true,
             lastPing: true,
             average: true,
-            jitter: false,
+            jitter: true,
             minMax: false,
             badThreshold: 100,
             worseThreshold: 200
         };
-        this.graphData = {}; // Store graph data for each hop
+        this.graphData = {};
         this.maxGraphPoints = 100;
+        this.mtu = null;
     }
 
     async render() {
         return `
             <div class="page-container-full">
                 <div class="ping-tracer-full-container">
-                    <!-- Sidebar Overlay (Mobile) -->
-                    <div class="ping-tracer-sidebar-overlay" id="ping-tracer-overlay" onclick="pingTracerInstance.closeConfigSidebar()"></div>
-                    <div class="ping-tracer-split">
-                        <!-- Left Side: Configuration -->
-                        <div class="ping-tracer-form" id="ping-tracer-form">
-                            <div class="ping-tracer-form-header">
-                                <h3><i class="fas fa-cog"></i> Configuration</h3>
-                                <button class="ping-tracer-form-close" id="ping-tracer-form-close" onclick="pingTracerInstance.closeConfigSidebar()" title="Close">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                    <!-- Top Header Configuration -->
+                    <div class="ping-tracer-header">
+                        <div class="header-left">
+                            <div class="header-app-brand">
+                                <i class="fas fa-satellite-dish"></i>
+                                <span>Ping Tracer</span>
                             </div>
-                            <div class="ping-tracer-form-content">
-                                <div class="form-group">
-                                    <label for="host">Host</label>
-                                    <input 
-                                        type="text" 
-                                        id="host" 
-                                        class="form-input" 
-                                        placeholder="www.google.com"
-                                        value="${this.config.host}"
-                                    >
+                            <div class="header-controls">
+                                <div class="header-control-item">
+                                    <label for="host">Target Host</label>
+                                    <input type="text" id="host" class="header-input" placeholder="e.g. google.com" value="${this.config.host}">
                                 </div>
-
-                                <div class="form-group">
-                                    <label for="rate">Rate (pings/sec per host)</label>
-                                    <input 
-                                        type="number" 
-                                        id="rate" 
-                                        class="form-input" 
-                                        min="1" 
-                                        max="10" 
-                                        value="${this.config.rate}"
-                                    >
+                                <div class="header-control-item">
+                                    <label for="rate">Rate</label>
+                                    <input type="number" id="rate" class="header-input header-num-input" min="1" max="10" value="${this.config.rate}" title="Pings per second">
                                 </div>
-
-                                <div class="form-group">
-                                    <h4>General Options</h4>
-                                    <label>
+                                <div class="header-control-item">
+                                    <label for="probing-mode">Protocol</label>
+                                    <select id="probing-mode" class="header-input header-select">
+                                        <option value="icmp" ${this.config.probingMode === 'icmp' ? 'selected' : ''}>ICMP</option>
+                                        <option value="udp" ${this.config.probingMode === 'udp' ? 'selected' : ''}>UDP</option>
+                                        <option value="tcp" ${this.config.probingMode === 'tcp' ? 'selected' : ''}>TCP</option>
+                                    </select>
+                                </div>
+                                <div class="header-divider"></div>
+                                <div class="header-toggles">
+                                    <label class="header-checkbox" title="Map full network path">
                                         <input type="checkbox" id="trace-route" ${this.config.traceRoute ? 'checked' : ''}>
-                                        Trace Route
+                                        <span>Traceroute</span>
                                     </label>
-                                    <label>
+                                    <label class="header-checkbox" title="Enrich with ASN and Geolocation">
+                                        <input type="checkbox" id="enrichment" ${this.config.enrichment ? 'checked' : ''}>
+                                        <span>ASN/Geo</span>
+                                    </label>
+                                    <label class="header-checkbox" title="Auto-detect Path MTU">
+                                        <input type="checkbox" id="mtu-discovery" ${this.config.mtuDiscovery ? 'checked' : ''}>
+                                        <span>MTU</span>
+                                    </label>
+                                    <label class="header-checkbox" title="Perform reverse DNS lookups">
                                         <input type="checkbox" id="reverse-dns" ${this.config.reverseDNS ? 'checked' : ''}>
-                                        Reverse DNS Lookup
+                                        <span>rDNS</span>
                                     </label>
-                                    <label>
-                                        <input type="checkbox" id="log-failures" ${this.config.logFailures ? 'checked' : ''}>
-                                        Log Failures
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="log-successes" ${this.config.logSuccesses ? 'checked' : ''}>
-                                        Log Successes
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="prefer-ipv4" ${this.config.preferIPv4 ? 'checked' : ''}>
-                                        Prefer IPv4
-                                    </label>
-                                </div>
-
-                                <div class="form-group">
-                                    <h4>Graph Options</h4>
-                                    <label>
-                                        <input type="checkbox" id="server-names" ${this.config.serverNames ? 'checked' : ''}>
-                                        Server Names
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="packet-loss" ${this.config.packetLoss ? 'checked' : ''}>
-                                        Packet Loss %
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="last-ping" ${this.config.lastPing ? 'checked' : ''}>
-                                        Last Ping
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="average" ${this.config.average ? 'checked' : ''}>
-                                        Average
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="jitter" ${this.config.jitter ? 'checked' : ''}>
-                                        Jitter
-                                    </label>
-                                    <label>
-                                        <input type="checkbox" id="min-max" ${this.config.minMax ? 'checked' : ''}>
-                                        Min / Max
-                                    </label>
-                                </div>
-
-                                <div class="form-group">
-                                    <h4>Thresholds</h4>
-                                    <label for="bad-threshold">Bad threshold (ms)</label>
-                                    <input 
-                                        type="number" 
-                                        id="bad-threshold" 
-                                        class="form-input" 
-                                        min="1" 
-                                        value="${this.config.badThreshold}"
-                                    >
-                                    <label for="worse-threshold">Worse threshold (ms)</label>
-                                    <input 
-                                        type="number" 
-                                        id="worse-threshold" 
-                                        class="form-input" 
-                                        min="1" 
-                                        value="${this.config.worseThreshold}"
-                                    >
-                                </div>
-
-                                <div class="form-spacer"></div>
-                                
-                                <div class="form-actions-bottom">
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-primary" 
-                                        id="start-btn"
-                                        onclick="pingTracerInstance.start()"
-                                    >
-                                        <i class="fas fa-play"></i> Start
-                                    </button>
-                                    <button 
-                                        type="button" 
-                                        class="btn btn-secondary" 
-                                        id="stop-btn"
-                                        onclick="pingTracerInstance.stop()"
-                                        style="display: none;"
-                                    >
-                                        <i class="fas fa-stop"></i> Stop
-                                    </button>
                                 </div>
                             </div>
                         </div>
+                        <div class="header-right">
+                            <span id="mtu-display" class="mtu-badge" style="display:none"></span>
+                            <button type="button" class="btn btn-sm btn-primary" id="start-btn" onclick="pingTracerInstance.start()">
+                                <i class="fas fa-play"></i> Start Trace
+                            </button>
+                            <button type="button" class="btn btn-sm btn-danger" id="stop-btn" onclick="pingTracerInstance.stop()" style="display: none;">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                        </div>
 
-                        <!-- Right Side: Graphs and Results -->
+                    </div>
+
+                    <div class="ping-tracer-results-area">
                         <div class="ping-tracer-results">
-                            <div class="results-header" id="results-header" style="display: none;">
-                                <div id="discovery-status" class="discovery-status" style="display: none;">
-                                    <div class="discovery-spinner"></div>
-                                    <span>Discovering network path...</span>
-                                    <div class="discovery-progress-bar">
-                                        <div class="discovery-progress-value"></div>
+                            <div id="results-meta-container" style="display: none;">
+                                <div class="results-header">
+                                    <div class="stats-table-header">
+                                        <div class="header-main-info">Path Discovery</div>
+                                        <div class="header-stats-group">
+                                            <span class="stat-col">Sent</span>
+                                            <span class="stat-col">Loss%</span>
+                                            <span class="stat-col">Last</span>
+                                            <span class="stat-col">Avg</span>
+                                            <span class="stat-col">Min</span>
+                                            <span class="stat-col">Max</span>
+                                            <span class="stat-col">StdDev</span>
+                                            <span class="stat-col">Jitter</span>
+                                        </div>
+                                        <div class="header-visual">Latency Trend</div>
                                     </div>
-                                </div>
-                                <div class="results-stats" id="results-stats">
-                                    <span>Total Successful: <strong id="total-successful">0</strong></span>
-                                    <span>Total Failed: <strong id="total-failed">0</strong></span>
                                 </div>
                             </div>
 
-                            <div class="graphs-container" id="graphs-container">
+
+                            <div class="graphs-container">
                                 <div class="graphs-empty" id="graphs-empty">
                                     <div class="empty-icon-wrapper">
-                                        <i class="fas fa-chart-line"></i>
+                                        <i class="fas fa-network-wired"></i>
                                     </div>
-                                    <h3>No Data Yet</h3>
-                                    <p>Configure settings and click "Start" to begin monitoring.</p>
+                                    <h3>Network Path Monitor</h3>
+                                    <p>Start a diagnostic trace to visualize path statistics, hop latency distribution, and route stability.</p>
                                 </div>
+                                <div id="hops-list"></div>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -192,278 +128,152 @@ export class PingTracerPage {
         `;
     }
 
-    start() {
-        if (this.isRunning) {
-            return;
-        }
 
-        // Get configuration from form
+    start() {
+        if (this.isRunning) return;
+
         this.config.host = document.getElementById('host').value.trim();
         this.config.rate = parseInt(document.getElementById('rate').value) || 1;
         this.config.traceRoute = document.getElementById('trace-route').checked;
+        this.config.enrichment = document.getElementById('enrichment').checked;
+        this.config.mtuDiscovery = document.getElementById('mtu-discovery').checked;
         this.config.reverseDNS = document.getElementById('reverse-dns').checked;
-        this.config.logFailures = document.getElementById('log-failures').checked;
-        this.config.logSuccesses = document.getElementById('log-successes').checked;
-        this.config.preferIPv4 = document.getElementById('prefer-ipv4').checked;
-        this.config.serverNames = document.getElementById('server-names').checked;
-        this.config.packetLoss = document.getElementById('packet-loss').checked;
-        this.config.lastPing = document.getElementById('last-ping').checked;
-        this.config.average = document.getElementById('average').checked;
-        this.config.jitter = document.getElementById('jitter').checked;
-        this.config.minMax = document.getElementById('min-max').checked;
-        this.config.badThreshold = parseInt(document.getElementById('bad-threshold').value) || 100;
-        this.config.worseThreshold = parseInt(document.getElementById('worse-threshold').value) || 200;
+        this.config.probingMode = document.getElementById('probing-mode').value;
 
         if (!this.config.host) {
-            alert('Please enter a host');
+            alert('Please enter a target host');
             return;
-        }
-
-
-        // Stop any existing scan first
-        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-            this.ws.send(JSON.stringify({ type: 'stop' }));
-            this.ws.close();
-            this.ws = null;
         }
 
         this.isRunning = true;
         this.hops = [];
         this.graphData = {};
+        this.mtu = null;
 
-        // Reset counters in DOM immediately
-        const totalSuccessfulEl = document.getElementById('total-successful');
-        const totalFailedEl = document.getElementById('total-failed');
-        if (totalSuccessfulEl) totalSuccessfulEl.textContent = '0';
-        if (totalFailedEl) totalFailedEl.textContent = '0';
-
-        // Update UI
-        const startBtn = document.getElementById('start-btn');
-        const stopBtn = document.getElementById('stop-btn');
-        const graphsEmpty = document.getElementById('graphs-empty');
-        const graphsContainer = document.getElementById('graphs-container');
-        const resultsHeader = document.getElementById('results-header');
-        const discoveryStatus = document.getElementById('discovery-status');
-
-        if (startBtn) startBtn.style.display = 'none';
-        if (stopBtn) stopBtn.style.display = 'inline-block';
-        if (graphsEmpty) graphsEmpty.style.display = 'none';
-        if (graphsContainer) graphsContainer.innerHTML = '';
-        if (resultsHeader) resultsHeader.style.display = 'flex';
-
-        // Show discovery status if traceroute is enabled
-        if (this.config.traceRoute && discoveryStatus) {
-            discoveryStatus.style.display = 'flex';
-        } else if (discoveryStatus) {
-            discoveryStatus.style.display = 'none';
-        }
+        document.getElementById('start-btn').style.display = 'none';
+        document.getElementById('stop-btn').style.display = 'inline-block';
+        document.getElementById('graphs-empty').style.display = 'none';
+        document.getElementById('hops-list').innerHTML = '';
+        document.getElementById('results-meta-container').style.display = 'block';
+        document.getElementById('mtu-display').style.display = 'none';
 
 
-        // Build WebSocket URL
+
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/api/network/ping-tracer`;
-
-        // Create WebSocket connection
-        this.ws = new WebSocket(wsUrl);
+        this.ws = new WebSocket(`${protocol}//${window.location.host}/api/network/ping-tracer`);
 
         this.ws.onopen = () => {
-            // Send configuration
             this.ws.send(JSON.stringify(this.config));
         };
 
         this.ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);
-
-                if (data.type === 'hops') {
-                    this.hops = data.hops || [];
-                    this.initializeGraphs();
-                } else if (data.type === 'hop_found') {
-                    // Add new hop as it is discovered
-                    if (!this.hops) this.hops = [];
-                    // Avoid duplicates if reconnecting or weird state
-                    const exists = this.hops.find(h => h.hopNumber === data.hop.hopNumber);
-                    if (!exists) {
-                        this.hops.push(data.hop);
-                        this.initializeGraphForHop(data.hop);
-                    }
+                if (data.type === 'hop_found') {
+                    this.hops.push(data.hop);
+                    this.initializeGraphForHop(data.hop);
                 } else if (data.type === 'ping') {
                     this.updateHop(data.hop);
-                } else if (data.type === 'discovery_complete') {
-                    const discoveryStatus = document.getElementById('discovery-status');
-                    if (discoveryStatus) discoveryStatus.style.display = 'none';
+                } else if (data.type === 'mtu_found') {
+                    this.mtu = data.mtu;
+                    const mtuEl = document.getElementById('mtu-display');
+                    if (mtuEl) {
+                        mtuEl.textContent = `MTU: ${data.mtu}`;
+                        mtuEl.style.display = 'inline-block';
+                    }
                 } else if (data.type === 'stopped') {
-                    this.stop();
-                } else if (data.type === 'error') {
-                    alert(`Error: ${data.error}`);
                     this.stop();
                 }
             } catch (e) {
-                console.error('Error parsing WebSocket message:', e, 'Data:', event.data);
+                console.error(e);
             }
         };
 
-        this.ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            alert('WebSocket connection error. Please check your connection.');
-            this.stop();
-        };
-
-        this.ws.onclose = () => {
-            if (this.isRunning) {
-                console.log('WebSocket closed');
-                this.stop();
-            }
-        };
+        this.ws.onclose = () => this.stop();
     }
 
     stop() {
         this.isRunning = false;
 
-        // Send stop message to server BEFORE closing
+        // Close modal if open
+        if (window.modalInstance && window.modalInstance.isOpen) {
+            window.modalInstance.close();
+        }
+        this.activeDetailHop = null;
+
         if (this.ws) {
             if (this.ws.readyState === WebSocket.OPEN) {
-                try {
-                    this.ws.send(JSON.stringify({ type: 'stop' }));
-                } catch (e) {
-                    console.error('Error sending stop message:', e);
-                }
+                this.ws.send(JSON.stringify({ type: 'stop' }));
             }
-
-            // Close WebSocket connection immediately
-            try {
-                this.ws.close();
-            } catch (e) {
-                console.error('Error closing WebSocket:', e);
-            }
+            this.ws.close();
             this.ws = null;
         }
 
-        // Clear data
-        this.hops = [];
-        this.graphData = {};
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (stopBtn) stopBtn.style.display = 'none';
 
-        // Reset counters
-        const totalSuccessfulEl = document.getElementById('total-successful');
-        const totalFailedEl = document.getElementById('total-failed');
-        if (totalSuccessfulEl) totalSuccessfulEl.textContent = '0';
-        if (totalFailedEl) totalFailedEl.textContent = '0';
+        // Set to empty state
+        const emptyEl = document.getElementById('graphs-empty');
+        if (emptyEl) emptyEl.style.display = 'flex';
 
-        const startBtnEl = document.getElementById('start-btn');
-        const stopBtnEl = document.getElementById('stop-btn');
-        const discoveryStatus = document.getElementById('discovery-status');
-        const graphsContainer = document.getElementById('graphs-container');
-        const graphsEmpty = document.getElementById('graphs-empty');
+        const hopsEl = document.getElementById('hops-list');
+        if (hopsEl) hopsEl.innerHTML = '';
 
-        if (startBtnEl) startBtnEl.style.display = 'inline-block';
-        if (stopBtnEl) stopBtnEl.style.display = 'none';
-        if (discoveryStatus) discoveryStatus.style.display = 'none';
-        if (graphsContainer) graphsContainer.innerHTML = '';
-        if (graphsEmpty) graphsEmpty.style.display = 'block';
+        const resMeta = document.getElementById('results-meta-container');
+        if (resMeta) resMeta.style.display = 'none';
+
+        const hostEl = document.getElementById('display-host');
+
+        if (hostEl) hostEl.textContent = '';
+
+        const mtuEl = document.getElementById('mtu-display');
+        if (mtuEl) mtuEl.style.display = 'none';
     }
 
-    cleanup() {
-        // Force stop and close WebSocket when leaving the page
-        console.log('[PingTracer] Cleaning up - stopping scan and closing WebSocket');
-        this.isRunning = false;
 
-        // Immediately close WebSocket without waiting
-        if (this.ws) {
-            // Send stop message if possible
-            if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
-                try {
-                    this.ws.send(JSON.stringify({ type: 'stop' }));
-                } catch (e) {
-                    // Ignore errors - we're closing anyway
-                }
-            }
-
-            // Force close the connection
-            try {
-                this.ws.close(1000, 'Page navigation');
-            } catch (e) {
-                // Ignore errors
-            }
-            this.ws = null;
-        }
-
-        // Clear all data
-        this.hops = [];
-        this.graphData = {};
-    }
-
-    initializeGraphs() {
-        const container = document.getElementById('graphs-container');
-        if (!container) return;
-        container.innerHTML = '';
-
-        if (!this.hops || this.hops.length === 0) return;
-
-        this.hops.forEach(hop => {
-            this.initializeGraphForHop(hop);
-        });
-    }
 
     initializeGraphForHop(hop) {
-        const container = document.getElementById('graphs-container');
-        if (!container) return;
+        const container = document.getElementById('hops-list');
+        if (!container || document.getElementById(`hop-${hop.hopNumber}`)) return;
 
-        if (!hop.isActive) return;
 
-        // Check if graph already exists
-        if (document.getElementById(`hop-graph-${hop.hopNumber}`)) {
-            return;
-        }
+        const hopDiv = document.createElement('div');
+        hopDiv.className = 'hop-row-v2 clickable';
+        hopDiv.id = `hop-${hop.hopNumber}`;
+        hopDiv.onclick = () => this.showHopDetails(hop.hopNumber);
 
-        const graphDiv = document.createElement('div');
-        graphDiv.className = 'hop-graph';
-        graphDiv.id = `hop-graph-${hop.hopNumber}`;
-
-        // Build label with hostname only if serverNames is enabled
-        let label = `${hop.hopNumber}. ${hop.ip}`;
-        if (this.config.serverNames && hop.hostname && hop.hostname.trim() !== '') {
-            label = `${hop.hopNumber}. ${hop.hostname} (${hop.ip})`;
-        }
-
-        // Build stats text
-        let statsText = '';
-        if (this.config.packetLoss) {
-            // Ensure packetLoss is a number and calculate if needed
-            let packetLoss = hop.packetLoss;
-            if (typeof packetLoss !== 'number' || isNaN(packetLoss)) {
-                const total = (hop.successful || 0) + (hop.failed || 0);
-                packetLoss = total > 0 ? ((hop.failed || 0) / total) * 100 : 0;
-            }
-            statsText += `${packetLoss.toFixed(2)}%`;
-        }
-        if (this.config.lastPing) {
-            // For latency 0, we can display it as "<1ms" or just "0ms" or "1ms"
-            // If it's -1, it's a timeout.
-            if (hop.lastPing > 0) {
-                statsText += statsText ? ` [${hop.lastPing}ms` : `[${hop.lastPing}ms`;
-            } else if (hop.lastPing === 0) {
-                // Should consider 0 as valid response (e.g. local or very fast)
-                // Display as <1ms for better clarity
-                statsText += statsText ? ` [<1ms` : `[<1ms`;
-            } else {
-                statsText += statsText ? ` [timeout` : `[timeout`;
-            }
-        }
-        if (this.config.average && hop.average > 0) {
-            statsText += statsText ? `, avg:${hop.average.toFixed(0)}ms` : `[avg:${hop.average.toFixed(0)}ms`;
-        }
-        if (statsText && !statsText.endsWith(']')) {
-            statsText += ']';
-        }
-
-        graphDiv.innerHTML = `
-            <div class="hop-label">${statsText} ${label}</div>
-            <canvas class="graph-canvas" id="canvas-${hop.hopNumber}" width="800" height="50"></canvas>
+        hopDiv.innerHTML = `
+            <div class="hop-main-info">
+                <span class="hop-num-v2">${hop.hopNumber}</span>
+                <div class="hop-address-box">
+                    <div class="hop-ip-v2">${hop.ip}</div>
+                    <div class="hop-host-v2">${hop.hostname || ''}</div>
+                    <div class="hop-meta-v2">
+                        ${hop.asn ? `<span class="hop-asn-v2">ASN ${hop.asn}</span>` : ''}
+                        ${hop.geo ? `<span class="hop-geo-v2">${hop.geo}</span>` : ''}
+                        ${hop.ix ? `<span class="hop-ix-v2">${hop.ix}</span>` : ''}
+                        ${hop.flapping ? `<span class="hop-flap-v2">FLAP</span>` : ''}
+                    </div>
+                </div>
+            </div>
+            <div class="hop-stats-v2">
+                <span class="stat-val" data-label="Sent" id="sent-${hop.hopNumber}">${hop.sent || 0}</span>
+                <span class="stat-val" data-label="Loss" id="loss-${hop.hopNumber}">${hop.packetLoss.toFixed(1)}%</span>
+                <span class="stat-val highlight" data-label="Last" id="last-${hop.hopNumber}">${hop.lastPing >= 0 ? hop.lastPing : '--'}</span>
+                <span class="stat-val" data-label="Avg" id="avg-${hop.hopNumber}">${hop.average.toFixed(1)}</span>
+                <span class="stat-val" data-label="Min" id="min-${hop.hopNumber}">${hop.min}</span>
+                <span class="stat-val" data-label="Max" id="max-${hop.hopNumber}">${hop.max}</span>
+                <span class="stat-val" data-label="Std" id="std-${hop.hopNumber}">${hop.stdDev.toFixed(1)}</span>
+                <span class="stat-val" data-label="Jit" id="jit-${hop.hopNumber}">${hop.jitter.toFixed(1)}</span>
+            </div>
+            <div class="hop-visual">
+                <canvas id="canvas-${hop.hopNumber}" width="300" height="24"></canvas>
+            </div>
         `;
+        container.appendChild(hopDiv);
 
-        container.appendChild(graphDiv);
-
-        // Initialize graph data
         this.graphData[hop.hopNumber] = {
             canvas: document.getElementById(`canvas-${hop.hopNumber}`),
             ctx: document.getElementById(`canvas-${hop.hopNumber}`).getContext('2d'),
@@ -472,258 +282,245 @@ export class PingTracerPage {
     }
 
     updateHop(hop) {
-        if (!this.hops) return;
+        const hn = hop.hopNumber;
+        const updates = {
+            [`sent-${hn}`]: hop.sent,
+            [`loss-${hn}`]: `${hop.packetLoss.toFixed(1)}%`,
+            [`last-${hn}`]: hop.lastPing >= 0 ? hop.lastPing : '--',
+            [`avg-${hn}`]: hop.average.toFixed(1),
+            [`min-${hn}`]: hop.min,
+            [`max-${hn}`]: hop.max,
+            [`std-${hn}`]: hop.stdDev.toFixed(1),
+            [`jit-${hn}`]: hop.jitter.toFixed(1)
+        };
 
-        // Update hop data
-        const hopIndex = this.hops.findIndex(h => h.hopNumber === hop.hopNumber);
-        if (hopIndex >= 0) {
-            // Preserve hostname if it exists and new one is empty
-            if (this.hops[hopIndex].hostname && (!hop.hostname || hop.hostname.trim() === '')) {
-                hop.hostname = this.hops[hopIndex].hostname;
+        for (const [id, val] of Object.entries(updates)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        const lossEl = document.getElementById(`loss-${hn}`);
+        if (lossEl) lossEl.style.color = hop.packetLoss > 10 ? '#ef4444' : '#10b981';
+
+        const gd = this.graphData[hn];
+        if (gd) {
+            gd.data.push(hop.lastPing);
+            if (gd.data.length > 50) gd.data.shift();
+            this.drawGraph(gd);
+
+            // If details modal is open for this hop, update it
+            if (this.activeDetailHop === hn) {
+                this.updateHopDetails(hop);
             }
-            this.hops[hopIndex] = hop;
-
-            // Update the label in the graph
-            this.updateHopLabel(hop);
-        }
-
-        // Update graph
-        if (this.graphData[hop.hopNumber]) {
-            this.drawGraph(hop.hopNumber, hop);
-        }
-
-        // Update statistics
-        this.updateStatistics();
-    }
-
-    updateHopLabel(hop) {
-        const graphDiv = document.getElementById(`hop-graph-${hop.hopNumber}`);
-        if (!graphDiv) return;
-
-        // Build label with hostname only if serverNames is enabled
-        let label = `${hop.hopNumber}. ${hop.ip}`;
-        if (this.config.serverNames && hop.hostname && hop.hostname.trim() !== '') {
-            label = `${hop.hopNumber}. ${hop.hostname} (${hop.ip})`;
-        }
-
-        // Build stats text
-        let statsText = '';
-        if (this.config.packetLoss) {
-            // Ensure packetLoss is a number and calculate if needed
-            let packetLoss = hop.packetLoss;
-            if (typeof packetLoss !== 'number' || isNaN(packetLoss)) {
-                const total = (hop.successful || 0) + (hop.failed || 0);
-                packetLoss = total > 0 ? ((hop.failed || 0) / total) * 100 : 0;
-            }
-            statsText += `${packetLoss.toFixed(2)}%`;
-        }
-        if (this.config.lastPing) {
-            // For latency 0, we can display it as "<1ms" or just "0ms" or "1ms"
-            // If it's -1, it's a timeout.
-            if (hop.lastPing > 0) {
-                statsText += statsText ? ` [${hop.lastPing}ms` : `[${hop.lastPing}ms`;
-            } else if (hop.lastPing === 0) {
-                // Should consider 0 as valid response (e.g. local or very fast)
-                // Display as <1ms for better clarity
-                statsText += statsText ? ` [<1ms` : `[<1ms`;
-            } else {
-                statsText += statsText ? ` [timeout` : `[timeout`;
-            }
-        }
-        if (this.config.average && hop.average > 0) {
-            statsText += statsText ? `, avg:${hop.average.toFixed(0)}ms` : `[avg:${hop.average.toFixed(0)}ms`;
-        }
-        if (statsText && !statsText.endsWith(']')) {
-            statsText += ']';
-        }
-
-        // Update label
-        const labelEl = graphDiv.querySelector('.hop-label');
-        if (labelEl) {
-            labelEl.textContent = `${statsText} ${label}`;
         }
     }
 
-    drawGraph(hopNumber, hop) {
-        const graph = this.graphData[hopNumber];
-        if (!graph) return;
+    showHopDetails(hopNumber) {
+        const hop = this.hops.find(h => h.hopNumber === hopNumber);
+        if (!hop || !window.modalInstance) return;
 
-        const canvas = graph.canvas;
-        const ctx = graph.ctx;
-        const width = canvas.width;
-        const height = canvas.height;
+        this.activeDetailHop = hopNumber;
 
-        // Add new data point
-        graph.data.push({
-            latency: hop.lastPing,
-            timestamp: Date.now()
-        });
+        const content = `
+            <div class="hop-detail-modal compact-wide">
+                <div class="hop-detail-meta top-row">
+                    <div class="meta-item"><span>Hostname:</span> ${hop.hostname || 'Unknown'}</div>
+                    <div class="meta-item"><span>ASN:</span> ${hop.asn || 'N/A'}</div>
+                    <div class="meta-item"><span>Geo:</span> ${hop.geo || 'N/A'}</div>
+                </div>
 
-        // Keep only last maxGraphPoints
-        if (graph.data.length > this.maxGraphPoints) {
-            graph.data = graph.data.slice(-this.maxGraphPoints);
+                <div class="hop-detail-visual small-wide">
+                    <canvas id="detail-canvas-${hop.hopNumber}" width="800" height="25"></canvas>
+                </div>
+
+                <div class="hop-detail-main-grid">
+                    <!-- Column 1: Core Flow -->
+                    <div class="detail-column">
+                        <div class="detail-section">
+                            <h5>Transmission</h5>
+                            <div class="detail-row"><span>Sent:</span> <span id="dt-sent">${hop.sent}</span></div>
+                            <div class="detail-row"><span>Recv:</span> <span id="dt-recv">${hop.successful}</span></div>
+                            <div class="detail-row"><span>Loss:</span> <span id="dt-loss">${hop.packetLoss.toFixed(1)}%</span></div>
+                        </div>
+                        <div class="detail-section">
+                            <h5>Routing Symmetry</h5>
+                            <div class="detail-row"><span>Forward:</span> <span id="dt-fwd">${hop.forwardHops}</span></div>
+                            <div class="detail-row"><span>Return:</span> <span id="dt-ret">${hop.returnHops}</span></div>
+                            <div class="detail-row"><span>Symm:</span> <span id="dt-sym-ok" class="text-success">${hop.symmetric}</span> / <span id="dt-sym-err" class="text-danger">${hop.asymmetric}</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Latency & TTL -->
+                    <div class="detail-column">
+                        <div class="detail-section">
+                            <h5>Latency Stats</h5>
+                            <div class="detail-row"><span>Min/Avg/Max:</span> <span><span id="dt-min">${hop.min}</span>/<span id="dt-avg">${hop.average.toFixed(1)}</span>/<span id="dt-max">${hop.max}</span></span></div>
+
+                            <div class="detail-row"><span>Last:</span> <span id="dt-last" class="text-primary">${hop.lastPing}ms</span></div>
+                            <div class="detail-row"><span>StdDev:</span> <span id="dt-std">${hop.stdDev.toFixed(2)}ms</span></div>
+                        </div>
+                        <div class="detail-section">
+                            <h5>TTL Behavior</h5>
+                            <div class="detail-row"><span>Sent/Quoted:</span> <span><span id="dt-ttl-sent">${hop.sentTTL}</span> / <span id="dt-ttl-last">${hop.lastQuoted}</span></span></div>
+                            <div class="detail-row"><span>Result:</span> <span><span id="dt-ttl-ok" class="text-success">${hop.ttlNormal}</span> / <span id="dt-ttl-err" class="text-danger">${hop.ttlAnomalous}</span></span></div>
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Distribution -->
+                    <div class="detail-column">
+                        <div class="detail-section">
+                            <h5>Percentiles <small>(ms)</small></h5>
+                            <div class="detail-row"><span>p50 / p95 / p99:</span> <span><span id="dt-p50">${hop.p50}</span> / <span id="dt-p95">${hop.p95}</span> / <span id="dt-p99">${hop.p99}</span></span></div>
+                        </div>
+                        <div class="detail-section">
+                            <h5>Jitter Analysis</h5>
+                            <div class="detail-row"><span>Avg Jitter:</span> <span id="dt-jit-avg">${hop.jitterAvg?.toFixed(2) || '0.00'}ms</span></div>
+                            <div class="detail-row"><span>Max Jitter:</span> <span id="dt-jit-max">${hop.jitterMax?.toFixed(2) || '0.00'}ms</span></div>
+                            <div class="detail-row"><span>Current:</span> <span id="dt-jit-cur">${hop.jitter.toFixed(2)}ms</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hop-detail-footer-mini">
+                    <i class="fas fa-info-circle"></i> Live diagnostics for hop ${hop.hopNumber}.
+                </div>
+            </div>
+        `;
+
+        window.modalInstance.open(`Hop ${hop.hopNumber}: ${hop.ip}`, content, [], true);
+
+
+
+        // Render detailed graph after modal is shown
+        setTimeout(() => {
+            const canvas = document.getElementById(`detail-canvas-${hop.hopNumber}`);
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                const gd = this.graphData[hopNumber];
+                if (gd) {
+                    this.drawDetailedGraph(ctx, canvas, gd.data);
+                }
+            }
+        }, 100);
+    }
+
+    updateHopDetails(hop) {
+        const mapping = {
+            'dt-sent': hop.sent,
+            'dt-recv': hop.successful,
+            'dt-loss': `${hop.packetLoss.toFixed(1)}%`,
+            'dt-min': `${hop.min}ms`,
+            'dt-avg': `${hop.average.toFixed(1)}ms`,
+            'dt-max': `${hop.max}ms`,
+            'dt-last': `${hop.lastPing}ms`,
+            'dt-std': `${hop.stdDev.toFixed(2)}ms`,
+            'dt-p50': `${hop.p50}ms`,
+            'dt-p95': `${hop.p95}ms`,
+            'dt-p99': `${hop.p99}ms`,
+            'dt-jit-avg': `${hop.jitterAvg?.toFixed(2) || '0.00'}ms`,
+            'dt-jit-max': `${hop.jitterMax?.toFixed(2) || '0.00'}ms`,
+            'dt-jit-cur': `${hop.jitter.toFixed(2)}ms`,
+            // Symmetry & TTL
+            'dt-fwd': hop.forwardHops,
+            'dt-ret': hop.returnHops,
+            'dt-diff': (hop.forwardHops - hop.returnHops).toFixed(1),
+            'dt-sym-smp': hop.symSamples,
+            'dt-sym-ok': hop.symmetric,
+            'dt-sym-err': hop.asymmetric,
+            'dt-ttl-sent': hop.sentTTL,
+            'dt-ttl-last': hop.lastQuoted,
+            'dt-ttl-smp': hop.ttlSamples,
+            'dt-ttl-ok': hop.ttlNormal,
+            'dt-ttl-err': hop.ttlAnomalous
+        };
+
+
+        for (const [id, val] of Object.entries(mapping)) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
         }
 
-        // Clear canvas
-        ctx.clearRect(0, 0, width, height);
+        const canvas = document.getElementById(`detail-canvas-${hop.hopNumber}`);
+        if (canvas) {
+            const ctx = canvas.getContext('2d');
+            const gd = this.graphData[hop.hopNumber];
+            if (gd) {
+                this.drawDetailedGraph(ctx, canvas, gd.data);
+            }
+        }
+    }
 
-        // Set background
+    drawDetailedGraph(ctx, canvas, data) {
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
         ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillRect(0, 0, w, h);
 
-        if (graph.data.length < 2) {
-            return;
-        }
+        if (data.length < 2) return;
 
-        // Find min and max latency for scaling
-        let minLatency = Infinity;
-        let maxLatency = -Infinity;
-        graph.data.forEach(point => {
-            if (point.latency >= 0) { // Include 0
-                if (point.latency < minLatency) minLatency = point.latency;
-                if (point.latency > maxLatency) maxLatency = point.latency;
-            }
-        });
+        const max = Math.max(...data.filter(v => v >= 0), 50) * 1.5;
+        const barWidth = w / 50;
 
-        // Add padding
-        if (minLatency === Infinity) minLatency = 0;
-        if (maxLatency === -Infinity) maxLatency = 100;
-        const range = maxLatency - minLatency || 100;
-        minLatency = Math.max(0, minLatency - range * 0.1);
-        maxLatency = maxLatency + range * 0.1;
-
-        // Draw threshold lines
-        if (this.config.badThreshold > 0) {
-            const badY = height - ((this.config.badThreshold - minLatency) / (maxLatency - minLatency)) * height;
-            ctx.strokeStyle = '#fbbf24';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(0, badY);
-            ctx.lineTo(width, badY);
-            ctx.stroke();
-        }
-
-        if (this.config.worseThreshold > 0) {
-            const worseY = height - ((this.config.worseThreshold - minLatency) / (maxLatency - minLatency)) * height;
-            ctx.strokeStyle = '#ef4444';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(0, worseY);
-            ctx.lineTo(width, worseY);
-            ctx.stroke();
-        }
-
-        ctx.setLineDash([]);
-
-        // Draw graph line
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-
-        let hasData = false;
-        graph.data.forEach((point, index) => {
-            const x = (index / (graph.data.length - 1)) * width;
-
-            if (point.latency >= 0) { // Include 0 as valid point
-                const y = height - ((point.latency - minLatency) / (maxLatency - minLatency)) * height;
-
-                if (!hasData) {
-                    ctx.moveTo(x, y);
-                    hasData = true;
-                } else {
-                    ctx.lineTo(x, y);
-                }
-            } else {
-                // Failed ping - draw red marker
+        data.forEach((val, i) => {
+            const x = i * barWidth;
+            if (val < 0) {
                 ctx.fillStyle = '#ef4444';
-                ctx.fillRect(x - 1, 0, 2, height);
+                ctx.fillRect(x, 0, barWidth - 1, h);
+            } else {
+                const barHeight = (val / max) * h;
+                ctx.fillStyle = '#34d399';
+                ctx.fillRect(x, h - barHeight, barWidth - 1, barHeight);
             }
         });
-
-        if (hasData) {
-            ctx.stroke();
-        }
-
-        // Draw filled area
-        if (hasData) {
-            ctx.fillStyle = 'rgba(16, 185, 129, 0.2)';
-            ctx.beginPath();
-            ctx.moveTo(0, height);
-            graph.data.forEach((point, index) => {
-                if (point.latency >= 0) { // Include 0
-                    const x = (index / (graph.data.length - 1)) * width;
-                    const y = height - ((point.latency - minLatency) / (maxLatency - minLatency)) * height;
-                    ctx.lineTo(x, y);
-                }
-            });
-            ctx.lineTo(width, height);
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        // Draw Min/Max lines if enabled (after graph so they're visible)
-        if (this.config.minMax && hop.min > 0 && hop.max > 0) {
-            // Draw Min line
-            const minY = height - ((hop.min - minLatency) / (maxLatency - minLatency)) * height;
-            ctx.strokeStyle = '#3b82f6';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(0, minY);
-            ctx.lineTo(width, minY);
-            ctx.stroke();
-
-            // Draw Max line
-            const maxY = height - ((hop.max - minLatency) / (maxLatency - minLatency)) * height;
-            ctx.strokeStyle = '#f59e0b';
-            ctx.lineWidth = 2;
-            ctx.setLineDash([5, 5]);
-            ctx.beginPath();
-            ctx.moveTo(0, maxY);
-            ctx.lineTo(width, maxY);
-            ctx.stroke();
-
-            ctx.setLineDash([]);
-        }
     }
 
-    updateStatistics() {
-        let totalSuccessful = 0;
-        let totalFailed = 0;
 
-        this.hops.forEach(hop => {
-            totalSuccessful += hop.successful || 0;
-            totalFailed += hop.failed || 0;
+    drawGraph(gd) {
+        const { ctx, canvas, data } = gd;
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.clearRect(0, 0, w, h);
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(0, 0, w, h);
+
+        if (data.length < 2) return;
+
+        const max = Math.max(...data.filter(v => v >= 0), 100) * 1.2;
+        const step = w / (this.maxGraphPoints - 1);
+        const startX = w - (data.length * step);
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 1.5;
+
+        data.forEach((val, i) => {
+            const x = startX + (i * step);
+            if (val < 0) {
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(x - 1, 0, 2, h);
+            } else {
+                const y = h - (val / max) * h;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
         });
-
-        const totalSuccessfulEl = document.getElementById('total-successful');
-        const totalFailedEl = document.getElementById('total-failed');
-        if (totalSuccessfulEl) totalSuccessfulEl.textContent = totalSuccessful;
-        if (totalFailedEl) totalFailedEl.textContent = totalFailed;
-    }
-
-    toggleConfigSidebar() {
-        const form = document.getElementById('ping-tracer-form');
-        const overlay = document.getElementById('ping-tracer-overlay');
-        if (form && overlay) {
-            form.classList.toggle('sidebar-open');
-            overlay.classList.toggle('show');
-        }
-    }
-
-    closeConfigSidebar() {
-        const form = document.getElementById('ping-tracer-form');
-        const overlay = document.getElementById('ping-tracer-overlay');
-        if (form && overlay) {
-            form.classList.remove('sidebar-open');
-            overlay.classList.remove('show');
-        }
+        ctx.stroke();
     }
 
     async mount() {
         window.pingTracerInstance = this;
     }
 
+    cleanup() {
+        this.stop();
+    }
+
+    toggleConfigSidebar() {
+        // Obsolete with new header design
+    }
+
+    closeConfigSidebar() {
+        // Obsolete with new header design
+    }
 }

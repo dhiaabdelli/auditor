@@ -209,21 +209,28 @@
 }
 
 @keyframes pulse-warning {
-    0%, 100% {
+
+    0%,
+    100% {
         box-shadow: 0 0 15px rgba(239, 68, 68, 0.2), 0 2px 4px rgba(0, 0, 0, 0.1);
     }
+
     50% {
         box-shadow: 0 0 20px rgba(239, 68, 68, 0.4), 0 2px 4px rgba(0, 0, 0, 0.1);
     }
 }
 
 @keyframes rotate-icon {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: rotate(0deg);
     }
+
     25% {
         transform: rotate(-10deg);
     }
+
     75% {
         transform: rotate(10deg);
     }
@@ -710,25 +717,37 @@
     text-transform: uppercase;
 }
 
-.status-online, .status-running, .status-ok, .status-healthy, .status-enabled, .status-connected, .status-up {
+.status-online,
+.status-running,
+.status-ok,
+.status-healthy,
+.status-enabled,
+.status-connected,
+.status-up {
     background: rgba(16, 185, 129, 0.2);
     color: #34d399;
     border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
-.status-offline, .status-stopped, .status-disabled, .status-disconnected, .status-down {
+.status-offline,
+.status-stopped,
+.status-disabled,
+.status-disconnected,
+.status-down {
     background: rgba(100, 116, 139, 0.2);
     color: var(--text-muted);
     border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
-.status-warning, .status-unhealthy {
+.status-warning,
+.status-unhealthy {
     background: rgba(245, 158, 11, 0.2);
     color: #fbbf24;
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
-.status-error, .status-failed {
+.status-error,
+.status-failed {
     background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
@@ -791,7 +810,7 @@
 }
 
 .table-compact tbody tr:last-child td {
-    border-bottom: none;
+    border-bottom: 1px solid var(--header-border);
 }
 
 .update-count-pill {
@@ -1564,17 +1583,3 @@
 .task-flag:hover::before {
     opacity: 1;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

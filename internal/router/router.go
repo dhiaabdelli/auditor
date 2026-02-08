@@ -568,27 +568,6 @@ func SetupRoutes(staticFS http.FileSystem) {
 	// Crypto Tools API endpoints
 	http.Handle("/api/crypto/rsa-generate", secureAPIHandler(handlers.HandleGenerateRSAKeyPair))
 
-	// Infrastructure Inventory handlers
-	http.Handle("/api/infrastructure-inventory/generate-excel", secureAPIHandler(handlers.HandleGenerateInfrastructureExcel))
-	http.Handle("/api/infrastructure-inventory", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case "GET":
-			if r.URL.Query().Get("id") != "" {
-				handlers.HandleGetInfrastructureInventory(w, r)
-			} else {
-				handlers.HandleGetInfrastructureInventories(w, r)
-			}
-		case "POST":
-			handlers.HandleCreateInfrastructureInventory(w, r)
-		case "PUT":
-			handlers.HandleUpdateInfrastructureInventory(w, r)
-		case "DELETE":
-			handlers.HandleDeleteInfrastructureInventory(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	}))
-
 	// API Audit endpoints
 	http.Handle("/api/audit/logs", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
@@ -603,7 +582,20 @@ func SetupRoutes(staticFS http.FileSystem) {
 	http.Handle("/api/audit/stats", secureAPIHandler(handlers.GetAPIAuditLogStats))
 
 	// User management endpoints
-	http.Handle("/api/admin/users", secureAPIHandler(handlers.HandleGetUsers))
+	http.Handle("/api/admin/users", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			handlers.HandleGetUsers(w, r)
+		case "POST":
+			handlers.HandleCreateUser(w, r)
+		case "PUT":
+			handlers.HandleUpdateUser(w, r)
+		case "DELETE":
+			handlers.HandleDeleteUser(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
 
 	// Sessions endpoints
 	http.Handle("/api/sessions", secureAPIHandler(func(w http.ResponseWriter, r *http.Request) {

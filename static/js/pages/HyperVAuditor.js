@@ -28,7 +28,7 @@ export class HyperVAuditorPage {
         this.showServicesModalFlag = false;
         this.selectedServicesModal = null; // { hostName, hostIndex, page }
         this.loadingReports = false;
-        this.viewMode = localStorage.getItem('hyperv-auditor-details-view-mode') || 'list';
+        this.loadingReports = false;
         this.overview = {
             upNodes: 0,
             totalNodes: 0,
@@ -205,7 +205,32 @@ export class HyperVAuditorPage {
                 level: 'Level',
                 viewAllErrors: 'View All',
                 details: 'Details',
-                close: 'Close'
+                close: 'Close',
+                // General Information
+                generalInformation: 'General Information',
+                generalInfoDesc: 'General details on the infrastructure',
+                numberOfHosts: 'Number of Hosts',
+                numberOfVMs: 'Number of VMs',
+                numberOfTemplates: 'Number of Templates',
+                numberOfClusters: 'Number of Clusters',
+                numberOfDatastores: 'Number of Datastores',
+                activeVMs: 'Active VMs',
+                inactiveVMs: 'Inactive VMs',
+                // License Report
+                licenseReport: 'License Report',
+                edition: 'Edition',
+                channel: 'Channel',
+                licenseStatus: 'License Status',
+                activation: 'Activation',
+                productKey: 'Product Key',
+                kmsInfo: 'KMS Information',
+                osVersionTable: 'Hosts Operating System Details',
+                osName: 'Operating System',
+                osBuild: 'Build Number',
+                osArchitecture: 'Architecture',
+                osEdition: 'Edition',
+                osInstallDate: 'Install Date',
+                lowSpaceVolumes: 'Volumes (Less than 15% Free)'
             },
             fr: {
                 title: 'Auditeur Hyper-V',
@@ -355,7 +380,32 @@ export class HyperVAuditorPage {
                 viewAllErrors: 'Voir Tout',
                 details: 'Détails',
                 close: 'Fermer',
-                deleting: 'Suppression...'
+                deleting: 'Suppression...',
+                // General Information
+                generalInformation: 'Informations Générales',
+                generalInfoDesc: 'Détails généraux sur l\'infrastructure',
+                numberOfHosts: 'Nombre d\'Hôtes',
+                numberOfVMs: 'Nombre de VMs',
+                numberOfTemplates: 'Nombre de Modèles',
+                numberOfClusters: 'Nombre de Clusters',
+                numberOfDatastores: 'Nombre de Datastores',
+                activeVMs: 'VMs Actives',
+                inactiveVMs: 'VMs Inactives',
+                // License Report
+                licenseReport: 'Rapport de Licence',
+                edition: 'Édition',
+                channel: 'Canal',
+                licenseStatus: 'Statut de Licence',
+                activation: 'Activation',
+                productKey: 'Clé de Produit',
+                kmsInfo: 'Informations KMS',
+                osVersionTable: 'Détails du Système d\'Exploitation des Hôtes',
+                osName: 'Système d\'Exploitation',
+                osBuild: 'Numéro de Build',
+                osArchitecture: 'Architecture',
+                osEdition: 'Édition',
+                osInstallDate: 'Date d\'Installation',
+                lowSpaceVolumes: 'Volumes (Moins de 15% Libre)'
             }
         };
         this.activeView = 'summary';
@@ -497,13 +547,13 @@ export class HyperVAuditorPage {
             <div class="administration-container page-container-full ${this.sidebarCollapsed ? 'sidebar-collapsed' : ''}">
                 <input type="file" id="report-file-input" accept=".json" style="display: none;" onchange="hyperVAuditorInstance.handleFileSelect(event)">
                 
-                <aside class="administration-sidebar">
+                <aside class="administration-sidebar" style="display: flex; flex-direction: column; overflow: hidden;">
                     <div class="sidebar-collapse-header">
                         <button class="collapse-btn" onclick="hyperVAuditorInstance.toggleSidebar()">
                             <i class="fas fa-angle-double-left"></i>
                         </button>
                     </div>
-                    <nav class="sidebar-nav">
+                    <nav class="sidebar-nav" style="overflow-y: auto; flex: 1; min-height: 0; padding-bottom: 3rem;">
                         <!-- Environment Category -->
                         <div class="sidebar-category ${this.expandedCategories.has('environment') ? 'expanded' : ''}">
                             <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('environment')">
@@ -528,6 +578,10 @@ export class HyperVAuditorPage {
                                 <button class="nav-item ${this.activeView === 'hosts' ? 'active' : ''}" 
                                         onclick="hyperVAuditorInstance.switchView('hosts')">
                                     <span>Hyper-V Hosts (${this.hosts.length})</span>
+                                </button>
+                                <button class="nav-item ${this.activeView === 'hosts-os-details' ? 'active' : ''}" 
+                                        onclick="hyperVAuditorInstance.switchView('hosts-os-details')">
+                                    <span>${this.t('osVersionTable')}</span>
                                 </button>
                                 ` : ''}
                                 ${this.clusterName ? `
@@ -556,26 +610,94 @@ export class HyperVAuditorPage {
                             </div>
                         </div>
 
-                        <!-- Hosts Details Category -->
+                        <!-- Hosts Details Categories -->
                         ${this.hosts.length > 0 ? `
-                        <div class="sidebar-category ${this.expandedCategories.has('hosts-details') ? 'expanded' : ''}">
-                            <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('hosts-details')">
+                        <div style="padding: 1.25rem 1.75rem 0.5rem; color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 0.5rem;">
+                            <span>Host Details</span>
+                        </div>
+                        ` + this.hosts.map((host, idx) => `
+                        <div class="sidebar-category ${this.expandedCategories.has('host-' + idx) ? 'expanded' : ''}">
+                            <div class="category-header" onclick="hyperVAuditorInstance.toggleCategory('host-' + ${idx})">
                                 <div class="category-title">
                                     <i class="fas fa-server"></i>
-                                    <span>Host Details</span>
+                                    <span>${host.name}</span>
                                 </div>
                                 <i class="fas fa-chevron-down arrow"></i>
                             </div>
                             <div class="category-items">
-                                ${this.hosts.map((host, idx) => `
-                                <button class="nav-item ${this.activeView === 'host-' + idx ? 'active' : ''}" 
-                                        onclick="hyperVAuditorInstance.switchView('host-${idx}')">
-                                    <span>${host.name}</span>
+                                <button class="nav-item ${this.activeView === `host-${idx}-summary` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-summary')">
+                                    <span>${this.t('summary') || 'Summary'}</span>
                                 </button>
-                                `).join('')}
+                                <button class="nav-item ${this.activeView === `host-${idx}-hardware` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-hardware')">
+                                    <span>${this.t('hardware') || 'Hardware'}</span>
+                                </button>
+                                <button class="nav-item ${this.activeView === `host-${idx}-system` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-system')">
+                                    <span>${this.t('system') || 'System'}</span>
+                                </button>
+                                ${host.serverRoles && host.serverRoles.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-roles` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-roles')">
+                                    <span>${this.t('roles') || 'Roles'}</span>
+                                </button>` : ''}
+                                ${Array.isArray(host.networkAdapters) && host.networkAdapters.some(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed)) ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-networks` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-networks')">
+                                    <span>${this.t('networks') || 'Networks'}</span>
+                                </button>` : ''}
+                                 <button class="nav-item ${this.activeView === `host-${idx}-disks` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-disks')">
+                                    <span>${this.t('disks') || 'Disks'}</span>
+                                </button>
+                                <button class="nav-item ${this.activeView === `host-${idx}-volumes` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-volumes')">
+                                    <span>${this.t('volumes') || 'Volumes'}</span>
+                                </button>
+                                ${host.mpioEnabled || (host.multipathIO && host.multipathIO.installed) ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-mpio` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-mpio')">
+                                    <span>MPIO</span>
+                                </button>` : ''}
+                                ${(host.liveMigrationSettings && host.liveMigrationSettings.enabled) || (host.liveMigration && host.liveMigration.enabled) ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-live-migration` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-live-migration')">
+                                    <span>Live Migration</span>
+                                </button>` : ''}
+                                ${(host.virtualSwitches && host.virtualSwitches.length > 0) || (host.vSwitches && host.vSwitches.length > 0) ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-virtual-switches` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-virtual-switches')">
+                                    <span>Virtual Switches</span>
+                                </button>` : ''}
+                                ${host.localUsers && host.localUsers.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-local-users` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-local-users')">
+                                    <span>${this.t('localUsers') || 'Local Users'}</span>
+                                </button>` : ''}
+                                ${host.localGroups && host.localGroups.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-local-groups` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-local-groups')">
+                                    <span>${this.t('localGroups') || 'Local Groups'}</span>
+                                </button>` : ''}
+                                ${host.missingUpdates && host.missingUpdates.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-missing-updates` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-missing-updates')">
+                                    <span>${this.t('missingUpdates') || 'Missing Updates'}</span>
+                                </button>` : ''}
+                                ${host.firewallRules && host.firewallRules.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-firewall` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-firewall')">
+                                    <span>${this.t('firewall') || 'Firewall'}</span>
+                                </button>` : ''}
+                                ${host.drivers && host.drivers.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-drivers` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-drivers')">
+                                    <span>${this.t('drivers') || 'Drivers'}</span>
+                                </button>` : ''}
+                                ${host.applications && host.applications.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-applications` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-applications')">
+                                    <span>${this.t('applications') || 'Applications'}</span>
+                                </button>` : ''}
+                                ${host.services && host.services.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-services` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-services')">
+                                    <span>${this.t('services') || 'Services'}</span>
+                                </button>` : ''}
+                                ${host.windowsUpdates && host.windowsUpdates.length > 0 ? `
+                                <button class="nav-item ${this.activeView === `host-${idx}-winupdates` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-winupdates')">
+                                    <span>${this.t('windowsUpdates') || 'Installed Updates'}</span>
+                                </button>` : ''}
+                                <button class="nav-item ${this.activeView === `host-${idx}-vms` ? 'active' : ''}" onclick="hyperVAuditorInstance.switchView('host-${idx}-vms')">
+                                    <span>${this.t('virtualMachines') || 'Virtual Machines'}</span>
+                                </button>
                             </div>
                         </div>
-                        ` : ''}
+                        `).join('') : ''}
                     </nav>
                 </aside>
 
@@ -583,9 +705,6 @@ export class HyperVAuditorPage {
                     <div class="file-share-auditor-main premium-auditor-container" style="height: 100%; display: flex; flex-direction: column; gap: 0; padding: 0;">
                         <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; height: 60px; flex-shrink: 0; background: rgba(15, 23, 42, 0.2); border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
                             <div style="display: flex; align-items: center; gap: 1rem; min-width: 0;">
-                                <button class="page-header-back-btn" onclick="hyperVAuditorInstance.goBack()" style="background: rgba(148, 163, 184, 0.08); border: none; color: #f8fafc; border-radius: 8px; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;">
-                                    <i class="fas fa-arrow-left" style="font-size: 0.9rem;"></i>
-                                </button>
                                 <div style="display: flex; align-items: center; gap: 0.875rem; overflow: hidden;">
                                     <h2 style="margin: 0; font-size: 1.15rem; font-weight: 600; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.selectedReport?.name || this.t('title')}</h2>
                                     <span style="font-size: 0.75rem; color: #64748b; background: rgba(148, 163, 184, 0.1); padding: 0.15rem 0.6rem; border-radius: 12px; white-space: nowrap;">${this.clusterName || this.hosts?.[0]?.name || 'Hyper-V Audit'}</span>
@@ -593,15 +712,8 @@ export class HyperVAuditorPage {
                             </div>
                             
                             <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <div class="view-mode-switch" style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); padding: 3px; border-radius: 10px; height: 32px; display: flex; align-items: center;">
-                                    <button class="view-mode-btn ${this.viewMode === 'grid' ? 'active' : ''}" onclick="hyperVAuditorInstance.setViewMode('grid')" title="Grid View" style="border-radius: 6px; width: 26px; height: 26px; font-size: 0.75rem;">
-                                        <i class="fas fa-th-large"></i>
-                                    </button>
-                                    <button class="view-mode-btn ${this.viewMode === 'list' ? 'active' : ''}" onclick="hyperVAuditorInstance.setViewMode('list')" title="List View" style="border-radius: 6px; width: 26px; height: 26px; font-size: 0.75rem;">
-                                        <i class="fas fa-list"></i>
-                                    </button>
-                                </div>
                                 <button class="premium-action-btn" onclick="hyperVAuditorInstance.loadReport()" style="height: 32px; width: 32px; padding: 0; display: flex; justify-content: center; align-items: center;">
+
                                     <i class="fas fa-sync-alt" style="font-size: 0.75rem;"></i>
                                 </button>
                                 <button class="premium-action-btn" onclick="hyperVAuditorInstance.generateScript({ encrypt: true, obfuscate: true })" style="height: 32px; padding: 0 0.75rem; font-size: 0.75rem;">
@@ -618,13 +730,15 @@ export class HyperVAuditorPage {
                             </div>
                         </div>
                         
-                        <div class="audit-content" style="padding: 1.5rem; overflow-y: auto; flex: 1;">
+                        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
                             ${!this.selectedReport ? `
-                                <div class="card" style="margin: 1.5rem;">
-                                    <div class="card-body">
-                                        <div class="empty-state">
-                                            <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--gray-light); margin-bottom: 1rem;"></i>
-                                            <p>${this.t('loadingReport')}</p>
+                                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; overflow-y: auto; height: 100%;">
+                                    <div class="card" style="margin: 1.5rem;">
+                                        <div class="card-body">
+                                            <div class="empty-state">
+                                                <i class="fas fa-spinner fa-spin" style="font-size: 3rem; color: var(--gray-light); margin-bottom: 1rem;"></i>
+                                                <p>${this.t('loadingReport')}</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -665,7 +779,7 @@ export class HyperVAuditorPage {
             return this.clusterName ? this.renderClusterOverview() : '';
         }
         if (this.activeView === 'hosts') {
-            return this.hosts.length > 0 ? (this.viewMode === 'grid' ? this.renderHostsGrid() : this.renderHostsTable()) : '';
+            return this.hosts.length > 0 ? this.renderHostsTable() : '';
         }
         if (this.activeView === 'storage') {
             return this.clusterName ? `
@@ -676,28 +790,39 @@ export class HyperVAuditorPage {
         if (this.activeView === 'vms') {
             return this.clusterName ? this.renderAllVMsByHost() : '';
         }
+        if (this.activeView === 'hosts-os-details') {
+            return this.hosts.length > 0 ? this.renderHostsOSTable() : '';
+        }
+
 
         if (this.activeView.startsWith('host-')) {
-            const hostIndex = parseInt(this.activeView.split('-')[1]);
+            const parts = this.activeView.split('-');
+            const hostIndex = parseInt(parts[1]);
+            const sectionName = parts.slice(2).join('-'); // Handle section names with dashes like 'missing-updates'
+
             const host = this.hosts[hostIndex];
             if (host) {
-                // We need to render segments of renderServerSections for a specific host
-                // Actually, let's just use CSS to show/hide sections, or a filtered version of renderServerSections
-                return this.renderServerSections(hostIndex);
+                if (sectionName) {
+                    return this.renderHostSection(hostIndex, sectionName);
+                } else {
+                    // Default to summary if no section specified
+                    return this.renderHostSection(hostIndex, 'summary');
+                }
             }
         }
 
         return `
             ${!this.clusterName && this.hosts.length > 0 ? this.renderSummary() : ''}
             ${this.clusterName ? this.renderClusterOverview() : ''}
-            ${this.hosts.length > 0 ? (this.viewMode === 'grid' ? this.renderHostsGrid() : this.renderHostsTable()) : ''}
+            ${this.hosts.length > 0 ? this.renderHostsTable() : ''}
             ${this.clusterName ? this.renderCSVTable() : ''}
             ${this.clusterName ? this.renderQuorumTable() : ''}
             ${this.clusterName ? this.renderAllVMsByHost() : ''}
-            ${this.hosts.length > 0 ? this.renderServerSections() : ''}
             ${this.showDriversModalFlag ? this.renderDriversModal() : ''}
             ${this.showApplicationsModalFlag ? this.renderApplicationsModal() : ''}
             ${this.showServicesModalFlag ? this.renderServicesModal() : ''}
+            ${this.localUsersModalOpen ? this.renderLocalUsersModal() : ''}
+            ${this.localGroupsModalOpen ? this.renderLocalGroupsModal() : ''}
         `;
     }
 
@@ -1225,8 +1350,15 @@ export class HyperVAuditorPage {
         const storagePercent = ov.totalStorage.value > 0 ? (ov.usedStorage.value / ov.totalStorage.value) * 100 : 0;
         const totalErrors = this.hosts.reduce((sum, host) => sum + (host.systemErrors?.length || 0), 0);
 
+        // Calculate VM counts
+        const runningVMs = ov.runningVm || 0;
+        const inactiveVMs = ov.totalVm - runningVMs;
+        const totalTemplates = this.hosts.reduce((sum, host) => sum + (host.templates?.length || 0), 0);
+        const totalDatastores = this.volumes?.length || 0;
+
         return `
-            <div class="compact-summary-section">
+            <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; overflow-y: auto; height: 100%;">
+                <div class="compact-summary-section">
                 <div class="compact-summary-grid">
                     <div class="compact-stat-card stat-servers">
                         <div class="stat-icon"><i class="fas fa-server"></i></div>
@@ -1273,8 +1405,113 @@ export class HyperVAuditorPage {
                         </div>
                     </div>
                 </div>
+
+                <!-- General Information Section -->
+                <div class="general-info-section" style="margin-top: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                        <i class="fas fa-info-circle" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                        <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('generalInformation')}</h3>
+                    </div>
+                    <div class="cluster-system-card" style="padding: 0;">
+                        <div class="info-table-wrapper">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8; width: 200px;">${this.t('numberOfHosts')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${this.hosts.length}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${ov.totalVm}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfTemplates')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${totalTemplates}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfClusters')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${this.clusterName ? 1 : 0}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfDatastores')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${totalDatastores}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('activeVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #10b981; font-weight: 500;">${runningVMs}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('inactiveVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f59e0b; font-weight: 500;">${inactiveVMs}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- License Report Section -->
+                <div class="license-report-section" style="margin-top: 2.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                        <i class="fas fa-key" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                        <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('licenseReport')}</h3>
+                    </div>
+                    <div class="cluster-system-card" style="padding: 0;">
+                        <div class="info-table-wrapper" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 600px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02);">
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('hostname')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('edition')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('channel')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('licenseStatus')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('productKey')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('kmsInfo')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${this.hosts.map(host => {
+            const wa = host.windowsActivation || {};
+            const status = wa.licenseStatus || 'Unknown';
+            const isActivated = wa.isActivated;
+            const statusLower = status.toLowerCase();
+            let statusType = 'warning';
+            if (isActivated === true || statusLower.includes('licensed') || statusLower.includes('activated')) {
+                statusType = 'success';
+            } else if (isActivated === false || statusLower.includes('unlicensed') || statusLower.includes('non-genuine') || statusLower.includes('inactive')) {
+                statusType = 'error';
+            }
+
+            return `
+                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                            <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${host.name}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">${wa.name || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">${wa.description || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem;">
+                                                <span class="activation-status activation-${statusType}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px;">${status}</span>
+                                            </td>
+                                            <td style="padding: 0.65rem 1rem; color: #f8fafc; font-family: monospace; font-size: 0.75rem;">${wa.productKey || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">
+                                                ${wa.kmsServer ? `
+                                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                        <i class="fas fa-server" style="font-size: 0.7rem;"></i>
+                                                        <span>${wa.kmsServer}${wa.kmsPort ? `:${wa.kmsPort}` : ''}</span>
+                                                    </div>
+                                                ` : (wa.isKmsClient ? 'KMS Client' : 'N/A')}
+                                            </td>
+                                        </tr>
+                                    `;
+        }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                ${this.renderHostsOSTable()}
+                ${this.renderLowSpaceVolumesTable()}
             </div>
         `;
+
     }
 
     renderClusterOverview() {
@@ -1413,11 +1650,12 @@ export class HyperVAuditorPage {
                 </div>
 
                 <div class="cluster-system-grid">
-                    <div class="cluster-system-card">
-                        <div class="system-card-header">
-                            <i class="fas fa-network-wired"></i>
-                            <span>${this.t('physicalResources')}</span>
+                    <div class="cluster-system-card-modern">
+                        <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.875rem; padding-left: 0.25rem;">
+                            <i class="fas fa-network-wired" style="color: #60a5fa; font-size: 1rem;"></i>
+                            <h3 style="margin: 0; font-size: 0.875rem; font-weight: 700; color: #f8fafc;">${this.t('physicalResources')}</h3>
                         </div>
+                        <div class="cluster-system-card">
                         <div class="system-card-content">
                             <div class="system-pill">
                                 <strong>${ov.totalNodes}</strong>
@@ -1437,11 +1675,12 @@ export class HyperVAuditorPage {
                             </div>
                         </div>
                     </div>
-                    <div class="cluster-system-card">
-                        <div class="system-card-header">
-                            <i class="fas fa-info-circle"></i>
-                            <span>${this.t('clusterMetadata')}</span>
+                    <div class="cluster-system-card-modern">
+                        <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.875rem; padding-left: 0.25rem;">
+                            <i class="fas fa-info-circle" style="color: #60a5fa; font-size: 1rem;"></i>
+                            <h3 style="margin: 0; font-size: 0.875rem; font-weight: 700; color: #f8fafc;">${this.t('clusterMetadata')}</h3>
                         </div>
+                        <div class="cluster-system-card">
                         <div class="system-card-meta">
                             ${clusterInfo.domain ? `<div><span>Domain</span><strong>${clusterInfo.domain}</strong></div>` : ''}
                             ${clusterInfo.state ? `<div><span>Status</span><strong>${clusterInfo.state}</strong></div>` : ''}
@@ -1451,16 +1690,121 @@ export class HyperVAuditorPage {
                         </div>
                     </div>
                 </div>
+                <!-- General Information Section -->
+                <div class="general-info-section" style="margin-top: 2rem;">
+                    <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                        <i class="fas fa-info-circle" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                        <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('generalInformation')}</h3>
+                    </div>
+                    <div class="cluster-system-card" style="padding: 0;">
+                        <div class="info-table-wrapper">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                                <tbody>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8; width: 200px;">${this.t('numberOfHosts')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${this.hosts.length}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${ov.totalVm}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfTemplates')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${this.hosts.reduce((sum, host) => sum + (host.templates?.length || 0), 0)}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfClusters')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${this.clusterName ? 1 : 0}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('numberOfDatastores')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${csvCount + clusterDiskCount}</td>
+                                    </tr>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('activeVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #10b981; font-weight: 500;">${ov.runningVm}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 0.65rem 1rem; color: #94a3b8;">${this.t('inactiveVMs')}</td>
+                                        <td style="padding: 0.65rem 1rem; color: #f59e0b; font-weight: 500;">${ov.totalVm - ov.runningVm}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- License Report Section -->
+                <div class="license-report-section" style="margin-top: 2.5rem;">
+                    <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                        <i class="fas fa-key" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                        <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('licenseReport')}</h3>
+                    </div>
+                    <div class="cluster-system-card" style="padding: 0;">
+                        <div class="info-table-wrapper" style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; min-width: 600px;">
+                                <thead>
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(255, 255, 255, 0.02);">
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('hostname')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('edition')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('channel')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('licenseStatus')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('productKey')}</th>
+                                        <th style="padding: 0.65rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('kmsInfo')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${this.hosts.map(host => {
+            const wa = host.windowsActivation || {};
+            const status = wa.licenseStatus || 'Unknown';
+            const isActivated = wa.isActivated;
+            const statusLower = status.toLowerCase();
+            let statusType = 'warning';
+            if (isActivated === true || statusLower.includes('licensed') || statusLower.includes('activated')) {
+                statusType = 'success';
+            } else if (isActivated === false || statusLower.includes('unlicensed') || statusLower.includes('non-genuine') || statusLower.includes('inactive')) {
+                statusType = 'error';
+            }
+
+            return `
+                                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                            <td style="padding: 0.65rem 1rem; color: #f8fafc; font-weight: 500;">${host.name}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">${wa.name || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">${wa.description || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem;">
+                                                <span class="activation-status activation-${statusType}" style="font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 4px;">${status}</span>
+                                            </td>
+                                            <td style="padding: 0.65rem 1rem; color: #f8fafc; font-family: monospace; font-size: 0.75rem;">${wa.productKey || 'N/A'}</td>
+                                            <td style="padding: 0.65rem 1rem; color: #94a3b8; font-size: 0.75rem;">
+                                                ${wa.kmsServer ? `
+                                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                        <i class="fas fa-server" style="font-size: 0.7rem;"></i>
+                                                        <span>${wa.kmsServer}${wa.kmsPort ? `:${wa.kmsPort}` : ''}</span>
+                                                    </div>
+                                                ` : (wa.isKmsClient ? 'KMS Client' : 'N/A')}
+                                            </td>
+                                        </tr>
+                                    `;
+        }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                ${this.renderHostsOSTable()}
+                ${this.renderLowSpaceVolumesTable()}
             </section>
-        `;
+        </div>`;
     }
 
-    renderHostsGrid() {
+    renderClusterOverview() {
         return `
-            <div style="margin-top: 2rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-left: 0.5rem;">
-                    <i class="fas fa-th-large" style="color: #60a5fa; font-size: 1.25rem;"></i>
-                    <h3 style="margin: 0; font-size: 1.125rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
+            <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; overflow-y: auto; height: 100%;">
+                ${this.renderSummary()}
+                <div style="margin-top: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1.25rem; padding-left: 0.5rem;">
+                    <i class="fas fa-th-large" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
                 </div>
                 <div class="reports-grid-modern" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
                     ${this.hosts.map((host, idx) => {
@@ -1482,7 +1826,7 @@ export class HyperVAuditorPage {
                                         <i class="fas fa-server"></i>
                                     </div>
                                     <div style="display: flex; flex-direction: column; overflow: hidden;">
-                                        <h3 style="margin: 0; font-size: 1rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${host.name}</h3>
+                                        <h3 style="margin: 0; font-size: 0.9rem; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${host.name}</h3>
                                         <div style="display: flex; align-items: center; gap: 0.375rem; margin-top: 0.125rem;">
                                             <span class="premium-status-badge ${isUp ? 'success' : 'empty'}" style="padding: 0.125rem 0.5rem; font-size: 0.65rem;">
                                                 ${isUp ? 'Online' : 'Offline'}
@@ -1494,15 +1838,15 @@ export class HyperVAuditorPage {
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem; padding: 1rem; background: rgba(15, 23, 42, 0.3); border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.05);">
                                     <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                         <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Workload</span>
-                                        <span style="color: #60a5fa; font-weight: 700; font-size: 1rem;">${host.vms?.length || 0} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">VMs</small></span>
+                                        <span style="color: #60a5fa; font-weight: 700; font-size: 0.9rem;">${host.vms?.length || 0} <small style="font-weight: 400; font-size: 0.65rem; color: #94a3b8;">VMs</small></span>
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                         <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Memory</span>
-                                        <span style="color: #ffffff; font-weight: 700; font-size: 1rem;">${memTotal ? Math.round(memTotal) : 'N/A'} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">GB</small></span>
+                                        <span style="color: #ffffff; font-weight: 700; font-size: 0.9rem;">${memTotal ? Math.round(memTotal) : 'N/A'} <small style="font-weight: 400; font-size: 0.65rem; color: #94a3b8;">GB</small></span>
                                     </div>
                                     <div style="display: flex; flex-direction: column; gap: 0.25rem;">
                                         <span style="font-size: 0.65rem; color: #64748b; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Compute</span>
-                                        <span style="color: #ffffff; font-weight: 700; font-size: 1rem;">${host.logicalProcessor || host.socketCount || 'N/A'} <small style="font-weight: 400; font-size: 0.7rem; color: #94a3b8;">LP</small></span>
+                                        <span style="color: #ffffff; font-weight: 700; font-size: 0.9rem;">${host.logicalProcessor || host.socketCount || 'N/A'} <small style="font-weight: 400; font-size: 0.65rem; color: #94a3b8;">LP</small></span>
                                     </div>
                                     <div style="display: flex; align-items: center; justify-content: flex-end;">
                                         <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(59, 130, 246, 0.1); display: flex; align-items: center; justify-content: center; color: #60a5fa; transition: all 0.3s;" class="card-arrow-icon">
@@ -1518,18 +1862,12 @@ export class HyperVAuditorPage {
         `;
     }
 
-    setViewMode(mode) {
-        this.viewMode = mode;
-        localStorage.setItem('hyperv-auditor-details-view-mode', mode);
-        this.updateDisplay();
-    }
-
     renderHostsTable() {
         return `
             <div style="margin-top: 2rem;">
-                <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; padding-left: 0.5rem;">
-                    <i class="fas fa-server" style="color: #60a5fa; font-size: 1.25rem;"></i>
-                    <h3 style="margin: 0; font-size: 1.125rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
+                <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1.25rem; padding-left: 0.5rem;">
+                    <i class="fas fa-server" style="color: #60a5fa; font-size: 1.15rem;"></i>
+                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('hyperVHosts')}</h3>
                 </div>
                 <div style="overflow-x: auto;">
                     <table class="audit-table-v2">
@@ -1588,17 +1926,17 @@ export class HyperVAuditorPage {
                                         <tr>
                                             <td>
                                                 <div style="display: flex; flex-direction: column;">
-                                                    <span style="font-weight: 700; color: #ffffff; font-size: 0.9375rem;">${host.name}</span>
+                                                    <span style="font-weight: 700; color: #ffffff; font-size: 0.85rem;">${host.name}</span>
                                                     <span style="font-size: 0.75rem; color: #64748b;">${isClustered}${clusterStateInfo}</span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div style="font-size: 0.8125rem; color: #94a3b8;">
+                                                <div style="font-size: 0.75rem; color: #94a3b8;">
                                                     ${host.hardware?.manufacturer || 'N/A'}<br>
                                                     <span style="font-size: 0.75rem;">${host.hardware?.model || 'N/A'}</span>
                                                 </div>
                                             </td>
-                                            <td><span style="font-size: 0.8125rem;">${host.osVersion || 'N/A'}</span></td>
+                                            <td><span style="font-size: 0.75rem;">${host.osVersion || 'N/A'}</span></td>
                                             <td>
                                                 ${(() => {
                     let hostStatus = 'up';
@@ -1618,18 +1956,18 @@ export class HyperVAuditorPage {
                 })()}
                                             </td>
                                             <td>
-                                                <span style="display: inline-flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.125rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.8125rem;">
+                                                <span style="display: inline-flex; align-items: center; justify-content: center; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); padding: 0.125rem 0.5rem; border-radius: 6px; font-weight: 700; font-size: 0.75rem;">
                                                     ${host.vms?.length || 0}
                                                 </span>
                                             </td>
                                             <td>
-                                                <div style="font-size: 0.8125rem;">
+                                                <div style="font-size: 0.75rem;">
                                                     <span style="color: #ffffff; font-weight: 600;">${host.logicalProcessor || host.socketCount || 'N/A'}</span>
                                                     <span style="color: #64748b; font-size: 0.7rem;"> LP</span>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div style="font-size: 0.8125rem;">
+                                                <div style="font-size: 0.75rem;">
                                                     <span style="color: #ffffff; font-weight: 600;">${memTotal ? Math.round(memTotal) : 'N/A'}</span>
                                                     <span style="color: #64748b; font-size: 0.7rem;"> GB</span>
                                                 </div>
@@ -1648,6 +1986,47 @@ export class HyperVAuditorPage {
             </div>
         `;
     }
+
+    renderHostsOSTable() {
+        return `
+            <div class="hosts-os-section" style="margin-top: 1rem;">
+                <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                    <i class="fas fa-microchip" style="color: #60a5fa; font-size: 0.95rem;"></i>
+                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('osVersionTable')}</h3>
+                </div>
+                <div class="cluster-system-card" style="padding: 0;">
+                    <div class="info-table-wrapper">
+                        <table class="compact-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(15, 23, 42, 0.2);">
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('hostname')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('osName')}</th>
+
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('osBuild')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('osArchitecture')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('osEdition')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('osInstallDate')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${this.hosts.map(host => `
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.75rem 1rem; color: #f8fafc; font-weight: 500;">${host.name}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${host.osProductName || host.osVersion || 'Unknown'}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${host.osBuildNumber || 'Unknown'}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${host.osArchitecture || 'Unknown'}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${host.osEditionID || 'Unknown'}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${host.osInstallDate || 'Unknown'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
 
     renderDisksTable() {
         const allDisks = [];
@@ -2079,19 +2458,113 @@ export class HyperVAuditorPage {
         `;
     }
 
+    renderLowSpaceVolumesTable() {
+        const criticalVolumes = [];
+        const threshold = 0.15;
+
+        // 1. Regular Host Volumes
+        if (this.hosts && Array.isArray(this.hosts)) {
+            this.hosts.forEach(host => {
+                if (host.volumes && Array.isArray(host.volumes)) {
+                    host.volumes.forEach(vol => {
+                        const size = vol.size || 0;
+                        const free = vol.sizeRemaining || 0;
+                        if (size > 0 && (free / size) < threshold) {
+                            criticalVolumes.push({
+                                name: vol.driveLetter ? `${vol.driveLetter}: (${vol.fileSystemLabel || 'Local Volume'})` : (vol.fileSystemLabel || 'Local Volume'),
+                                total: size,
+                                free: free,
+                                percent: (free / size * 100).toFixed(1),
+                                owner: host.name,
+                                type: 'Local'
+                            });
+                        }
+                    });
+                }
+            });
+        }
+
+        // 2. CSVs
+        if (this.clusterSharedVolumes && Array.isArray(this.clusterSharedVolumes)) {
+            this.clusterSharedVolumes.forEach(csv => {
+                const size = parseFloat(csv.size) || 0;
+                const free = parseFloat(csv.sizeRemaining) || 0;
+                if (size > 0 && (free / size) < threshold) {
+                    criticalVolumes.push({
+                        name: csv.name || csv.path || 'CSV',
+                        total: size,
+                        free: free,
+                        percent: (free / size * 100).toFixed(1),
+                        owner: csv.ownerNode || 'Cluster',
+                        type: 'CSV'
+                    });
+                }
+            });
+        }
+
+        if (criticalVolumes.length === 0) return '';
+
+        return `
+            <div class="low-space-volumes-section" style="margin-top: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.625rem; margin-bottom: 1rem; padding-left: 0.5rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: #ef4444; font-size: 0.95rem;"></i>
+                    <h3 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #f8fafc; letter-spacing: -0.01em;">${this.t('lowSpaceVolumes')}</h3>
+                </div>
+                <div class="cluster-system-card" style="padding: 0; border: 1px solid rgba(239, 68, 68, 0.2);">
+                    <div class="info-table-wrapper">
+                        <table class="compact-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                            <thead>
+                                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05); background: rgba(239, 68, 68, 0.05);">
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('volumeName')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('volumeOwner')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: left; color: #94a3b8; font-weight: 600;">${this.t('type')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: right; color: #94a3b8; font-weight: 600;">${this.t('total')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: right; color: #94a3b8; font-weight: 600;">${this.t('free')}</th>
+                                    <th style="padding: 0.75rem 1rem; text-align: right; color: #94a3b8; font-weight: 600;">Free %</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${criticalVolumes.map(vol => `
+                                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                        <td style="padding: 0.75rem 1rem; color: #f8fafc; font-weight: 500;">${vol.name}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">${vol.owner}</td>
+                                        <td style="padding: 0.75rem 1rem; color: #cbd5e1;">
+                                            <span style="font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px; background: rgba(148, 163, 184, 0.1); color: #94a3b8;">${vol.type}</span>
+                                        </td>
+                                        <td style="padding: 0.75rem 1rem; text-align: right; color: #cbd5e1;">${vol.total.toFixed(1)} GB</td>
+                                        <td style="padding: 0.75rem 1rem; text-align: right; color: #ef4444; font-weight: 600;">${vol.free.toFixed(1)} GB</td>
+                                        <td style="padding: 0.75rem 1rem; text-align: right;">
+                                            <div style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                                                <div style="width: 40px; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                                    <div style="width: ${vol.percent}%; height: 100%; background: #ef4444;"></div>
+                                                </div>
+                                                <span style="color: #ef4444; font-weight: 700;">${vol.percent}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+
     renderAllVMsByHost() {
         // Only show for clusters
         if (!this.clusterName || this.vms.length === 0) return '';
 
         return `
-            <div class="compact-table-section all-vms-table-section">
-                <div class="section-header-compact">
+            <div class="compact-table-section all-vms-table-section" style="display: flex; flex-direction: column; height: 100%;">
+                <div class="section-header-compact" style="flex-shrink: 0;">
                     <h3 class="section-title-compact"><i class="fas fa-cube"></i> All Virtual Machines</h3>
                 </div>
-                <div class="table-wrapper-compact">
-                    <table class="table-compact">
-                        <thead>
-                            <tr>
+                <div class="table-wrapper-compact" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                    <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                        <thead style="flex-shrink: 0; display: block;">
+                            <tr style="display: table; width: 100%; table-layout: fixed;">
                                 <th><i class="fas fa-cube"></i> ${this.t('vmName')}</th>
                                 <th><i class="fas fa-code-branch"></i> ${this.t('generationVersion')}</th>
                                 <th><i class="fas fa-power-off"></i> ${this.t('state')}</th>
@@ -2105,7 +2578,7 @@ export class HyperVAuditorPage {
                                 <th><i class="fas fa-network-wired"></i> ${this.t('network')}</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                             ${this.vms.map((vm, vmIndex) => {
             const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
             const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
@@ -2122,7 +2595,7 @@ export class HyperVAuditorPage {
 
             return `
                                 <tr class="data-row ${this.filters.expandedRows.has(rowId) ? 'expanded' : ''}" 
-                                    onclick="hyperVAuditorInstance.toggleRow('${rowId}')">
+                                    onclick="hyperVAuditorInstance.toggleRow('${rowId}')" style="display: table; width: 100%; table-layout: fixed;">
                                     <td>
                                         <div class="row-header">
                                             <strong>${vm.name || 'N/A'}</strong>
@@ -2448,7 +2921,7 @@ export class HyperVAuditorPage {
             const isOffline = hostStatus === 'offline';
 
             return `
-                <div class="server-card-wrapper ${isOffline ? 'server-offline' : ''}">
+                <div id="host-${actualIndex}-summary" class="server-card-wrapper ${isOffline ? 'server-offline' : ''}">
                     <div class="server-header-modern">
                         <div class="server-header-left-section">
                             <div class="server-icon-modern">
@@ -2510,7 +2983,7 @@ export class HyperVAuditorPage {
                 <div class="server-section-modern">
                     <div class="server-content-modern">
                         <!-- Hardware Information -->
-                        <div class="hardware-section-modern">
+                        <div id="host-${actualIndex}-hardware" class="hardware-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-microchip"></i> ${this.t('hardwareInfo')}
                             </h4>
@@ -2563,7 +3036,7 @@ export class HyperVAuditorPage {
                         </div>
 
                         <!-- System Information -->
-                        <div class="hardware-section-modern">
+                        <div id="host-${actualIndex}-system" class="hardware-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-info-circle"></i> ${this.t('systemInfo')}
                             </h4>
@@ -2693,7 +3166,7 @@ export class HyperVAuditorPage {
 
                         <!-- Server Roles -->
                         ${host.serverRoles && host.serverRoles.length > 0 ? `
-                        <div class="roles-section-modern">
+                        <div id="host-${actualIndex}-roles" class="roles-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-layer-group"></i> ${this.t('serverRoles')}
                                 <span class="role-count-badge-modern">${host.serverRoles.length}</span>
@@ -2722,7 +3195,7 @@ export class HyperVAuditorPage {
 
                         <!-- Host Networks -->
                         ${Array.isArray(host.networkAdapters) && host.networkAdapters.some(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed)) ? `
-                        <div class="host-network-section-modern">
+                        <div id="host-${actualIndex}-networks" class="host-network-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-network-wired"></i> ${this.t('hostNetworks')}
                                 <span class="network-count-badge-modern">${host.networkAdapters.filter(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed)).length}</span>
@@ -2887,14 +3360,18 @@ export class HyperVAuditorPage {
                         ` : ''}
 
                         <!-- Host Disks -->
-                        ${this.renderHostDisks(host)}
+                        <div id="host-${actualIndex}-disks">
+                             ${this.renderHostDisks(host)}
+                        </div>
                         
                         <!-- Host Volumes -->
-                        ${this.renderHostVolumes(host)}
+                        <div id="host-${actualIndex}-volumes">
+                            ${this.renderHostVolumes(host)}
+                        </div>
 
                         <!-- Multipath I/O (MPIO) -->
                         ${host.multipathIO && host.multipathIO.installed ? `
-                        <div class="multipath-section-compact">
+                        <div id="host-${actualIndex}-mpio" class="multipath-section-compact">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-route"></i> Multipath I/O (MPIO)
                                 <span class="mpio-status-badge mpio-status-${host.multipathIO.enabled ? 'enabled' : 'installed'}">
@@ -2980,7 +3457,7 @@ export class HyperVAuditorPage {
 
                         <!-- Live Migration Settings -->
                         ${host.liveMigration && host.liveMigration.enabled ? `
-                        <div class="livemigration-section-compact">
+                        <div id="host-${actualIndex}-livemigration" class="livemigration-section-compact">
                             <div class="livemigration-header-compact">
                                 <div class="livemigration-title-group">
                                     <i class="fas fa-exchange-alt"></i>
@@ -3048,7 +3525,7 @@ export class HyperVAuditorPage {
 
                         <!-- Virtual Switches -->
                         ${host.virtualSwitches && host.virtualSwitches.length > 0 ? `
-                        <div class="vswitches-section-compact">
+                        <div id="host-${actualIndex}-vswitches" class="vswitches-section-compact">
                             <div class="vswitches-header-compact">
                                 <div class="vswitches-title-group">
                                     <i class="fas fa-network-wired"></i>
@@ -3164,7 +3641,7 @@ export class HyperVAuditorPage {
                         ` : ''}
 
                         ${host.localUsers && host.localUsers.length > 0 ? `
-                        <div class="users-section-modern">
+                        <div id="host-${actualIndex}-users" class="users-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-users"></i> ${this.t('localUsers')}
                                 <span class="role-count-badge-modern">${host.localUsers.length}</span>
@@ -3197,7 +3674,7 @@ export class HyperVAuditorPage {
                         ` : ''}
 
                         ${host.localGroups && host.localGroups.length > 0 ? `
-                        <div class="groups-section-modern">
+                        <div id="host-${actualIndex}-groups" class="groups-section-modern">
                             <h4 class="section-subtitle-modern">
                                 <i class="fas fa-users-cog"></i> ${this.t('localGroups')}
                                 <span class="role-count-badge-modern">${host.localGroups.length}</span>
@@ -3251,22 +3728,27 @@ export class HyperVAuditorPage {
 
                         <!-- Missing Windows Updates -->
                         ${host.missingUpdates && host.missingUpdates.length > 0 ? `
-                        <div class="hardware-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-missing-updates" class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-download"></i> Missing Windows Updates
                                 <span class="update-count-pill">${host.missingUpdates.length}</span>
+                                ${host.missingUpdates.length > 20 ? `
+                                <button class="view-all-btn-compact" onclick="hyperVAuditorInstance.showErrorsModal('missingUpdates', 'Missing Windows Updates - ${host.name}', ${actualIndex})">
+                                    View all (${host.missingUpdates.length}) <i class="fas fa-chevron-right"></i>
+                                </button>
+                                ` : ''}
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>KB Article</th>
                                             <th>Name</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        ${host.missingUpdates.map(update => `
-                                        <tr>
+                                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                        ${host.missingUpdates.slice(0, 20).map(update => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td><strong>${update.kbNumber || 'N/A'}</strong></td>
                                             <td>${update.title || 'N/A'}</td>
                                         </tr>
@@ -3279,23 +3761,23 @@ export class HyperVAuditorPage {
 
                         <!-- Windows Firewall -->
                         ${host.windowsFirewall && host.windowsFirewall.length > 0 ? `
-                        <div class="hardware-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-firewall" class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-shield-alt"></i> Windows Firewall
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>Profile</th>
                                             <th>Profile Enabled</th>
                                             <th>Inbound Action</th>
                                             <th>Outbound Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${host.windowsFirewall.map(fw => `
-                                        <tr>
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td><strong>${fw.profile || 'N/A'}</strong></td>
                                             <td><span class="status-badge status-${fw.profileEnabled ? 'online' : 'offline'}">${fw.profileEnabled ? 'Enabled' : 'Disabled'}</span></td>
                                             <td>${fw.inboundAction || 'N/A'}</td>
@@ -3310,8 +3792,8 @@ export class HyperVAuditorPage {
 
                         <!-- Installed Drivers -->
                         ${host.drivers && host.drivers.length > 0 ? `
-                        <div class="hardware-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-drivers" class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-microchip"></i> Installed Drivers
                                 <span class="update-count-pill">${host.drivers.length}</span>
                                 ${host.drivers.length > 20 ? `
@@ -3320,10 +3802,10 @@ export class HyperVAuditorPage {
                                 </button>
                                 ` : ''}
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>Class Description</th>
                                             <th>Provider Name</th>
                                             <th>Driver Version</th>
@@ -3331,9 +3813,9 @@ export class HyperVAuditorPage {
                                             <th>Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${host.drivers.slice(0, 20).map(driver => `
-                                        <tr>
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td>${driver.classDescription || 'N/A'}</td>
                                             <td>${driver.providerName || 'N/A'}</td>
                                             <td>${driver.driverVersion || 'N/A'}</td>
@@ -3349,8 +3831,8 @@ export class HyperVAuditorPage {
 
                         <!-- Installed Applications -->
                         ${host.installedApplications && host.installedApplications.length > 0 ? `
-                        <div class="hardware-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-apps" class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-box"></i> Installed Applications
                                 <span class="update-count-pill">${host.installedApplications.length}</span>
                                 ${host.installedApplications.length > 20 ? `
@@ -3359,19 +3841,19 @@ export class HyperVAuditorPage {
                                 </button>
                                 ` : ''}
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>Application Name</th>
                                             <th>Publisher</th>
                                             <th>Version</th>
                                             <th>Install Date</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${host.installedApplications.slice(0, 20).map(app => `
-                                        <tr>
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td>${app.applicationName || 'N/A'}</td>
                                             <td>${app.publisher || 'N/A'}</td>
                                             <td>${app.version || 'N/A'}</td>
@@ -3386,8 +3868,8 @@ export class HyperVAuditorPage {
 
                         <!-- Services -->
                         ${host.services && host.services.length > 0 ? `
-                        <div class="hardware-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-services" class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-cogs"></i> Services
                                 <span class="update-count-pill">${host.services.length}</span>
                                 ${host.services.length > 20 ? `
@@ -3396,19 +3878,19 @@ export class HyperVAuditorPage {
                                 </button>
                                 ` : ''}
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="table-compact">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>Display Name</th>
                                             <th>Short Name</th>
                                             <th>Status</th>
                                             <th>Start Type</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${host.services.slice(0, 20).map(service => `
-                                        <tr>
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <td>${service.displayName || 'N/A'}</td>
                                             <td><code style="background: #0f172a; color: #94a3b8; border: 1px solid #334155; padding: 0.125rem 0.375rem; border-radius: 3px; font-size: 0.75rem;">${service.shortName || 'N/A'}</code></td>
                                             <td><span class="status-badge status-${service.status === 'Running' ? 'online' : service.status === 'Stopped' ? 'offline' : 'warning'}">${service.status || 'Unknown'}</span></td>
@@ -3423,8 +3905,8 @@ export class HyperVAuditorPage {
 
                         <!-- Windows Updates -->
                         ${host.windowsUpdates && Array.isArray(host.windowsUpdates) && host.windowsUpdates.length > 0 ? `
-                        <div class="updates-section-compact">
-                            <div class="updates-header-compact">
+                        <div id="host-${actualIndex}-winupdates" class="updates-section-compact" style="display: flex; flex-direction: column; height: 100%;">
+                            <div class="updates-header-compact" style="flex-shrink: 0;">
                                 <div class="updates-title-group">
                                     <i class="fas fa-download"></i>
                                     <span>${this.t('windowsUpdates')}</span>
@@ -3436,7 +3918,7 @@ export class HyperVAuditorPage {
                                     </button>
                                 ` : ''}
                             </div>
-                            <div class="updates-grid-compact">
+                            <div class="updates-grid-compact" style="flex: 1; overflow-y: auto;">
                                 ${host.windowsUpdates.slice(0, 10).map(update => `
                                     <div class="update-card-compact">
                                         <div class="update-card-header">
@@ -3470,15 +3952,15 @@ export class HyperVAuditorPage {
                         ` : ''}
 
                         <!-- Virtual Machines Table -->
-                        <div class="vm-section-modern">
-                            <h4 class="section-subtitle-modern">
+                        <div id="host-${actualIndex}-vms" class="vm-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                            <h4 class="section-subtitle-modern" style="flex-shrink: 0;">
                                 <i class="fas fa-cube"></i> ${this.t('virtualMachines')}
                                 <span class="vm-count-badge-modern">${hostVMs.length}</span>
                             </h4>
-                            <div class="table-container-modern">
-                                <table class="data-table-modern compact-table">
-                                    <thead>
-                                        <tr>
+                            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                                <table class="data-table-modern compact-table" style="display: flex; flex-direction: column; height: 100%;">
+                                    <thead style="flex-shrink: 0; display: block;">
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
                                             <th>${this.t('vmName')}</th>
                                             <th>${this.t('generationVersion')}</th>
                                             <th>${this.t('state')}</th>
@@ -3492,7 +3974,7 @@ export class HyperVAuditorPage {
                                             <th>${this.t('network')}</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="vm-table-${actualIndex}">
+                                    <tbody id="vm-table-${actualIndex}" style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
                                         ${hostVMs.map((vm, vmIndex) => {
                             const memStartup = typeof vm.memory?.startup === 'number' ? `${vm.memory.startup.toFixed(1)} GB` : (vm.memory?.startup || 'N/A');
                             const memMin = typeof vm.memory?.min === 'number' ? `${vm.memory.min.toFixed(1)} GB` : (vm.memory?.min || '');
@@ -3506,7 +3988,7 @@ export class HyperVAuditorPage {
 
                             return `
                                             <tr class="data-row ${this.filters.expandedRows.has(`vm-${actualIndex}-${vmIndex}`) ? 'expanded' : ''}" 
-                                                onclick="hyperVAuditorInstance.toggleRow('vm-${actualIndex}-${vmIndex}')">
+                                                onclick="hyperVAuditorInstance.toggleRow('vm-${actualIndex}-${vmIndex}')" style="display: table; width: 100%; table-layout: fixed;">
                                                 <td>
                                                     <div class="row-header">
                                                         <strong>${vm.name}</strong>
@@ -3794,134 +4276,115 @@ export class HyperVAuditorPage {
 
     renderHostDisks(host) {
         if (!host.disks || !Array.isArray(host.disks) || host.disks.length === 0) {
-            return '';
+            return '<div style="padding: 1rem; color: #94a3b8;">No physical disks found.</div>';
         }
 
         return `
-            <div class="host-disks-section-compact">
-                <div class="host-disks-header-compact">
-                    <div class="host-disks-title-group">
-                        <i class="fas fa-hdd"></i>
-                        <span>Physical Disks</span>
-                        <span class="disk-count-pill">${host.disks.length}</span>
-                    </div>
-                </div>
-                <div class="host-disks-grid-compact">
-                    ${host.disks.map(disk => {
-            const totalSizeGB = typeof disk.size === 'number' ? disk.size :
-                (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
-            const allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize :
-                (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
+        <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
 
+            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                    <thead style="flex-shrink: 0; display: block;">
+                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                            <th>Disk name</th>
+                            <th>Disk ID</th>
+                            <th>Size</th>
+                            <th>Allocated</th>
+                            <th>Unallocated</th>
+                            <th>Partition style</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                        ${host.disks.map(disk => {
+            const totalSizeGB = typeof disk.size === 'number' ? disk.size : (typeof disk.size === 'string' ? parseFloat(disk.size.replace(/[^\d.]/g, '')) : 0);
+            const allocatedGB = typeof disk.allocatedSize === 'number' ? disk.allocatedSize : (typeof disk.allocatedSize === 'string' ? parseFloat(disk.allocatedSize.replace(/[^\d.]/g, '')) : 0);
             const unallocatedGB = Math.max(0, totalSizeGB - allocatedGB);
-            const unallocatedPercent = totalSizeGB > 0 ? (unallocatedGB / totalSizeGB) * 100 : 0;
-            const allocatedPercent = totalSizeGB > 0 ? (allocatedGB / totalSizeGB) * 100 : 0;
+            const diskName = disk.friendlyName || disk.name || (disk.number !== null && disk.number !== undefined ? `Disk ${disk.number}` : 'N/A');
+            const diskId = disk.uniqueId || disk.serialNumber || 'N/A';
+            const status = disk.operationalStatus || disk.healthStatus || 'N/A';
+            const isHealthy = status === 'Healthy' || status === 'OK' || status === 'Online';
 
             return `
-                            <div class="disk-card-compact">
-                                <div class="disk-card-header">
-                                    <div class="disk-name-group">
-                                        <i class="fas fa-hdd"></i>
-                                        <div class="disk-info">
-                                            <div class="disk-name">${disk.friendlyName || `Disk ${disk.number || 'N/A'}`}</div>
-                                            ${disk.uniqueId || disk.serialNumber ? `<div class="disk-id">${disk.uniqueId || disk.serialNumber}</div>` : ''}
-                                        </div>
-                                    </div>
-                                    <div class="disk-status-badge status-${(disk.operationalStatus || 'unknown').toLowerCase()}">
-                                        <i class="fas ${disk.operationalStatus === 'Online' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                                        ${this.translateStatus(disk.operationalStatus) || 'Unknown'}
-                                    </div>
-                                </div>
-                                <div class="disk-card-body">
-                                    <div class="disk-size-info">
-                                        <div class="disk-size-main">
-                                            <span class="disk-size-label">Total Size</span>
-                                            <span class="disk-size-value">${totalSizeGB.toFixed(2)} GB</span>
-                                        </div>
-                                        <div class="disk-usage-bar">
-                                            <div class="usage-bar-track">
-                                                <div class="usage-bar-fill" style="width: ${allocatedPercent}%; background: ${unallocatedPercent >= 25 ? '#10b981' : unallocatedPercent >= 10 ? '#f59e0b' : '#ef4444'};"></div>
-                                            </div>
-                                            <div class="usage-bar-labels">
-                                                <span class="usage-allocated">${allocatedGB.toFixed(1)} GB allocated</span>
-                                                <span class="usage-unallocated">${unallocatedGB.toFixed(1)} GB unallocated</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                                <tr style="display: table; width: 100%; table-layout: fixed;">
+                                    <td><strong>${diskName}</strong></td>
+                                    <td style="font-size: 0.75rem; color: #94a3b8;">${diskId}</td>
+                                    <td>${totalSizeGB > 0 ? `${totalSizeGB.toFixed(2)} GB` : 'N/A'}</td>
+                                    <td>${allocatedGB > 0 ? `${allocatedGB.toFixed(2)} GB` : (allocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
+                                    <td>${unallocatedGB > 0 ? `${unallocatedGB.toFixed(2)} GB` : (unallocatedGB === 0 && totalSizeGB > 0 ? '0.00 GB' : 'N/A')}</td>
+                                    <td>${disk.partitionStyle || 'N/A'}</td>
+                                    <td>
+                                        <span class="status-badge status-${isHealthy ? 'online' : 'offline'}">
+                                            ${status}
+                                        </span>
+                                    </td>
+                                </tr>
+                                `;
         }).join('')}
-                </div>
+                    </tbody>
+                </table>
             </div>
-        `;
+        </div>
+    `;
     }
 
     renderHostVolumes(host) {
         if (!host.volumes || !Array.isArray(host.volumes) || host.volumes.length === 0) {
-            return '';
+            return '<div style="padding: 1rem; color: #94a3b8;">No volumes found.</div>';
         }
 
         return `
-            <div class="host-volumes-section-compact">
-                <div class="host-volumes-header-compact">
-                    <div class="host-volumes-title-group">
-                        <i class="fas fa-database"></i>
-                        <span>Volumes</span>
-                        <span class="volume-count-pill">${host.volumes.length}</span>
-                    </div>
-                </div>
-                <div class="host-volumes-grid-compact">
-                    ${host.volumes.map(volume => {
-            const totalSizeGB = typeof volume.size === 'number' ? volume.size :
-                (typeof volume.size === 'string' ? parseFloat(volume.size.replace(/[^\d.]/g, '')) : 0);
-            const freeSizeGB = typeof volume.sizeRemaining === 'number' ? volume.sizeRemaining :
-                (typeof volume.sizeRemaining === 'string' ? parseFloat(volume.sizeRemaining.replace(/[^\d.]/g, '')) : 0);
-            const usedSizeGB = totalSizeGB - freeSizeGB;
-            const freePercent = totalSizeGB > 0 ? (freeSizeGB / totalSizeGB) * 100 : 0;
-            const usedPercent = totalSizeGB > 0 ? (usedSizeGB / totalSizeGB) * 100 : 0;
+        <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+            <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                    <thead style="flex-shrink: 0; display: block;">
+                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                            <th>Drive letter</th>
+                            <th>File system</th>
+                            <th>Size</th>
+                            <th>Used</th>
+                            <th>Free</th>
+                            <th>Free space %</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                        ${host.volumes.map(vol => {
+            const totalGB = parseFloat(vol.size) || (typeof vol.size === 'number' ? vol.size : 0);
+            const freeGB = parseFloat(vol.sizeRemaining) || (typeof vol.sizeRemaining === 'number' ? vol.sizeRemaining : 0);
+            const usedGB = totalGB - freeGB;
+            const freePercent = totalGB > 0 ? Math.round((freeGB / totalGB) * 100) : 0;
+            const isLowSpace = freePercent < 15;
 
             return `
-                            <div class="volume-card-compact">
-                                <div class="volume-card-header">
-                                    <div class="volume-name-group">
-                                        <i class="fas ${volume.driveLetter ? 'fa-folder' : 'fa-database'}"></i>
-                                        <div class="volume-info">
-                                            <div class="volume-name">${volume.fileSystemLabel || volume.driveLetter || 'Volume'}</div>
-                                            ${volume.driveLetter || volume.fileSystem ? `<div class="volume-drive-fs">
-                                                ${volume.driveLetter ? `<span class="volume-drive">${volume.driveLetter}:</span>` : ''}
-                                                ${volume.fileSystem ? `<span class="volume-fs">${volume.fileSystem}</span>` : ''}
-                                            </div>` : ''}
+                            <tr class="${isLowSpace ? 'low-space-row' : ''}" style="display: table; width: 100%; table-layout: fixed;">
+                                <td><strong>${vol.driveLetter ? `${vol.driveLetter}:` : (vol.fileSystemLabel || 'N/A')}</strong></td>
+                                <td>${vol.fileSystem || 'N/A'}</td>
+                                <td>${totalGB > 0 ? `${totalGB.toFixed(1)} GB` : 'N/A'}</td>
+                                <td>${usedGB >= 0 ? `${usedGB.toFixed(1)} GB` : 'N/A'}</td>
+                                <td>${freeGB >= 0 ? `${freeGB.toFixed(1)} GB` : 'N/A'}</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <div style="flex: 1; height: 4px; background: rgba(255,255,255,0.05); border-radius: 2px; overflow: hidden;">
+                                            <div style="height: 100%; width: ${freePercent}%; background: ${freePercent < 15 ? '#ef4444' : freePercent < 30 ? '#f59e0b' : '#34d399'};"></div>
                                         </div>
+                                        <span style="font-size: 0.75rem; min-width: 2.5rem; text-align: right; color: ${freePercent < 15 ? '#f87171' : '#94a3b8'};">${freePercent}%</span>
                                     </div>
-                                    <div class="volume-status-badge status-${(volume.healthStatus || 'unknown').toLowerCase()}">
-                                        <i class="fas ${volume.healthStatus === 'Healthy' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                                        ${this.translateStatus(volume.healthStatus) || 'Unknown'}
-                                    </div>
-                                </div>
-                                <div class="volume-card-body">
-                                    <div class="volume-size-info">
-                                        <div class="volume-size-main">
-                                            <span class="volume-size-label">Total Size</span>
-                                            <span class="volume-size-value">${totalSizeGB.toFixed(2)} GB</span>
-                                        </div>
-                                        <div class="volume-usage-bar">
-                                            <div class="usage-bar-track">
-                                                <div class="usage-bar-fill" style="width: ${usedPercent}%; background: ${freePercent >= 25 ? '#10b981' : freePercent >= 10 ? '#f59e0b' : '#ef4444'};"></div>
-                                            </div>
-                                            <div class="usage-bar-labels">
-                                                <span class="usage-used">${usedSizeGB.toFixed(1)} GB used</span>
-                                                <span class="usage-free">${freeSizeGB.toFixed(1)} GB free (${freePercent.toFixed(1)}%)</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
+                                </td>
+                                <td>
+                                    <span class="status-badge status-${vol.healthStatus === 'Healthy' || vol.healthStatus === 'OK' ? 'online' : 'warning'}">
+                                        ${vol.healthStatus || 'Unknown'}
+                                    </span>
+                                </td>
+                            </tr>
+                            `;
         }).join('')}
-                </div>
+                    </tbody>
+                </table>
             </div>
-        `;
+        </div>
+    `;
     }
 
     renderVolumesSection() {
@@ -4006,6 +4469,821 @@ export class HyperVAuditorPage {
     getFilteredVolumes() {
         let filtered = [...this.volumes];
         return filtered;
+    }
+
+    async scrollToSection(hostIdx, sectionName) {
+        // Ensure we are on the correct view
+        if (this.activeView !== 'host-' + hostIdx) {
+            this.switchView('host-' + hostIdx);
+            // Wait a bit for the DOM to update
+            await new Promise(resolve => setTimeout(resolve, 150));
+        }
+
+        const elementId = `host-${hostIdx}-${sectionName}`;
+        const element = document.getElementById(elementId);
+
+        if (element) {
+            // Scroll with offset for header
+            const headerOffset = 100;
+            const elementPosition = element.getBoundingClientRect().top;
+            const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+            window.scrollTo({
+                top: offsetPosition,
+                behavior: 'smooth'
+            });
+
+            // Highlight effect
+            element.style.transition = 'background-color 0.5s ease';
+            const originalBg = element.style.backgroundColor;
+            element.style.backgroundColor = 'rgba(96, 165, 250, 0.1)';
+            setTimeout(() => {
+                element.style.backgroundColor = originalBg;
+            }, 1000);
+        }
+    }
+
+    renderHostSection(hostIndex, sectionName) {
+        const host = this.hosts[hostIndex];
+        if (!host) return '';
+
+        // Helper for safe strings
+        const safeLower = (s) => (s && typeof s === 'string') ? s.toLowerCase() : String(s || '').toLowerCase();
+        const safeEscape = (s) => (s && typeof s === 'string') ? s.replace(/"/g, '&quot;') : '';
+
+        // Status Logic
+        let hostStatus = 'online';
+        if (host.error) {
+            hostStatus = 'offline';
+        } else if (host.status) {
+            hostStatus = safeLower(host.status);
+        } else if (host.isClustered && host.clusterNodeState) {
+            const clusterState = safeLower(host.clusterNodeState);
+            if (clusterState === 'down' || clusterState === 'paused' || clusterState === 'failed') {
+                hostStatus = 'offline';
+            } else {
+                hostStatus = clusterState;
+            }
+        } else if (host.state) {
+            const stateLower = safeLower(host.state);
+            hostStatus = (stateLower === 'down') ? 'offline' : stateLower;
+        }
+        const isOffline = hostStatus === 'offline';
+
+        let content = '';
+
+        if (sectionName === 'summary') {
+            const hostVMs = this.vms.filter(vm => vm.host === host.name);
+            const hostErrors = host.systemErrors || [];
+            const hypervErrors = host.hypervErrors || [];
+
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; overflow-y: auto;">
+                    <!-- Hero Section -->
+                    <div class="audit-dashboard-header">
+                        <div class="dashboard-hero-icon">
+                            <i class="fas fa-server"></i>
+                        </div>
+                        <div class="dashboard-hero-info">
+                            <h1 class="dashboard-hero-title">
+                                ${host.name}
+                                ${host.domain ? `<span class="hero-badge badge-primary"><i class="fas fa-network-wired"></i> ${host.domain}</span>` : ''}
+                            </h1>
+                            <div class="dashboard-hero-badges">
+                                <span class="hero-badge"><i class="fas fa-desktop"></i> ${host.osVersionString || host.osVersion || 'Windows Server'}</span>
+                                <span class="hero-badge" style="${isOffline ? 'color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1);' : 'color: #34d399; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1);'}">
+                                    <i class="fas fa-power-off"></i> ${isOffline ? 'Offline' : 'Online'}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="dashboard-hero-stats">
+                            <div class="hero-stat-item">
+                                <span class="hero-stat-label">Uptime</span>
+                                <span class="hero-stat-value">${host.uptime || 'N/A'}</span>
+                            </div>
+                            <div class="hero-stat-item">
+                                <span class="hero-stat-label">VMs</span>
+                                <span class="hero-stat-value">${hostVMs.length}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="audit-dashboard-grid">
+                        <!-- Quick Stats Panel -->
+                        <div class="dashboard-panel">
+                            <div class="dashboard-panel-header">
+                                <div class="dashboard-panel-icon icon-purple">
+                                    <i class="fas fa-chart-pie"></i>
+                                </div>
+                                <h3 class="dashboard-panel-title">Resource Usage</h3>
+                            </div>
+                            <div class="dashboard-panel-body modern-data-list">
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-microchip data-icon"></i>
+                                        <span class="data-label">Processors</span>
+                                    </div>
+                                    <span class="data-value">${host.logicalProcessor || 0} Logical</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-memory data-icon"></i>
+                                        <span class="data-label">Memory</span>
+                                    </div>
+                                    <span class="data-value">${host.totalMemory || (host.hardware?.totalMemory ? `${host.hardware.totalMemory} GB` : 'N/A')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                         <!-- Errors Panel -->
+                        ${hostErrors.length > 0 || hypervErrors.length > 0 ? `
+                        <div class="dashboard-panel">
+                            <div class="dashboard-panel-header">
+                                <div class="dashboard-panel-icon icon-orange">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <h3 class="dashboard-panel-title">Health Status</h3>
+                            </div>
+                            <div class="dashboard-panel-body modern-data-list">
+                                ${hostErrors.length > 0 ? `
+                                <div class="data-row" onclick="hyperVAuditorInstance.showErrorsModal('system', 'System Errors - ${host.name}', ${hostIndex})" style="cursor: pointer;">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-bug data-icon" style="color: #ef4444;"></i>
+                                        <span class="data-label">System Errors</span>
+                                    </div>
+                                    <span class="status-badge status-error">${hostErrors.length} Events</span>
+                                </div>
+                                ` : ''}
+                                ${hypervErrors.length > 0 ? `
+                                <div class="data-row" onclick="hyperVAuditorInstance.showErrorsModal('hyperv', 'Hyper-V Errors - ${host.name}', ${hostIndex})" style="cursor: pointer;">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-server data-icon" style="color: #f59e0b;"></i>
+                                        <span class="data-label">Hyper-V Errors</span>
+                                    </div>
+                                    <span class="status-badge status-warning">${hypervErrors.length} Events</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        else if (sectionName === 'hardware') {
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; overflow-y: auto;">
+                    <div class="audit-dashboard-grid">
+                        <div class="dashboard-panel">
+                            <div class="dashboard-panel-header">
+                                <div class="dashboard-panel-icon icon-purple">
+                                    <i class="fas fa-microchip"></i>
+                                </div>
+                                <h3 class="dashboard-panel-title">Hardware Specification</h3>
+                            </div>
+                             <div class="dashboard-panel-body modern-data-list">
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-industry data-icon"></i>
+                                        <span class="data-label">${this.t('manufacturer')}</span>
+                                    </div>
+                                    <span class="data-value">${host.hardware?.manufacturer || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-tag data-icon"></i>
+                                        <span class="data-label">${this.t('model')}</span>
+                                    </div>
+                                    <span class="data-value">${host.hardware?.model || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-barcode data-icon"></i>
+                                        <span class="data-label">${this.t('serialNumber')}</span>
+                                    </div>
+                                    <span class="data-value">${host.hardware?.serialNumber || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-microchip data-icon"></i>
+                                        <span class="data-label">${this.t('processor')}</span>
+                                    </div>
+                                    <span class="data-value">${host.hardware?.processor || `${host.logicalProcessor || 0} cores`}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-memory data-icon"></i>
+                                        <span class="data-label">${this.t('totalMemory')}</span>
+                                    </div>
+                                    <span class="data-value">${host.totalMemory || (host.hardware?.totalMemory ? `${host.hardware.totalMemory} GB` : 'N/A')}</span>
+                                </div>
+                                 ${host.logicalProcessor ? `
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-cogs data-icon"></i>
+                                        <span class="data-label">${this.t('logicalProcessors')}</span>
+                                    </div>
+                                    <span class="data-value">${host.logicalProcessor}</span>
+                                </div>
+                                ` : ''}
+                             </div>
+                        </div>
+                    </div>
+                </div>
+             `;
+        }
+        else if (sectionName === 'system') {
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; overflow-y: auto;">
+                    <div class="audit-dashboard-grid">
+                        <div class="dashboard-panel">
+                            <div class="dashboard-panel-header">
+                                <div class="dashboard-panel-icon icon-blue">
+                                    <i class="fab fa-windows"></i>
+                                </div>
+                                <h3 class="dashboard-panel-title">Operating System</h3>
+                            </div>
+                            <div class="dashboard-panel-body modern-data-list">
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-desktop data-icon"></i>
+                                        <span class="data-label">OS Name</span>
+                                    </div>
+                                    <span class="data-value">${host.osVersionString || host.osVersion || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-code-branch data-icon"></i>
+                                        <span class="data-label">Build Number</span>
+                                    </div>
+                                    <span class="data-value">${host.osFullBuild || host.osBuildNumber || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-microchip data-icon"></i>
+                                        <span class="data-label">Architecture</span>
+                                    </div>
+                                    <span class="data-value">${host.osArchitecture || 'N/A'}</span>
+                                </div>
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-calendar-alt data-icon"></i>
+                                        <span class="data-label">Install Date</span>
+                                    </div>
+                                    <span class="data-value">${host.osInstallDate || 'N/A'}</span>
+                                </div>
+                                 ${host.windowsActivation ? `
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-key data-icon"></i>
+                                        <span class="data-label">Activation</span>
+                                    </div>
+                                    <span class="data-value">${host.windowsActivation.licenseStatus || 'Unknown'}</span>
+                                </div>
+                                ` : ''}
+                                ${host.windowsActivation && host.windowsActivation.productKey && host.windowsActivation.productKey !== 'N/A' ? `
+                                <div class="data-row">
+                                    <div class="data-label-group">
+                                        <i class="fas fa-fingerprint data-icon"></i>
+                                        <span class="data-label">Product Key</span>
+                                    </div>
+                                    <span class="data-value system-product-key">${host.windowsActivation.productKey}</span>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'roles') {
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%;">
+                                        <th style="width: 25%;">Name</th>
+                                        <th style="width: 10%;">Type</th>
+                                        <th style="width: 65%;">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${host.serverRoles.map((role, roleIndex) => {
+                const featureType = role.featureType || 'Feature';
+                return `
+                                        <tr style="display: table; width: 100%; cursor: pointer;" onclick="hyperVAuditorInstance.showFeatureModal(${hostIndex}, ${roleIndex})">
+                                            <td style="width: 25%;"><strong>${role.displayName || role.name || 'Unknown'}</strong></td>
+                                            <td style="width: 10%;"><span class="status-badge" style="background: ${featureType === 'Role' ? 'rgba(139, 92, 246, 0.2)' : 'rgba(59, 130, 246, 0.2)'}; color: ${featureType === 'Role' ? '#a78bfa' : '#60a5fa'}; border: 1px solid ${featureType === 'Role' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(59, 130, 246, 0.3)'};">${featureType}</span></td>
+                                            <td style="width: 65%; color: #94a3b8; font-size: 0.8rem;">${role.description ? (role.description.length > 100 ? role.description.substring(0, 100) + '...' : role.description) : '-'}</td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else if (sectionName === 'networks') {
+            const adapters = (host.networkAdapters || []).filter(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed));
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Adapter Name</th>
+                                        <th>IP Address</th>
+                                        <th>MAC Address</th>
+                                        <th>Status</th>
+                                        <th>Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${adapters.map(adapter => {
+                const isSET = adapter.isSET === true || adapter.isSET === 'true' || adapter.isSET === 1;
+                const isTeamed = adapter.isTeamed === true || adapter.isTeamed === 'true' || adapter.isTeamed === 1;
+                const isVirtual = adapter.isVirtual === true || adapter.isVirtual === 'true' || adapter.isVirtual === 1;
+                const adapterType = isSET ? 'SET' : isTeamed ? 'Team' : isVirtual ? 'Virtual' : 'Physical';
+                const status = adapter.status || 'Unknown';
+                return `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${adapter.name || adapter.interfaceName || adapter.interfaceDescription || 'NIC'}</strong></td>
+                                            <td>${adapter.ipAddress || '-'}</td>
+                                            <td style="font-size: 0.7rem; color: #94a3b8;">${adapter.macAddress || '-'}</td>
+                                            <td><span class="status-badge status-${status === 'Up' ? 'online' : 'offline'}">${status}</span></td>
+                                            <td><span class="status-badge" style="background: ${isVirtual ? 'rgba(139, 92, 246, 0.2)' : isSET ? 'rgba(16, 185, 129, 0.2)' : isTeamed ? 'rgba(59, 130, 246, 0.2)' : 'rgba(100, 116, 139, 0.2)'}; color: ${isVirtual ? '#a78bfa' : isSET ? '#34d399' : isTeamed ? '#60a5fa' : '#94a3b8'}; border: 1px solid ${isVirtual ? 'rgba(139, 92, 246, 0.3)' : isSET ? 'rgba(16, 185, 129, 0.3)' : isTeamed ? 'rgba(59, 130, 246, 0.3)' : 'rgba(100, 116, 139, 0.3)'};">${adapterType}</span></td>
+                                        </tr>
+                                    `;
+            }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'disks') {
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                     ${this.renderHostDisks(host)}
+                </div>
+             `;
+        } else if (sectionName === 'volumes') {
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    ${this.renderHostVolumes(host)}
+                </div>
+             `;
+        } else if (sectionName === 'mpio') {
+            const mpioPaths = host.mpioPaths || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        ${mpioPaths.length > 0 ? `
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Target</th>
+                                        <th>Path Status</th>
+                                        <th>Adapter</th>
+                                        <th>Port</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${mpioPaths.map(path => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${path.targetName || 'N/A'}</strong></td>
+                                            <td><span class="status-badge status-${path.status === 'Active' ? 'online' : 'offline'}">${path.status}</span></td>
+                                            <td>${path.adapter || '-'}</td>
+                                            <td>Port ${path.portId || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ` : `
+                        <div class="dashboard-panel">
+                             <div class="dashboard-panel-body modern-data-list">
+                                <div class="data-row">
+                                    <span class="data-label">MPIO Status</span>
+                                    <span class="data-value">${host.mpioEnabled ? 'Enabled' : 'Disabled / Not Installed'}</span>
+                                </div>
+                                ${host.mpioEnabled ? `
+                                <div style="padding: 1rem; color: #94a3b8; font-size: 0.875rem;">
+                                    MPIO is enabled but no active paths were discovered.
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        } else if (sectionName === 'vms') {
+            const hostVMs = this.vms.filter(vm => vm.host === host.name);
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="vm-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                 <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>${this.t('vmName')}</th>
+                                        <th>${this.t('generationVersion')}</th>
+                                        <th>${this.t('state')}</th>
+                                        <th>${this.t('uptime')}</th>
+                                        <th>${this.t('vCPU')}</th>
+                                        <th>${this.t('vRAM')}</th>
+                                        <th>${this.t('disks')}</th>
+                                        <th>${this.t('network')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${hostVMs.map((vm, vmIndex) => {
+                return `
+                                            <tr class="data-row" style="display: table; width: 100%; table-layout: fixed;">
+                                                <td><strong>${vm.name}</strong></td>
+                                                <td>Gen${vm.generation} v${vm.version}</td>
+                                                <td><span class="vm-state-text vm-state-${vm.state.toLowerCase()}">${this.translateStatus(vm.state)}</span></td>
+                                                <td>${vm.uptime}</td>
+                                                <td>${vm.vCPU}</td>
+                                                 <td>${vm.memory?.assigned ? (vm.memory.assigned / 1024 / 1024 / 1024).toFixed(1) + ' GB' : 'N/A'}</td>
+                                                <td>${vm.disks.length}</td>
+                                                <td>${vm.networkAdapters?.length || 0}</td>
+                                            </tr>
+                                         `;
+            }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'local-users') {
+            const users = host.localUsers || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Name</th>
+                                        <th>Full Name</th>
+                                        <th>Description</th>
+                                        <th>Status</th>
+                                        <th>Last Logon</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${users.map(user => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${user.name || 'N/A'}</strong></td>
+                                            <td>${user.fullName || '-'}</td>
+                                            <td style="color: #94a3b8; font-size: 0.8rem;">${user.description || '-'}</td>
+                                            <td><span class="status-badge status-${user.enabled ? 'online' : 'offline'}">${user.enabled ? 'Enabled' : 'Disabled'}</span></td>
+                                            <td>${user.lastLogon || 'Never'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'local-groups') {
+            const groups = host.localGroups || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Group Name</th>
+                                        <th>Description</th>
+                                        <th>Members</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${groups.map(group => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${group.name || 'N/A'}</strong></td>
+                                            <td style="color: #94a3b8; font-size: 0.8rem;">${group.description || '-'}</td>
+                                            <td>${(group.members || []).join(', ') || 'No members'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'missing-updates') {
+            const updates = host.missingUpdates || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>KB</th>
+                                        <th>Title</th>
+                                        <th>Severity</th>
+                                        <th>Category</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${updates.map(upd => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong style="color: #60a5fa;">${upd.kb || upd.kbArticleId || 'N/A'}</strong></td>
+                                            <td style="max-width: 400px; white-space: normal; font-size: 0.85rem;">${upd.title || 'N/A'}</td>
+                                            <td><span class="status-badge status-${(upd.severity || '').toLowerCase() === 'critical' ? 'offline' : 'warning'}">${upd.severity || 'N/A'}</span></td>
+                                            <td>${upd.category || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'firewall') {
+            const rules = host.firewallRules || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Name</th>
+                                        <th>Display Group</th>
+                                        <th>Action</th>
+                                        <th>Direction</th>
+                                        <th>Local Port</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${rules.map(rule => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${rule.displayName || rule.name || 'N/A'}</strong></td>
+                                            <td>${rule.displayGroup || '-'}</td>
+                                            <td><span class="status-badge status-${(rule.action === 'Allow' ? 'online' : 'offline')}">${rule.action}</span></td>
+                                            <td>${rule.direction}</td>
+                                            <td>${rule.localPort || 'Any'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'drivers') {
+            const drivers = host.drivers || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Driver Name</th>
+                                        <th>Manufacturer</th>
+                                        <th>Version</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${drivers.map(drv => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${drv.friendlyName || drv.name || 'N/A'}</strong></td>
+                                            <td>${drv.manufacturer || 'N/A'}</td>
+                                            <td>${drv.version || 'N/A'}</td>
+                                            <td>${drv.driverDate || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'applications') {
+            const apps = host.applications || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Name</th>
+                                        <th>Publisher</th>
+                                        <th>Version</th>
+                                        <th>Install Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${apps.map(app => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${app.name || 'N/A'}</strong></td>
+                                            <td>${app.publisher || 'N/A'}</td>
+                                            <td>${app.version || 'N/A'}</td>
+                                            <td>${app.installDate || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'services') {
+            const services = host.services || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Service Name</th>
+                                        <th>Display Name</th>
+                                        <th>State</th>
+                                        <th>Start Mode</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${services.map(svc => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${svc.name || 'N/A'}</strong></td>
+                                            <td title="${svc.displayName}">${svc.displayName && svc.displayName.length > 40 ? svc.displayName.substring(0, 40) + '...' : svc.displayName}</td>
+                                            <td><span class="status-badge status-${svc.state === 'Running' ? 'online' : 'offline'}">${svc.state}</span></td>
+                                            <td>${svc.startMode}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'live-migration') {
+            const config = host.liveMigrationSettings || {};
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; overflow-y: auto;">
+                     <div class="dashboard-panel">
+                        <div class="dashboard-panel-header">
+                            <div class="dashboard-panel-icon icon-blue">
+                                <i class="fas fa-exchange-alt"></i>
+                            </div>
+                            <h3 class="dashboard-panel-title">Live Migration Settings</h3>
+                        </div>
+                        <div class="dashboard-panel-body modern-data-list">
+                            <div class="data-row">
+                                <span class="data-label">Incoming Migrations Enabled</span>
+                                <span class="status-badge status-${config.enabled ? 'online' : 'offline'}">${config.enabled ? 'Enabled' : 'Disabled'}</span>
+                            </div>
+                            <div class="data-row">
+                                <span class="data-label">Simultaneous Migrations</span>
+                                <span class="data-value">${config.maximumSimultaneousMigrations || 'N/A'}</span>
+                            </div>
+                             <div class="data-row">
+                                <span class="data-label">Storage Migrations</span>
+                                <span class="data-value">${config.maximumSimultaneousStorageMigrations || 'N/A'}</span>
+                            </div>
+                            <div class="data-row">
+                                <span class="data-label">Authentication Type</span>
+                                <span class="data-value">${config.authenticationType || 'N/A'}</span>
+                            </div>
+                            <div class="data-row">
+                                <span class="data-label">Performance Option</span>
+                                <span class="data-value">${config.performanceOption || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'virtual-switches') {
+            const switches = host.virtualSwitches || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>Switch Name</th>
+                                        <th>Switch Type</th>
+                                        <th>Adapter</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${switches.map(sw => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong>${sw.name || 'N/A'}</strong></td>
+                                            <td>${sw.switchType || 'N/A'}</td>
+                                            <td>${sw.netAdapterInterfaceDescription || sw.interfaceDescription || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        } else if (sectionName === 'winupdates') {
+            const updates = host.windowsUpdates || [];
+            content = `
+                <div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; display: flex; flex-direction: column;">
+                    <div class="hardware-section-modern" style="display: flex; flex-direction: column; height: 100%;">
+
+                        <div class="table-container-modern" style="flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden;">
+                            <table class="table-compact" style="display: flex; flex-direction: column; height: 100%;">
+                                <thead style="flex-shrink: 0; display: block;">
+                                    <tr style="display: table; width: 100%; table-layout: fixed;">
+                                        <th>KB</th>
+                                        <th>Installed On</th>
+                                        <th>Installed By</th>
+                                        <th>Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody style="flex: 1; overflow-y: auto; display: block; min-height: 0; width: 100%;">
+                                    ${updates.map(upd => `
+                                        <tr style="display: table; width: 100%; table-layout: fixed;">
+                                            <td><strong style="color: #60a5fa;">${upd.hotFixID || 'N/A'}</strong></td>
+                                            <td>${upd.installedOn || 'N/A'}</td>
+                                            <td>${upd.installedBy || 'N/A'}</td>
+                                            <td style="color: #94a3b8; font-size: 0.85rem;">${upd.description || 'N/A'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+             `;
+        }
+        else {
+            content = `<div class="audit-content" style="padding: 1.5rem 1.5rem 3rem 1.5rem; height: 100%; overflow-y: auto;">
+                <div class="dashboard-panel">
+                    <div style="padding: 2rem; color: #94a3b8; text-align: center;">
+                        <i class="fas fa-tools" style="font-size: 2rem; margin-bottom: 1rem; display: block;"></i>
+                        Section <strong>${sectionName}</strong> content coming soon.
+                    </div>
+                </div>
+            </div>`;
+        }
+
+
+        return content;
+    }
+
+    renderNetworkAdaptersGrid(host) {
+        if (!host.networkAdapters) return '';
+        return host.networkAdapters.filter(adapter => adapter && (adapter.name || adapter.interfaceName || adapter.interfaceDescription || adapter.isSET || adapter.isTeamed)).map(adapter => {
+            const isSET = adapter.isSET === true || adapter.isSET === 'true' || adapter.isSET === 1;
+            const isTeamed = adapter.isTeamed === true || adapter.isTeamed === 'true' || adapter.isTeamed === 1;
+            const isVirtual = adapter.isVirtual === true || adapter.isVirtual === 'true' || adapter.isVirtual === 1;
+
+            return `
+                                    <div class="network-adapter-card ${isVirtual ? 'virtual-adapter' : ''} ${adapter.status === 'Up' ? 'adapter-up' : 'adapter-down'} ${isSET ? 'set-adapter' : ''} ${isTeamed && !isSET ? 'teamed-adapter' : ''}">
+                                        <div class="adapter-card-header">
+                                            <div class="adapter-icon ${isVirtual ? 'virtual-icon' : isSET ? 'set-icon' : isTeamed ? 'team-icon' : 'physical-icon'}">
+                                                <i class="fas ${isVirtual ? 'fa-cloud' : isSET ? 'fa-sitemap' : isTeamed ? 'fa-link' : 'fa-ethernet'}"></i>
+                                            </div>
+                                            <div class="adapter-title-group">
+                                                <div class="adapter-name">
+                                                    ${adapter.name || adapter.interfaceName || adapter.interfaceDescription || 'NIC'}
+                                                    ${isVirtual ? '<span class="virtual-badge-mini">Virtual</span>' : ''}
+                                                </div>
+                                                <div class="adapter-interface">${adapter.interfaceName || adapter.interfaceDescription || adapter.name || 'N/A'}</div>
+                                            </div>
+                                        </div>
+                                         <div class="adapter-card-body">
+                                             <div class="adapter-info-row">
+                                                ${adapter.ipAddress ? `<span class="info-pill"><i class="fas fa-network-wired"></i>${adapter.ipAddress}</span>` : ''}
+                                                ${adapter.macAddress ? `<span class="info-pill"><i class="fas fa-barcode"></i>${adapter.macAddress}</span>` : ''}
+                                            </div>
+                                         </div>
+                                    </div>
+                        `}).join('');
     }
 
     toggleRow(rowId) {
@@ -4581,6 +5859,16 @@ export class HyperVAuditorPage {
                     serialNumber: 'ABC123456789',
                     processor: 'Intel Xeon Gold 6248R (16 cores)'
                 },
+                windowsActivation: {
+                    description: 'Windows(R) Operating System, VOLUME_MAK channel',
+                    isActivated: true,
+                    isKmsClient: false,
+                    kmsPort: 1688,
+                    kmsServer: '',
+                    licenseStatus: 'Licensed',
+                    name: 'Windows(R), ServerStandard edition',
+                    productKey: '*****-*****-*****-*****-4VYVQ'
+                },
                 systemErrors: [
                     {
                         message: 'High memory usage detected',
@@ -4616,6 +5904,16 @@ export class HyperVAuditorPage {
                     serialNumber: 'XYZ987654321',
                     processor: 'Intel Xeon Gold 6248R (16 cores)'
                 },
+                windowsActivation: {
+                    description: 'Windows(R) Operating System, VOLUME_KMS channel',
+                    isActivated: true,
+                    isKmsClient: true,
+                    kmsPort: 1688,
+                    kmsServer: 'kms.corp.local',
+                    licenseStatus: 'Licensed',
+                    name: 'Windows(R), ServerStandard edition',
+                    productKey: 'N/A (KMS)'
+                },
                 systemErrors: []
             },
             {
@@ -4639,6 +5937,16 @@ export class HyperVAuditorPage {
                     model: 'ProLiant DL380 Gen10',
                     serialNumber: 'HP123456789',
                     processor: 'Intel Xeon Silver 4214 (12 cores)'
+                },
+                windowsActivation: {
+                    description: 'Windows(R) Operating System, VOLUME_MAK channel',
+                    isActivated: true,
+                    isKmsClient: false,
+                    kmsPort: 1688,
+                    kmsServer: '',
+                    licenseStatus: 'Licensed',
+                    name: 'Windows(R), ServerStandard edition',
+                    productKey: '*****-*****-*****-*****-AB123'
                 },
                 systemErrors: [
                     {
@@ -4923,12 +6231,22 @@ export class HyperVAuditorPage {
         const content = document.getElementById('page-content');
         if (content) {
             try {
+                // Save sidebar scroll position before re-render
+                const sidebarNav = content.querySelector('.sidebar-nav');
+                const savedScrollTop = sidebarNav ? sidebarNav.scrollTop : 0;
+
                 content.innerHTML = await this.render();
                 // Set instance but don't call mount() to avoid reloading reports
                 window.hyperVAuditorInstance = this;
                 // Update page navbar title after rendering
                 if (window.pageNavbarInstance) {
                     window.pageNavbarInstance.updateTitle();
+                }
+
+                // Restore sidebar scroll position after re-render
+                const newSidebarNav = content.querySelector('.sidebar-nav');
+                if (newSidebarNav && savedScrollTop > 0) {
+                    newSidebarNav.scrollTop = savedScrollTop;
                 }
             } catch (error) {
                 console.error('Error updating Hyper-V Auditor display:', error);

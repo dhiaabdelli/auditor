@@ -1,4 +1,4 @@
-import { WifiManagerPage } from './WifiManager.js';
+
 import { NetworkInterfacesPage } from './NetworkInterfaces.js';
 import { NetworkOverviewPage } from './NetworkOverview.js';
 
@@ -6,15 +6,12 @@ export class OverviewPage {
     constructor() {
         this.currentView = 'network-overview'; // Default view
         this.networkOverviewInstance = null;
-        this.wifiManagerInstance = null;
         this.networkInterfacesInstance = null;
 
         // Determine current view from URL
         const currentPage = window.appInstance?.currentPage || 'controller';
         if (currentPage === 'network-overview') {
             this.currentView = 'network-overview';
-        } else if (currentPage === 'wifi-manager') {
-            this.currentView = 'wifi-manager';
         } else if (currentPage === 'network-interfaces') {
             // Use dedicated network-interfaces page
             this.currentView = 'network-interfaces';
@@ -32,9 +29,6 @@ export class OverviewPage {
         } else if (this.currentView === 'network-interfaces') {
             this.networkInterfacesInstance = new NetworkInterfacesPage();
             return await this.networkInterfacesInstance.render();
-        } else if (this.currentView === 'wifi-manager') {
-            this.wifiManagerInstance = new WifiManagerPage();
-            return await this.wifiManagerInstance.render();
         } else {
             // Default to Network Overview
             this.networkOverviewInstance = new NetworkOverviewPage();
@@ -54,11 +48,6 @@ export class OverviewPage {
             if (this.networkInterfacesInstance.mount) {
                 await this.networkInterfacesInstance.mount();
             }
-        } else if (this.currentView === 'wifi-manager' && this.wifiManagerInstance) {
-            window.wifiManagerInstance = this.wifiManagerInstance;
-            if (this.wifiManagerInstance.mount) {
-                await this.wifiManagerInstance.mount();
-            }
         }
     }
 
@@ -71,12 +60,7 @@ export class OverviewPage {
             this.networkOverviewInstance = null;
         }
 
-        if (this.wifiManagerInstance) {
-            if (this.wifiManagerInstance.unmount) {
-                await this.wifiManagerInstance.unmount();
-            }
-            this.wifiManagerInstance = null;
-        }
+
 
         if (this.networkInterfacesInstance) {
             if (this.networkInterfacesInstance.unmount) {

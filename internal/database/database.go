@@ -33,17 +33,6 @@ type ReportTemplate struct {
 	Version     sql.NullString `json:"version,omitempty"`
 }
 
-// InfrastructureInventory represents an infrastructure inventory entry
-type InfrastructureInventory struct {
-	ID            int64     `json:"id"`
-	ClientName    string    `json:"clientName"`
-	ClientContact string    `json:"clientContact"`
-	Date          string    `json:"date"`
-	Data          string    `json:"data"` // JSON string
-	CreatedAt     time.Time `json:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-}
-
 // AutomationWorkflow represents an automation workflow
 type AutomationWorkflow struct {
 	ID            string    `json:"id"`
@@ -360,16 +349,6 @@ func createTables() error {
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 
-	CREATE TABLE IF NOT EXISTS infrastructure_inventories (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		client_name TEXT NOT NULL,
-		client_contact TEXT,
-		date TEXT,
-		data TEXT NOT NULL,
-		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-	);
-
 	CREATE TABLE IF NOT EXISTS automation_workflows (
 		id TEXT PRIMARY KEY,
 		name TEXT NOT NULL,
@@ -636,6 +615,7 @@ func migrateTables() error {
 		{"status", "TEXT DEFAULT 'Enabled'"},
 		{"quota", "TEXT DEFAULT 'Unlimited'"},
 		{"usage", "TEXT DEFAULT '0 B'"},
+		{"email", "TEXT"},
 		{"is_locked", "INTEGER DEFAULT 0"},
 	}
 

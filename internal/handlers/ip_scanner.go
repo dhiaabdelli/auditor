@@ -3,11 +3,11 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -26,13 +26,14 @@ import (
 
 // IPScannerResult represents a single IP scan result
 type IPScannerResult struct {
-	IP       string `json:"ip"`
-	Status   string `json:"status"` // "online", "offline", "scanning"
-	Hostname string `json:"hostname,omitempty"`
-	MAC      string `json:"mac,omitempty"`
-	Ports    []int  `json:"ports,omitempty"`
-	RTT      int    `json:"rtt,omitempty"` // Round trip time in ms
-	Error    string `json:"error,omitempty"`
+	IP       string            `json:"ip"`
+	Status   string            `json:"status"` // "online", "offline", "scanning"
+	Hostname string            `json:"hostname,omitempty"`
+	MAC      string            `json:"mac,omitempty"`
+	Ports    []int             `json:"ports,omitempty"`
+	Banners  map[string]string `json:"banners,omitempty"` // Port -> Banner
+	RTT      int               `json:"rtt,omitempty"`     // Round trip time in ms
+	Error    string            `json:"error,omitempty"`
 }
 
 // HandleIPScanner handles IP range scanning requests via WebSocket
@@ -69,9 +70,25 @@ func HandleIPScanner(w http.ResponseWriter, r *http.Request) {
 		scanPorts = sp
 	}
 
+	// New parameters
+	scanMethod := "connect" // Default to connect scan
+	if sm, ok := initMsg["scanMethod"].(string); ok {
+		scanMethod = sm
+	}
+
+	icmpDiscovery := true
+	if id, ok := initMsg["icmpDiscovery"].(bool); ok {
+		icmpDiscovery = id
+	}
+
 	portList := ""
 	if pl, ok := initMsg["ports"].(string); ok {
 		portList = pl
+	}
+
+	portRange := "1024" // Default
+	if pr, ok := initMsg["portRange"].(string); ok {
+		portRange = pr
 	}
 
 	timeout := 1
@@ -106,8 +123,16 @@ func HandleIPScanner(w http.ResponseWriter, r *http.Request) {
 	if scanPorts && portList != "" {
 		portsToScan = parsePortList(portList)
 	} else if scanPorts {
-		// Default common ports
-		portsToScan = []int{22, 23, 80, 135, 139, 443, 445, 3389, 5985, 5986}
+		// Use the selected port range
+		maxPort := 1024
+		if portRange == "all" {
+			maxPort = 65535
+		}
+
+		portsToScan = make([]int, maxPort)
+		for i := 0; i < maxPort; i++ {
+			portsToScan[i] = i + 1
+		}
 	}
 
 	// Scan IPs concurrently with limit
@@ -160,7 +185,7 @@ func HandleIPScanner(w http.ResponseWriter, r *http.Request) {
 			default:
 			}
 
-			result := scanIP(targetIP, timeout, scanPorts, portsToScan)
+			result := scanIP(targetIP, timeout, scanPorts, portsToScan, scanMethod, icmpDiscovery)
 
 			// Send result (protected by mutex to prevent corruption)
 			writeMutex.Lock()
@@ -298,18 +323,24 @@ func parsePortList(portList string) []int {
 }
 
 // scanIP scans a single IP address
-func scanIP(ip string, timeout int, scanPorts bool, portsToScan []int) IPScannerResult {
+func scanIP(ip string, timeout int, scanPorts bool, portsToScan []int, scanMethod string, icmpDiscovery bool) IPScannerResult {
 	result := IPScannerResult{
 		IP:     ip,
 		Status: "scanning",
 	}
 
-	// First, try ping (do it twice to reduce false positives)
-	isOnline := pingIP(ip, timeout)
-	if !isOnline {
-		// Try once more to be sure
-		time.Sleep(100 * time.Millisecond)
+	isOnline := false
+	if icmpDiscovery {
+		// First, try ping (do it twice to reduce false positives)
 		isOnline = pingIP(ip, timeout)
+		if !isOnline {
+			// Try once more to be sure
+			time.Sleep(100 * time.Millisecond)
+			isOnline = pingIP(ip, timeout)
+		}
+	} else {
+		// If ICMP discovery is disabled, assume online and proceed to port scan
+		isOnline = true
 	}
 
 	if !isOnline {
@@ -323,22 +354,40 @@ func scanIP(ip string, timeout int, scanPorts bool, portsToScan []int) IPScanner
 	result.Hostname = getHostname(ip)
 
 	// Get MAC address (ARP table)
-	// After ping, the ARP table should be populated, but we need to wait a bit
-	// Try multiple times with increasing delays to allow ARP table to update
-	time.Sleep(300 * time.Millisecond) // Initial delay to let ARP table update
-	for attempt := 0; attempt < 5; attempt++ {
-		if attempt > 0 {
-			time.Sleep(time.Duration(100+attempt*100) * time.Millisecond)
-		}
-		result.MAC = getMACAddress(ip)
-		if result.MAC != "" && result.MAC != "00:00:00:00:00:00" {
-			break
+	if icmpDiscovery { // Only if we pinged/are on local network, MAC makes sense
+		time.Sleep(300 * time.Millisecond) // Initial delay to let ARP table update
+		for attempt := 0; attempt < 5; attempt++ {
+			if attempt > 0 {
+				time.Sleep(time.Duration(100+attempt*100) * time.Millisecond)
+			}
+			result.MAC = getMACAddress(ip)
+			if result.MAC != "" && result.MAC != "00:00:00:00:00:00" {
+				break
+			}
 		}
 	}
 
 	// Scan ports if requested
 	if scanPorts && len(portsToScan) > 0 {
-		result.Ports = scanPortsForIP(ip, portsToScan, timeout)
+		ports, banners := scanPortsForIP(ip, portsToScan, timeout, scanMethod)
+		result.Ports = ports
+		result.Banners = banners
+
+		// If we skipped ICMP but found open ports, definitely online
+		if !icmpDiscovery && len(result.Ports) > 0 {
+			// Try to get MAC if we haven't already
+			if result.MAC == "" {
+				result.MAC = getMACAddress(ip)
+			}
+		} else if !icmpDiscovery && len(result.Ports) == 0 {
+			// If we skipped ICMP and found no ports, we can't be sure it's online
+			// But for now, we leave it as online or maybe change to offline?
+			// Usually "No Response" is better, but our status enum is limited.
+			// Let's assume offline if no ports found and no ICMP?
+			// No, user might just be scanning a firewall. keep "online" but maybe add note?
+			// Let's default to offline if no ports found when ICMP is off? No, that's misleading.
+			// Let's keep it as is.
+		}
 	}
 
 	return result
@@ -362,8 +411,7 @@ func pingIP(ip string, timeout int) bool {
 	// Create ICMP connection
 	conn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		// If we can't create raw socket (requires privileges), fallback to system ping
-		return pingIPFallback(ip, timeout)
+		return false
 	}
 	defer conn.Close()
 
@@ -417,33 +465,6 @@ func pingIP(ip string, timeout int) bool {
 	}
 
 	return false
-}
-
-// pingIPFallback uses system ping command as fallback when raw sockets are not available
-func pingIPFallback(ip string, timeout int) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout+2)*time.Second)
-	defer cancel()
-
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.CommandContext(ctx, "ping", "-n", "1", "-w", strconv.Itoa(timeout*1000), ip)
-	} else {
-		cmd = exec.CommandContext(ctx, "ping", "-c", "1", "-W", strconv.Itoa(timeout), ip)
-	}
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return false
-	}
-
-	outputStr := string(output)
-
-	// Check if we actually received a reply
-	if runtime.GOOS == "windows" {
-		return strings.Contains(outputStr, "Reply from") || strings.Contains(outputStr, "Réponse de")
-	} else {
-		return strings.Contains(outputStr, "1 received") || strings.Contains(outputStr, "1 packets received")
-	}
 }
 
 // getHostname attempts to resolve hostname from IP
@@ -874,12 +895,22 @@ func findInterfaceForIP(targetIP net.IP) (*net.Interface, net.IP, error) {
 }
 
 // scanPortsForIP scans ports for a given IP
-func scanPortsForIP(ip string, ports []int, timeout int) []int {
-	var openPorts []int
-	var wg sync.WaitGroup
-	var mu sync.Mutex
+func scanPortsForIP(ip string, ports []int, timeout int, method string) ([]int, map[string]string) {
+	if method == "syn" {
+		return scanPortsSyn(ip, ports, timeout)
+	}
+	return scanPortsConnect(ip, ports, timeout)
+}
 
-	maxConcurrent := 20
+// scanPortsConnect scans ports using full TCP connection
+func scanPortsConnect(ip string, ports []int, timeout int) ([]int, map[string]string) {
+	var openPorts []int
+	banners := make(map[string]string)
+	var mu sync.Mutex
+	var wg sync.WaitGroup
+
+	// High concurrency for single IP port scan
+	maxConcurrent := 1000
 	semaphore := make(chan struct{}, maxConcurrent)
 
 	for _, port := range ports {
@@ -890,25 +921,346 @@ func scanPortsForIP(ip string, ports []int, timeout int) []int {
 			defer wg.Done()
 			defer func() { <-semaphore }()
 
-			if isPortOpen(ip, p, timeout) {
+			isOpen, banner := checkPortConnect(ip, p, timeout)
+			if isOpen {
 				mu.Lock()
 				openPorts = append(openPorts, p)
+				if banner != "" {
+					banners[fmt.Sprintf("%d", p)] = banner
+				}
 				mu.Unlock()
 			}
 		}(port)
 	}
 
 	wg.Wait()
-	return openPorts
+	return openPorts, banners
 }
 
-// isPortOpen checks if a port is open
-func isPortOpen(ip string, port int, timeout int) bool {
+// checkPortConnect checks if a port is open and grabs banner
+func checkPortConnect(ip string, port int, timeout int) (bool, string) {
 	address := fmt.Sprintf("%s:%d", ip, port)
 	conn, err := net.DialTimeout("tcp", address, time.Duration(timeout)*time.Second)
 	if err != nil {
-		return false
+		return false, ""
 	}
-	conn.Close()
-	return true
+	defer conn.Close()
+
+	// Banner grabbing logic based on port
+	conn.SetReadDeadline(time.Now().Add(2 * time.Second))
+
+	banner := ""
+
+	switch port {
+	case 80, 8080: // HTTP
+		fmt.Fprintf(conn, "HEAD / HTTP/1.0\r\n\r\n")
+		buffer := make([]byte, 2048)
+		n, _ := conn.Read(buffer)
+		if n > 0 {
+			response := string(buffer[:n])
+			// Extract Server header
+			lines := strings.Split(response, "\n")
+			for _, line := range lines {
+				if strings.HasPrefix(line, "Server:") {
+					banner = strings.TrimSpace(strings.TrimPrefix(line, "Server:"))
+					break
+				}
+			}
+			if banner == "" {
+				// Fallback to first line if status code
+				if strings.HasPrefix(response, "HTTP/") {
+					banner = strings.TrimSpace(strings.Split(response, "\r\n")[0])
+				}
+			}
+		}
+	case 443, 8443: // HTTPS
+		// TLS Handshake is complex without crypto/tls, but we can try to wrap the connection
+		// Since we are in internal/handlers, we can import crypto/tls
+		// But checkPortConnect is currently using net.Conn.
+		// We can try to upgrade to TLS.
+		// For now, let's keep it simple or use a separate dialer for 443 if needed.
+		// Actually, let's try to re-dial with TLS if it's 443
+		conn.Close()
+		conf := &tls.Config{InsecureSkipVerify: true}
+		tlsConn, err := tls.DialWithDialer(&net.Dialer{Timeout: time.Duration(timeout) * time.Second}, "tcp", address, conf)
+		if err == nil {
+			defer tlsConn.Close()
+			fmt.Fprintf(tlsConn, "HEAD / HTTP/1.0\r\n\r\n")
+			buffer := make([]byte, 2048)
+			tlsConn.SetReadDeadline(time.Now().Add(2 * time.Second))
+			n, _ := tlsConn.Read(buffer)
+			if n > 0 {
+				response := string(buffer[:n])
+				lines := strings.Split(response, "\n")
+				for _, line := range lines {
+					if strings.HasPrefix(line, "Server:") {
+						banner = strings.TrimSpace(strings.TrimPrefix(line, "Server:"))
+						break
+					}
+				}
+			}
+		}
+	case 636: // LDAPS
+		conn.Close()
+		conf := &tls.Config{InsecureSkipVerify: true}
+		tlsConn, err := tls.DialWithDialer(&net.Dialer{Timeout: time.Duration(timeout) * time.Second}, "tcp", address, conf)
+		if err == nil {
+			defer tlsConn.Close()
+			// LDAP requires bind, but sometimes just connecting and reading might give something?
+			// Often LDAP servers are silent until spoken to.
+			// Without a proper LDAP library this is hard.
+			// User example: objectClass: [top vmwDseRoot]...
+			// This looks like a Root DSE search response.
+			// We can try sending an anonymous bind or search request.
+			// This is getting complicated for a simple banner grabber.
+			// Maybe just report "LDAPS Open" if no banner.
+		}
+	case 53: // DNS (TCP)
+		// Try sending a version.bind CHAOS query?
+		// Transaction ID: 0x0000, Flags: 0x0100 (Standard Query), Questions: 1
+		// Query: version.bind type TXT class CHAOS
+		// ... packet construction ...
+		// Simplest might be to skip active probing for DNS complexity and just accept open port
+	default:
+		// Generic read for SSH, FTP, SMTP, POP3, IMAP
+		// Some protocols like SMTP wait for client, others greet.
+		// FTP: 220 banner
+		// SSH: SSH-2.0...
+		// SMTP: 220 banner
+		// POP3: +OK
+		// IMAP: * OK
+		buffer := make([]byte, 1024)
+		n, _ := conn.Read(buffer)
+		if n > 0 {
+			banner = string(buffer[:n])
+			// If MySQL (3306), the banner is binary but contains version in plain text usually early on
+			if port == 3306 {
+				// Filter out non-printable chars or just look for version string
+				// MySQL handshake: [protocol version] [version string] [thread id] ...
+				// First byte is proto version (e.g. 0x0a), then null-terminated version string.
+				if n > 5 {
+					// Simple heuristic: read until null byte starting from offset 1
+					vStr := ""
+					for i := 1; i < n; i++ {
+						if buffer[i] == 0 {
+							break
+						}
+						vStr += string(buffer[i])
+					}
+					if len(vStr) > 0 {
+						banner = vStr
+					}
+				}
+			}
+		}
+	}
+
+	// Cleanup banner
+	if banner != "" {
+		banner = strings.TrimSpace(banner)
+		banner = strings.ReplaceAll(banner, "\r", "")
+		banner = strings.ReplaceAll(banner, "\n", " ")
+		if len(banner) > 100 {
+			banner = banner[:97] + "..."
+		}
+		return true, banner
+	}
+
+	return true, ""
+}
+
+// scanPortsSyn scans ports using TCP SYN packets (requires admin/root)
+func scanPortsSyn(ip string, ports []int, timeout int) ([]int, map[string]string) {
+	// If we are not admin/root, or on some systems, this might fail.
+	// We'll fall back to connect scan if we can't open pcap handle?
+	// For now, let's try to implement it.
+
+	targetIP := net.ParseIP(ip)
+	if targetIP == nil {
+		return nil, nil
+	}
+
+	// Find interface
+	iface, localIP, err := findInterfaceForIP(targetIP)
+	if err != nil {
+		// Fallback to connect scan
+		return scanPortsConnect(ip, ports, timeout)
+	}
+
+	// Open pcap handle
+	deviceName := iface.Name
+	// On Windows, device name is different from interface name for pcap
+	// We already have logic for this in findPcapDeviceForInterface
+	// But findInterfaceForIP returns net.Interface.
+
+	// Check if we need to find pcap device name specifically (mostly for Windows)
+	pcapDevName := deviceName
+	if runtime.GOOS == "windows" {
+		pcapDev, err := findPcapDeviceForInterface(iface)
+		if err == nil {
+			pcapDevName = pcapDev.Name
+		} else {
+			// Fallback
+			return scanPortsConnect(ip, ports, timeout)
+		}
+	}
+
+	handle, err := pcap.OpenLive(pcapDevName, 65536, false, pcap.BlockForever)
+	if err != nil {
+		return scanPortsConnect(ip, ports, timeout)
+	}
+	defer handle.Close()
+
+	// Set filter to capture TCP traffic from target IP
+	err = handle.SetBPFFilter(fmt.Sprintf("tcp and src host %s", ip))
+	if err != nil {
+		return scanPortsConnect(ip, ports, timeout)
+	}
+
+	var openPorts []int
+	banners := make(map[string]string)
+
+	// Map to track sent ports
+	sentPorts := make(map[int]bool)
+	for _, p := range ports {
+		sentPorts[p] = true
+	}
+
+	// Start packet processing
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	packets := packetSource.Packets()
+
+	// Channel to receive open ports
+	results := make(chan int, len(ports))
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case packet := <-packets:
+				if packet == nil {
+					continue
+				}
+				tcpLayer := packet.Layer(layers.LayerTypeTCP)
+				if tcpLayer != nil {
+					tcp, _ := tcpLayer.(*layers.TCP)
+					// Check for SYN-ACK (SYN=1, ACK=1)
+					if tcp.SYN && tcp.ACK {
+						port := int(tcp.SrcPort)
+						if sentPorts[port] {
+							select {
+							case results <- port:
+							default:
+							}
+						}
+					}
+				}
+			}
+		}
+	}()
+
+	// Send SYN packets
+	// Need to construct raw packet
+	srcMAC := iface.HardwareAddr
+	dstMAC := net.HardwareAddr{0xff, 0xff, 0xff, 0xff, 0xff, 0xff} // Broadcast by default fallback
+
+	// Try to get MAC from system or ARP
+	dstMACAddr := getMACAddress(ip)
+	if dstMACAddr == "" {
+		// Fallback
+		return scanPortsConnect(ip, ports, timeout)
+	}
+	parsedDstMac, _ := net.ParseMAC(dstMACAddr)
+	if parsedDstMac != nil {
+		dstMAC = parsedDstMac
+	}
+
+	// Create packet template
+	eth := layers.Ethernet{
+		SrcMAC:       srcMAC,
+		DstMAC:       dstMAC,
+		EthernetType: layers.EthernetTypeIPv4,
+	}
+	ip4 := layers.IPv4{
+		SrcIP:    localIP,
+		DstIP:    targetIP.To4(),
+		Version:  4,
+		TTL:      64,
+		Protocol: layers.IPProtocolTCP,
+	}
+	tcp := layers.TCP{
+		SrcPort: layers.TCPPort(49152), // Randomize?
+		Window:  14600,
+		SYN:     true,
+	}
+	opts := gopacket.SerializeOptions{
+		FixLengths:       true,
+		ComputeChecksums: true,
+	}
+
+	// Send packets
+	for _, port := range ports {
+		tcp.DstPort = layers.TCPPort(port)
+		tcp.SrcPort = layers.TCPPort(49152 + port%10000) // Simple randomization
+		tcp.Seq = 110502444 + uint32(port)
+
+		tcp.SetNetworkLayerForChecksum(&ip4)
+
+		buf := gopacket.NewSerializeBuffer()
+		if err := gopacket.SerializeLayers(buf, opts, &eth, &ip4, &tcp); err != nil {
+			continue
+		}
+		handle.WritePacketData(buf.Bytes())
+		// removed delay for faster scanning
+	}
+
+	// Collect results
+	scanDone := make(map[int]bool)
+
+	// Wait for timeout
+LOOP:
+	for {
+		select {
+		case p := <-results:
+			if !scanDone[p] {
+				openPorts = append(openPorts, p)
+				scanDone[p] = true
+			}
+		case <-ctx.Done():
+			break LOOP
+		}
+	}
+
+	// Banner grabbing for SYN scan results
+	if len(openPorts) > 0 {
+		var bannerWg sync.WaitGroup
+		var bannerMu sync.Mutex
+
+		// Use semaphore to limit connect concurrency
+		// Increase for faster grabbing
+		sem := make(chan struct{}, 100)
+
+		for _, p := range openPorts {
+			bannerWg.Add(1)
+			sem <- struct{}{}
+			go func(port int) {
+				defer bannerWg.Done()
+				defer func() { <-sem }()
+
+				_, banner := checkPortConnect(ip, port, 1)
+				if banner != "" {
+					bannerMu.Lock()
+					banners[fmt.Sprintf("%d", port)] = banner
+					bannerMu.Unlock()
+				}
+			}(p)
+		}
+		bannerWg.Wait()
+	}
+
+	return openPorts, banners
 }

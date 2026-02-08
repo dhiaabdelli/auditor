@@ -1,7 +1,12 @@
 export class AppsPage {
     constructor(onNavigate) {
+        // Set instance IMMEDIATELY so inline event handlers work
+        window.appsPageInstance = this;
+
         this.onNavigate = onNavigate;
         this.currentLanguage = localStorage.getItem('language') || 'en';
+        this.searchQuery = '';
+        this.filterCategory = 'all';
         this.translations = {
             en: {
                 // App titles
@@ -15,7 +20,6 @@ export class AppsPage {
                 ipScanner: 'DeepView Scout',
                 packetAnalyzer: 'DeepView Packet',
                 reportTemplates: 'DeepView Reports',
-                infrastructureInventory: 'Infrastructure Inventory',
                 scriptGenerator: 'Script Generator',
                 batchGenerator: 'Batch Generator',
                 speedtest: 'DeepView Pulse',
@@ -33,7 +37,6 @@ export class AppsPage {
                 ipScannerDesc: 'Map, monitor, and analyze network devices across all subnets',
                 packetAnalyzerDesc: 'Real-time packet capture and deep network traffic analysis',
                 reportTemplatesDesc: 'Create and manage document templates for automated report generation',
-                infrastructureInventoryDesc: 'Generate comprehensive infrastructure documentation in Excel format',
                 scriptGeneratorDesc: 'Generate PowerShell and batch scripts',
                 batchGeneratorDesc: 'Create and manage batch operations',
                 speedtestDesc: 'Real-time bandwidth and latency testing for accurate network performance',
@@ -72,7 +75,19 @@ export class AppsPage {
                 languageEnglish: 'English',
                 languageFrench: 'French',
                 // Page header
-                pageSubtitle: 'Choose your tool to streamline and optimize your infrastructure management'
+                pageSubtitle: 'Choose your tool to streamline and optimize your infrastructure management',
+                // Search and Filters
+                search: 'Search applications...',
+                allCategories: 'All Categories',
+                infrastructure: 'Infrastructure',
+                reporting: 'Reporting',
+                networking: 'Networking',
+                tools: 'Tools',
+                remote: 'Remote',
+                productivity: 'Productivity',
+                monitoring: 'Monitoring',
+                noResults: 'No applications found',
+                noResultsDesc: 'Try adjusting your search or filter criteria'
             },
             fr: {
                 // App titles
@@ -100,7 +115,6 @@ export class AppsPage {
                 packetAnalyzerDesc: 'Capture de paquets en temps réel et analyse approfondie du trafic réseau',
                 reportTemplates: 'DeepView Reports',
                 reportTemplatesDesc: 'Créer et gérer des modèles de documents pour la génération automatique de rapports',
-                infrastructureInventoryDesc: 'Générer une documentation complète de l\'infrastructure au format Excel',
                 scriptGeneratorDesc: 'Générer des scripts PowerShell et batch',
                 speedtest: 'DeepView Pulse',
                 domainLookup: 'DeepView Domain Lookup',
@@ -143,7 +157,19 @@ export class AppsPage {
                 languageEnglish: 'Anglais',
                 languageFrench: 'Français',
                 // Page header
-                pageSubtitle: 'Choisissez votre outil pour rationaliser et optimiser la gestion de votre infrastructure'
+                pageSubtitle: 'Choisissez votre outil pour rationaliser et optimiser la gestion de votre infrastructure',
+                // Search and Filters
+                search: 'Rechercher des applications...',
+                allCategories: 'Toutes les Catégories',
+                infrastructure: 'Infrastructure',
+                reporting: 'Rapports',
+                networking: 'Réseau',
+                tools: 'Outils',
+                remote: 'Distant',
+                productivity: 'Productivité',
+                monitoring: 'Surveillance',
+                noResults: 'Aucune application trouvée',
+                noResultsDesc: 'Essayez d\'ajuster vos critères de recherche ou de filtrage'
             }
         };
     }
@@ -159,8 +185,38 @@ export class AppsPage {
         document.dispatchEvent(new CustomEvent('languageChanged', { detail: { language: lang } }));
     }
 
-    render() {
-        const apps = [
+    handleSearch(query) {
+        this.searchQuery = query.toLowerCase();
+        this.updateDisplay();
+    }
+
+    handleFilter(category) {
+        this.filterCategory = category;
+        this.updateDisplay();
+    }
+
+    getFilteredApps(apps) {
+        return apps.filter(app => {
+            const matchesSearch = !this.searchQuery ||
+                app.title.toLowerCase().includes(this.searchQuery) ||
+                app.description.toLowerCase().includes(this.searchQuery);
+
+            const matchesCategory = this.filterCategory === 'all' ||
+                app.section === this.filterCategory;
+
+            return matchesSearch && matchesCategory;
+        });
+    }
+
+    updateDisplay() {
+        const content = document.getElementById('apps-dynamic-content');
+        if (content) {
+            content.innerHTML = this.renderAppsGrid();
+        }
+    }
+
+    getApps() {
+        return [
             // Auditor Section (consolidated - use sub-navbar to switch between auditors) - FIRST
             {
                 id: 'hyperv-auditor-list',
@@ -188,14 +244,6 @@ export class AppsPage {
                 title: this.t('reportTemplates'),
                 description: this.t('reportTemplatesDesc'),
                 color: '#8b5cf6',
-                section: 'reporting'
-            },
-            {
-                id: 'infrastructure-inventory',
-                icon: 'fa-file-excel',
-                title: this.t('infrastructureInventory'),
-                description: this.t('infrastructureInventoryDesc'),
-                color: '#10b981',
                 section: 'reporting'
             },
 
@@ -291,31 +339,91 @@ export class AppsPage {
                 section: 'monitoring'
             }
         ];
+    }
+
+    renderAppsGrid() {
+        const apps = this.getApps();
+        const filteredApps = this.getFilteredApps(apps);
+
+        if (filteredApps.length === 0) {
+            return `
+                <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 3rem; color: #64748b;">
+                    <i class="fas fa-search fa-3x" style="margin-bottom: 1.5rem; opacity: 0.5;"></i>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem; color: #94a3b8;">${this.t('noResults')}</h3>
+                    <p style="margin: 0; font-size: 0.875rem;">${this.t('noResultsDesc')}</p>
+                </div>
+            `;
+        }
 
         return `
-            <div class="apps-page">
-                <div class="apps-grid grid-compact">
-                    ${apps.map((app, index) => `
-                        <div class="app-card" data-app="${app.id}" onclick="appsPageInstance.navigateTo('${app.id}')">
-                            <div class="app-icon" style="background: linear-gradient(135deg, ${app.color}15 0%, ${app.color}25 100%);">
-                                <i class="fas ${app.icon}" style="color: ${app.color};"></i>
-                            </div>
-                            <div class="app-info">
-                                <h3 class="app-title">${app.title}</h3>
-                                ${app.description ? `<p class="app-description">${app.description}</p>` : ''}
-                            </div>
+            <div class="apps-grid grid-compact">
+                ${filteredApps.map((app, index) => `
+                    <div class="app-card" data-app="${app.id}" onclick="appsPageInstance.navigateTo('${app.id}')">
+                        <div class="app-icon" style="background: linear-gradient(135deg, ${app.color}15 0%, ${app.color}25 100%);">
+                            <i class="fas ${app.icon}" style="color: ${app.color};"></i>
                         </div>
-                    `).join('')}
+                        <div class="app-info">
+                            <h3 class="app-title">${app.title}</h3>
+                            ${app.description ? `<p class="app-description">${app.description}</p>` : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    render() {
+        const categories = [
+            { id: 'all', label: this.t('allCategories') },
+            { id: 'infrastructure', label: this.t('infrastructure') },
+            { id: 'reporting', label: this.t('reporting') },
+            { id: 'networking', label: this.t('networking') },
+            { id: 'tools', label: this.t('tools') },
+            { id: 'remote', label: this.t('remote') },
+            { id: 'productivity', label: this.t('productivity') },
+            { id: 'monitoring', label: this.t('monitoring') }
+        ];
+
+        return `
+            <div class="apps-page" style="height: calc(100vh - 120px); overflow: hidden; display: flex; flex-direction: column;">
+                <div style="padding: 1rem; display: flex; flex-direction: column; height: 100%; box-sizing: border-box;">
+                    <!-- Search and Filter Bar -->
+                    <div style="display: flex; gap: 0.75rem; margin-bottom: 2rem; flex-shrink: 0; flex-wrap: wrap;">
+                        <!-- Search Bar -->
+                        <div style="position: relative; flex: 1; min-width: 220px;">
+                            <i class="fas fa-search" style="position: absolute; left: 0.65rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.75rem;"></i>
+                            <input 
+                                type="text" 
+                                placeholder="${this.t('search')}" 
+                                value="${this.searchQuery}"
+                                oninput="appsPageInstance.handleSearch(this.value)"
+                                style="width: 100%; padding: 0 0.65rem 0 2.25rem; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 0.8rem; outline: none; height: 34px;">
+                        </div>
+                        
+                        <!-- Category Filter -->
+                        <div style="position: relative;">
+                            <select 
+                                onchange="appsPageInstance.handleFilter(this.value)"
+                                style="padding: 0 2.25rem 0 0.65rem; background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 6px; color: white; font-size: 0.8rem; outline: none; cursor: pointer; appearance: none; min-width: 160px; height: 34px;">
+                                ${categories.map(cat => `
+                                    <option value="${cat.id}" ${this.filterCategory === cat.id ? 'selected' : ''}>${cat.label}</option>
+                                `).join('')}
+                            </select>
+                            <i class="fas fa-chevron-down" style="position: absolute; right: 0.65rem; top: 50%; transform: translateY(-50%); color: #64748b; font-size: 0.7rem; pointer-events: none;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Apps Grid -->
+                    <div id="apps-dynamic-content" style="flex: 1; overflow-y: auto; min-height: 0;">
+                        ${this.renderAppsGrid()}
+                    </div>
                 </div>
             </div>
         `;
     }
 
     async mount() {
-        // Set global instance
-        window.appsPageInstance = this;
-
-        // Set up click handlers
+        // Set up click handlers for app cards
         document.querySelectorAll('.app-card').forEach(card => {
             card.addEventListener('click', (e) => {
                 const appId = card.dataset.app;
@@ -324,7 +432,6 @@ export class AppsPage {
                 }
             });
         });
-
     }
 
     navigateTo(appId) {

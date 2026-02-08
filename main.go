@@ -21,6 +21,7 @@ import (
 	"network-script-generator/internal/handlers"
 	"network-script-generator/internal/router"
 	"network-script-generator/internal/security"
+	"network-script-generator/internal/shared"
 )
 
 //go:embed static
@@ -49,6 +50,15 @@ func main() {
 		log.Fatal("Database initialization failed:", err)
 	}
 
+	// Initialize GeoIP (City and ASN)
+	// We check if files exist, if not we just log a warning but continue
+	cityDB := "data/geoip/GeoLite2-City.mmdb"
+	asnDB := "data/geoip/GeoLite2-ASN.mmdb"
+	countryDB := "data/geoip/GeoLite2-Country.mmdb"
+	if err := shared.InitGeoIP(cityDB, asnDB, countryDB); err != nil {
+		log.Printf("Warning: GeoIP initialization failed: %v", err)
+	}
+
 	// Initialize automation schedulers after database is ready
 	handlers.InitSchedulers()
 
@@ -69,6 +79,9 @@ func main() {
 		if database.DB != nil {
 			database.DB.Close()
 		}
+
+		// Close GeoIP readers
+		shared.CloseGeoIP()
 	}()
 
 	// Initialize API key in database if needed

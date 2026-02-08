@@ -62,8 +62,6 @@ export class Header {
             'speedtest': 'DeepView Pulse',
             // Reports
             'reports': 'DeepView Reports',
-            // Infrastructure Inventory
-            'infrastructure-inventory': 'Infrastructure Inventory',
             // Tools
             'subnet-calculator': 'Tools',
             // Crypto
@@ -143,7 +141,6 @@ export class Header {
 
     render() {
         const pageName = this.getPageName(this.currentPage);
-        const isAppsPage = this.currentPage === 'apps';
         const needsConfigToggle =
             this.currentPage === 'ping-tracer' ||
             this.currentPage === 'ip-scanner' ||
@@ -154,7 +151,15 @@ export class Header {
             this.currentPage === 'file-share-auditor' ||
             this.currentPage === 'file-share-auditor-details' ||
             this.currentPage === 'linux-server-auditor' ||
-            this.currentPage === 'linux-server-auditor-details';
+            this.currentPage === 'linux-server-auditor-details' ||
+            this.currentPage === 'hyperv-auditor' ||
+            this.currentPage === 'hyperv-auditor-list' ||
+            this.currentPage === 'hyperv-auditor-details';
+
+        const isOverview = ['controller', 'network-overview'].includes(this.currentPage);
+        const isAdministration = ['administration', 'wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(this.currentPage);
+        const isMonitor = this.currentPage === 'health-monitor';
+        const isApplications = !isOverview && !isAdministration && !isMonitor && this.currentPage !== 'login';
 
         return `
             <div class="modern-header">
@@ -163,16 +168,16 @@ export class Header {
                         DeepView Console
                     </div>
                     <div class="header-nav">
-                        <button class="nav-item ${['controller', 'network-overview'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openOverview()">
+                        <button class="nav-item ${isOverview ? 'active' : ''}" onclick="headerInstance.openOverview()">
                             Overview
                         </button>
-                        <button class="nav-item ${this.currentPage === 'apps' ? 'active' : ''}" onclick="headerInstance.openApps()">
+                        <button class="nav-item ${isApplications ? 'active' : ''}" onclick="headerInstance.openApps()">
                             Applications
                         </button>
-                        <button class="nav-item ${['administration', 'wifi-manager', 'network-interfaces', 'settings', 'activity-log', 'activity-log-sessions'].includes(this.currentPage) ? 'active' : ''}" onclick="headerInstance.openAdministration()">
+                        <button class="nav-item ${isAdministration ? 'active' : ''}" onclick="headerInstance.openAdministration()">
                             Administration
                         </button>
-                        <button class="nav-item ${this.currentPage === 'health-monitor' ? 'active' : ''}" onclick="headerInstance.openMonitor()">
+                        <button class="nav-item ${isMonitor ? 'active' : ''}" onclick="headerInstance.openMonitor()">
                             Monitor
                         </button>
                     </div>
@@ -247,7 +252,10 @@ export class Header {
             pageId === 'file-share-auditor' ||
             pageId === 'file-share-auditor-details' ||
             pageId === 'linux-server-auditor' ||
-            pageId === 'linux-server-auditor-details';
+            pageId === 'linux-server-auditor-details' ||
+            pageId === 'hyperv-auditor' ||
+            pageId === 'hyperv-auditor-list' ||
+            pageId === 'hyperv-auditor-details';
 
         // Update the header-left section to show the correct button
         // Update the header-left section to show the correct menu active state
